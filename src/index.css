@@ -1,0 +1,47 @@
+/* Global styles for Ghana Climate Atlas */
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: #eaeaea;
+  background-color: #1a1a2e;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+a {
+  font-weight: 500;
+  color: #e94560;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #ff6b6b;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Ensure leaflet fills container */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
