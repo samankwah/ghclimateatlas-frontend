@@ -110,7 +110,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   const layersRef = useRef<Map<string, L.Path>>(new Map());
 
   // Style function for GeoJSON features - borders only, no fill (interpolated layer handles colors)
-  const getStyle = useCallback((districtId: string, isSelected: boolean): PathOptions => {
+  const getStyle = useCallback((_districtId: string, isSelected: boolean): PathOptions => {
     return {
       fillOpacity: 0,
       weight: isSelected ? 2 : 0.5,
