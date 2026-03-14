@@ -90,7 +90,7 @@ export const useDistrictTimeSeries = (
     null;
 
   // Build time series data
-  let data: TimeSeriesPoint[] = [];
+  const data: TimeSeriesPoint[] = [];
   let statistics: DistrictStatistics | null = null;
 
   if (!isLoading && !error && districtId) {

@@ -23,6 +23,7 @@ interface CategoryTabsProps {
   scenario: Scenario;
   period: Period;
   availableVariables?: ClimateVariable[];
+  controlsExpanded?: boolean;
 }
 
 const SunIcon = () => (
@@ -91,26 +92,6 @@ const INITIAL_ACTIVE_PARENTS: ActiveParentState = {
   cold_weather: null,
 };
 
-const SEASONAL_VARIABLE_IDS = [
-  'mean_temp_major_south',
-  'mean_temp_major_north',
-  'mean_temp_minor_south',
-  'mean_temp_dry_season',
-  'max_temp_major_south',
-  'max_temp_major_north',
-  'max_temp_minor_south',
-  'max_temp_dry_season',
-  'min_temp_major_south',
-  'min_temp_major_north',
-  'min_temp_minor_south',
-  'min_temp_dry_season',
-  'precipitation_major_south',
-  'precipitation_major_north',
-  'precipitation_minor_south',
-  'precipitation_dry_season',
-  'precipitation_growing_season',
-];
-
 const cloneEmptySelections = (): SelectionsState => ({
   precipitation: [],
   agriculture: [],
@@ -163,6 +144,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   scenario,
   period,
   availableVariables,
+  controlsExpanded = true,
 }) => {
   const [openPanel, setOpenPanel] = useState<Category | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -177,7 +159,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   const availableVariableIds = new Set((availableVariables ?? []).map((variable) => variable.id));
   availableVariableIds.add('dry_days');
   availableVariableIds.add('wet_days');
-  SEASONAL_VARIABLE_IDS.forEach((variableId) => availableVariableIds.add(variableId));
 
   const handleCategoryClick = (categoryId: Category) => {
     if (openPanel === categoryId) {
@@ -249,7 +230,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
   return (
     <div className="category-tabs-wrapper" data-tour="map-variable">
-      {openPanel && (
+      {openPanel && (!isMobileViewport || controlsExpanded) && (
         <button
           type="button"
           className="category-panel-backdrop"
@@ -308,7 +289,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
         })}
       </div>
 
-      {openPanel && isMobileViewport && createPortal(
+      {openPanel && isMobileViewport && controlsExpanded && createPortal(
         <div className="category-panel-anchor">
           <CategoryPanel
             panelId={`category-panel-${openPanel}`}

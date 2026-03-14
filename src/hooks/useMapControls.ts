@@ -1,6 +1,6 @@
 // Map controls state management
 
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { Period, Scenario, MapState } from "../types/climate";
 
 const DEFAULT_STATE: MapState = {
@@ -11,8 +11,36 @@ const DEFAULT_STATE: MapState = {
   showChange: false,
 };
 
+const PERIOD_VALUES: Period[] = ["baseline", "2030", "2050", "2080"];
+const SCENARIO_VALUES: Scenario[] = ["rcp45", "rcp85"];
+
+const getInitialState = (): MapState => {
+  if (typeof window === "undefined") {
+    return DEFAULT_STATE;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const periodParam = params.get("period");
+  const scenarioParam = params.get("scenario");
+
+  const period = PERIOD_VALUES.includes(periodParam as Period)
+    ? (periodParam as Period)
+    : DEFAULT_STATE.period;
+  const scenario = SCENARIO_VALUES.includes(scenarioParam as Scenario)
+    ? (scenarioParam as Scenario)
+    : DEFAULT_STATE.scenario;
+
+  return {
+    variable: params.get("variable") || DEFAULT_STATE.variable,
+    period,
+    scenario,
+    selectedDistrictId: params.get("district") || null,
+    showChange: period !== "baseline" && params.get("change") === "1",
+  };
+};
+
 export const useMapControls = () => {
-  const [state, setState] = useState<MapState>(DEFAULT_STATE);
+  const [state, setState] = useState<MapState>(getInitialState);
 
   const setVariable = useCallback((variable: string) => {
     setState((prev) => ({ ...prev, variable }));
@@ -41,6 +69,28 @@ export const useMapControls = () => {
       showChange: prev.period !== "baseline" ? !prev.showChange : false,
     }));
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set("variable", state.variable);
+    params.set("period", state.period);
+    params.set("scenario", state.scenario);
+
+    if (state.selectedDistrictId) {
+      params.set("district", state.selectedDistrictId);
+    }
+
+    if (state.showChange && state.period !== "baseline") {
+      params.set("change", "1");
+    }
+
+    const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+    window.history.replaceState({}, "", nextUrl);
+  }, [state]);
 
   return {
     ...state,

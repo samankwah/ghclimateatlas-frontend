@@ -26,7 +26,7 @@ const PERIOD_INFO: Record<Period, { label: string; description: string }> = {
     description: "Climate change begins to take hold in the coming years. Changes are already underway and will become more noticeable within the next two decades."
   },
   "2050": {
-    label: "Mid-Century (2041-2060)",
+    label: "Mid-Century (2041-2070)",
     description: "A period of significant transition where the effects of climate change become clearly established across Ghana's regions."
   },
   "2080": {

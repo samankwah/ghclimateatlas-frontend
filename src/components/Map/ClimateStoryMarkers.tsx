@@ -67,14 +67,15 @@ function getEmbeddedVideoUrl(videoUrl: string) {
   return videoUrl;
 }
 
-function createPlayIcon(_category: string) {
+function createPlayIcon(category: string) {
+  const iconColor = CATEGORY_COLORS[category] || "#444";
   return L.divIcon({
     className: "",
     iconSize: [30, 30],
     iconAnchor: [15, 15],
     popupAnchor: [0, -17],
     html: `<div class="story-marker">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="#444">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="${iconColor}">
         <polygon points="8,5 19,12 8,19" />
       </svg>
     </div>`,

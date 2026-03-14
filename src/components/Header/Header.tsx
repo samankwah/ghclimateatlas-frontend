@@ -1,9 +1,12 @@
-// Header component - displays variable name, scenario badge, period info, and legend
-
 import { useMemo } from "react";
 import type { ClimateVariable, Period, Scenario } from "../../types/climate";
 import type { ColorScaleType } from "../../utils/colorScales";
 import { generateLegendStops, normalizeUnit } from "../../utils/colorScales";
+import {
+  getPeriodRangeLabel,
+  getScenarioDescription,
+  getScenarioLabel,
+} from "../../utils/climateLabels";
 
 interface HeaderProps {
   variable: ClimateVariable | undefined;
@@ -14,8 +17,10 @@ interface HeaderProps {
   colorScaleType: ColorScaleType;
   showChange: boolean;
   parameterLabel?: string | null;
+  shareStatus?: string | null;
   onOpenHelp: () => void;
   onOpenTour: () => void;
+  onShare: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -27,28 +32,11 @@ const Header: React.FC<HeaderProps> = ({
   colorScaleType,
   showChange,
   parameterLabel,
+  shareStatus,
   onOpenHelp,
   onOpenTour,
+  onShare,
 }) => {
-  const getPeriodLabel = (p: Period): string => {
-    switch (p) {
-      case "baseline":
-        return "1991-2020";
-      case "2030":
-        return "2021-2050";
-      case "2050":
-        return "2041-2060";
-      case "2080":
-        return "2051-2080";
-      default:
-        return p;
-    }
-  };
-
-  const getScenarioText = (s: Scenario): string => {
-    return s === "rcp85" ? "High Carbon -> More climate change" : "Low Carbon -> Less climate change";
-  };
-
   const gradientStyle = useMemo(() => {
     const stops = generateLegendStops(
       minValue,
@@ -56,7 +44,7 @@ const Header: React.FC<HeaderProps> = ({
       showChange ? "diverging" : colorScaleType,
       5
     );
-    const colors = stops.map((s) => s.color).join(", ");
+    const colors = stops.map((stop) => stop.color).join(", ");
     return {
       background: `linear-gradient(to right, ${colors})`,
     };
@@ -97,14 +85,17 @@ const Header: React.FC<HeaderProps> = ({
           <div className="scenario-info" data-tour="scenarios">
             {period !== "baseline" ? (
               <>
-                <span className="scenario-text">{getScenarioText(scenario)}</span>
+                <span className="scenario-text">
+                  {getScenarioLabel(scenario)} {"->"} {getScenarioDescription(scenario)}
+                </span>
                 <span className="period-separator">•</span>
-                <span className="period-text">{getPeriodLabel(period)}</span>
+                <span className="period-text">{getPeriodRangeLabel(period)}</span>
               </>
             ) : (
-              <span className="period-text">Baseline: 1991-2020</span>
+              <span className="period-text">Baseline: {getPeriodRangeLabel("baseline")}</span>
             )}
           </div>
+          {shareStatus ? <div className="share-status">{shareStatus}</div> : null}
         </div>
 
         <div className="header-right">
@@ -123,7 +114,7 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
             <span>TOUR</span>
           </button>
-          <button className="header-btn-labeled" title="Share" data-tour="share-map">
+          <button className="header-btn-labeled" title="Share" data-tour="share-map" onClick={onShare}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />

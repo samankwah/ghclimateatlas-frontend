@@ -87,7 +87,6 @@ const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
   // Send computation request to worker when data changes
   useEffect(() => {
     if (dataPoints.length === 0 || !ghanaBoundary) {
-      if (dataPoints.length === 0) setGridResult(null);
       return;
     }
 
@@ -105,7 +104,7 @@ const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
 
   // Create the image data URL from the grid (cheap, runs on main thread)
   const imageDataUrl = useMemo(() => {
-    if (!gridResult) return null;
+    if (!gridResult || dataPoints.length === 0) return null;
 
     const canvas = document.createElement("canvas");
     canvas.width = gridResult.cols;
@@ -122,7 +121,7 @@ const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
     );
     ctx.putImageData(imageData, 0, 0);
     return canvas.toDataURL();
-  }, [gridResult, minValue, maxValue, colorScale, opacity]);
+  }, [gridResult, minValue, maxValue, colorScale, opacity, dataPoints.length]);
 
   // Create/update the image overlay on the map
   useEffect(() => {

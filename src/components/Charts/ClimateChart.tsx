@@ -1,7 +1,7 @@
 // Climate time series chart using Highcharts
 // Matching the climate projection visualization style with historical (gray) and projected (red) regions
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import type { TimeSeriesPoint } from "../../hooks/useDistrictTimeSeries";
@@ -93,37 +93,28 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 }) => {
   const [chartReady, setChartReady] = useState(highchartsMoreInitialized);
   const displayUnit = normalizeUnit(unit);
-  const axisMetricLabel = useMemo(() => {
-    const lowerName = variableName.toLowerCase();
-
-    if (lowerName.includes("precipitation") || displayUnit === "mm") {
-      return `Precipitation (${displayUnit})`;
-    }
-
-    if (lowerName.includes("temperature") || displayUnit.includes("C")) {
-      return `Temperature (${displayUnit})`;
-    }
-
-    return `${variableName} (${displayUnit})`;
-  }, [displayUnit, variableName]);
+  const lowerName = variableName.toLowerCase();
+  const axisMetricLabel =
+    lowerName.includes("precipitation") || displayUnit === "mm"
+      ? `Precipitation (${displayUnit})`
+      : lowerName.includes("temperature") || displayUnit.includes("C")
+        ? `Temperature (${displayUnit})`
+        : `${variableName} (${displayUnit})`;
   const lowerVariableName = variableName.toLowerCase();
   const isMinimumTemperatureChart = lowerVariableName.includes("minimum temperature");
+  const isMaximumTemperatureChart = lowerVariableName.includes("maximum temperature");
   const isTemperatureChart =
     lowerVariableName.includes("temperature") && !displayUnit.includes("days");
-  const selectedPeriodBand = useMemo(() => {
-    switch (selectedPeriod) {
-      case "baseline":
-        return { from: 1976, to: 2005 };
-      case "2030":
-        return { from: 2021, to: 2050 };
-      case "2050":
-        return { from: 2041, to: 2070 };
-      case "2080":
-        return { from: 2051, to: 2080 };
-      default:
-        return null;
-    }
-  }, [selectedPeriod]);
+  const selectedPeriodBand =
+    selectedPeriod === "baseline"
+      ? { from: 1976, to: 2005 }
+      : selectedPeriod === "2030"
+        ? { from: 2021, to: 2050 }
+        : selectedPeriod === "2050"
+          ? { from: 2041, to: 2070 }
+          : selectedPeriod === "2080"
+            ? { from: 2051, to: 2080 }
+            : null;
 
   useEffect(() => {
     if (!chartReady) {
@@ -134,22 +125,30 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   }, [chartReady]);
 
   // Generate chart data with memoization for performance
-  const chartData = useMemo(() => {
-    if (!data || data.length === 0) return null;
+  let chartData: {
+    historicalLine: [number, number][];
+    historicalRange: [number, number, number][];
+    projectedLine: [number, number][];
+    projectedRange: [number, number, number][];
+    yAxisStep: number;
+    yMin: number;
+    yMax: number;
+  } | null = null;
 
+  if (data && data.length > 0) {
     // Separate historical and projected data
     const historicalPoints = data.filter((d) => d.period === "baseline");
     const projectedPoints = data.filter((d) => d.period !== "baseline");
 
     // Sort projected points by year
-    projectedPoints.sort((a, b) => a.year - b.year);
+    const sortedProjectedPoints = [...projectedPoints].sort((a, b) => a.year - b.year);
 
     const baselineValue = historicalPoints[0]?.median || 0;
     const baselineLow = historicalPoints[0]?.low || 0;
     const baselineHigh = historicalPoints[0]?.high || 0;
 
     // Get end values from the last projected point
-    const lastProjected = projectedPoints[projectedPoints.length - 1];
+    const lastProjected = sortedProjectedPoints[sortedProjectedPoints.length - 1];
     const endMedian = lastProjected?.median || baselineValue;
     const endLow = lastProjected?.low || baselineLow;
     const endHigh = lastProjected?.high || baselineHigh;
@@ -181,20 +180,36 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
     const padding = (maxValue - minValue) * 0.15;
-    const yAxisStep = isMinimumTemperatureChart ? 1 : isTemperatureChart ? 2 : 5;
-    const yMinPadding = isMinimumTemperatureChart ? padding * 0.12 : isTemperatureChart ? padding * 0.2 : padding * 0.35;
-    const yMaxPadding = isMinimumTemperatureChart ? padding * 0.12 : isTemperatureChart ? padding * 0.22 : padding * 0.45;
+    const yAxisStep = 5;
+    const yMinPadding = isTemperatureChart ? padding * 0.2 : padding * 0.35;
+    const yMaxPadding = isTemperatureChart ? padding * 0.22 : padding * 0.45;
 
-    return {
+    const computedYMin = Math.floor((minValue - yMinPadding) / yAxisStep) * yAxisStep;
+    const computedYMax = Math.ceil((maxValue + yMaxPadding) / yAxisStep) * yAxisStep;
+    chartData = {
       historicalLine: historicalData.lineData,
       historicalRange: historicalData.rangeData,
       projectedLine: projectedData.lineData,
       projectedRange: projectedData.rangeData,
       yAxisStep,
-      yMin: Math.floor((minValue - yMinPadding) / yAxisStep) * yAxisStep,
-      yMax: Math.ceil((maxValue + yMaxPadding) / yAxisStep) * yAxisStep,
+      yMin: isMinimumTemperatureChart
+        ? 15
+        : isMaximumTemperatureChart
+          ? 25
+          : isTemperatureChart
+            ? 5
+            : computedYMin,
+      yMax: isTemperatureChart
+        ? (
+            isMinimumTemperatureChart
+              ? 30
+              : isMaximumTemperatureChart
+                ? 45
+                : (computedYMax <= 35 ? 35 : 40)
+          )
+        : computedYMax,
     };
-  }, [data, isMinimumTemperatureChart, isTemperatureChart]);
+  }
 
   if (!data || data.length === 0 || !chartData) {
     return (
@@ -212,7 +227,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const options: Highcharts.Options = {
     chart: {
       backgroundColor: "transparent",
@@ -298,7 +312,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     tooltip: {
       shared: true,
       valueSuffix: ` ${displayUnit}`,
-      valueDecimals: 0, // No decimal places in tooltip
+      valueDecimals: 0,
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#475569",
       borderRadius: 8,
@@ -366,7 +380,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       }],
     },
     series: [
-      // Historical range (gray)
       {
         name: "1950-2005",
         type: "arearange",
@@ -378,7 +391,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         marker: { enabled: false },
         showInLegend: false,
       },
-      // Projected range (red)
       {
         name: "2006-2095",
         type: "arearange",
@@ -390,7 +402,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         marker: { enabled: false },
         showInLegend: false,
       },
-      // Historical ensemble mean line (gray)
       {
         name: "Historical Values",
         type: "line",
@@ -401,7 +412,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         marker: { enabled: false },
         showInLegend: false,
       },
-      // Projected ensemble mean line (dark)
       {
         name: "Ensemble mean",
         type: "line",

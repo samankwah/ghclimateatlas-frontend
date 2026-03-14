@@ -4,12 +4,10 @@ import { useState } from 'react';
 
 interface MapLayerTogglesProps {
   showGrid: boolean;
-  showAverage: boolean;
   showCities: boolean;
   showWater?: boolean;
   showStories?: boolean;
   onToggleGrid: () => void;
-  onToggleAverage: () => void;
   onToggleWater?: () => void;
   onToggleCities: () => void;
   onToggleStories?: () => void;
@@ -18,12 +16,10 @@ interface MapLayerTogglesProps {
 
 const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
   showGrid,
-  showAverage,
   showCities,
   showWater = true,
   showStories = true,
   onToggleGrid,
-  onToggleAverage,
   onToggleWater,
   onToggleCities,
   onToggleStories,
@@ -74,18 +70,6 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
             <span className="toggle-label">Water</span>
           </button>
         )}
-
-        <button
-          className={`layer-toggle ${showAverage ? "active" : ""}`}
-          onClick={onToggleAverage}
-          title="Toggle Average"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 3v18h18" />
-            <path d="M18 9l-5 5-4-4-6 6" />
-          </svg>
-          <span className="toggle-label">Avg</span>
-        </button>
 
         <button
           className={`layer-toggle ${showCities ? "active" : ""}`}

@@ -185,6 +185,13 @@ body {
   font-weight: 600;
 }
 
+.share-status {
+  min-height: 1rem;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 .scenario-text {
   color: #ffffff;
 }
@@ -848,6 +855,14 @@ body {
   z-index: 500;
 }
 
+.change-toggle-mobile-trigger {
+  display: none;
+}
+
+.change-toggle-panel {
+  display: block;
+}
+
 .change-toggle {
   display: flex;
   align-items: center;
@@ -955,25 +970,50 @@ body {
 .scenario-slider {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 0.25rem;
 }
 
 .scenario-labels {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  align-items: center;
   width: 100%;
+  min-height: 1rem;
+}
+
+.period-labels {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.timeline-section:first-child .scenario-labels {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .scenario-slider span {
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-secondary);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .scenario-slider span.active {
   color: #22d3ee;
   font-weight: 700;
+}
+
+.period-labels span {
+  color: #cbd5e1;
+}
+
+.period-labels span.active {
+  color: #22d3ee;
 }
 
 .scenario-slider input[type="range"] {
@@ -1020,6 +1060,10 @@ body {
   cursor: pointer;
   border: 3px solid white;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.time-period-slider input[type="range"] {
+  width: 320px;
 }
 
 /* Time Period Selector */
@@ -3642,6 +3686,13 @@ body {
   min-height: 300px;
 }
 
+.climate-chart-note {
+  margin-top: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
 /* Custom Legend for Climate Chart */
 .climate-chart-legend {
   display: flex;
@@ -3975,6 +4026,10 @@ body {
     width: 100%;
   }
 
+  .time-period-slider input[type="range"] {
+    width: 100%;
+  }
+
   .scenario-labels {
     gap: 0.75rem;
   }
@@ -3984,6 +4039,18 @@ body {
     text-align: center;
     flex: 1 1 0;
   }
+
+  .period-labels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 0.5rem;
+    align-items: start;
+  }
+
+  .period-labels span {
+      font-size: 0.72rem;
+      line-height: 1.2;
+    }
 
   .sidebar-search-panel {
     left: 0.75rem;
@@ -4167,13 +4234,59 @@ body {
 
   .change-toggle-overlay {
     top: calc(var(--header-height) + 3.75rem);
-    right: 0.5rem;
+    right: 0;
     left: auto;
     max-width: min(10rem, calc(100vw - 5.25rem));
+    padding: 0;
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 12px 0 0 12px;
   }
 
   .change-toggle {
     line-height: 1.35;
+  }
+
+  .change-toggle-mobile-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.5rem;
+    min-width: 0.5rem;
+    height: 4.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: 8px 0 0 8px;
+    background: rgba(255, 255, 255, 0.22);
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(10px);
+  }
+
+  .change-toggle-mobile-trigger.active {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .change-toggle-panel {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 0.35rem);
+    width: min(11.5rem, calc(100vw - 1rem));
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(0.2rem);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+  }
+
+  .change-toggle-overlay.mobile-open .change-toggle-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
   }
 
   .district-detail-panel {
@@ -4233,6 +4346,10 @@ body {
     padding-inline: 0.875rem;
   }
 
+  .time-period-slider input[type="range"] {
+    width: 100%;
+  }
+
   .section-label {
     text-align: center;
   }
@@ -4241,6 +4358,14 @@ body {
     gap: 0.375rem;
     padding: 0.5rem 0.625rem;
   }
+
+  .period-labels {
+    gap: 0.3rem 0.4rem;
+  }
+
+  .period-labels span {
+      font-size: 0.68rem;
+    }
 
   .category-tab {
     min-width: 4.25rem;
@@ -4309,9 +4434,13 @@ body {
 
   .change-toggle-overlay {
     left: auto;
-    right: 0.5rem;
+    right: 0;
     top: calc(var(--header-height) + 3.5rem);
     max-width: min(9rem, calc(100vw - 4.75rem));
+  }
+
+  .change-toggle-panel {
+    width: min(10rem, calc(100vw - 6rem));
   }
 
   .district-detail-panel {

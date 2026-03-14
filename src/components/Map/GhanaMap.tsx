@@ -59,19 +59,33 @@ const DESKTOP_MAX_BOUNDS: [[number, number], [number, number]] = [
 const FitBounds = () => {
   const map = useMap();
   useEffect(() => {
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      map.fitBounds(GHANA_BOUNDS, {
-        paddingTopLeft: [0, 0],
-        paddingBottomRight: [0, 50],
-      });
-    } else {
+    const applyBounds = () => {
+      map.invalidateSize();
+
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        map.fitBounds(GHANA_BOUNDS, {
+          paddingTopLeft: [18, 24],
+          paddingBottomRight: [18, 54],
+        });
+        return;
+      }
+
       map.fitBounds(GHANA_BOUNDS, {
         paddingTopLeft: [20, 10],
         paddingBottomRight: [20, 150],
       });
       map.setMaxBounds(DESKTOP_MAX_BOUNDS);
-    }
+    };
+
+    applyBounds();
+    const timer = window.setTimeout(applyBounds, 180);
+    window.addEventListener("resize", applyBounds);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("resize", applyBounds);
+    };
   }, [map]);
   return null;
 };

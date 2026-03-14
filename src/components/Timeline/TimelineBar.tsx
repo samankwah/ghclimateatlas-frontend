@@ -12,6 +12,7 @@ interface TimelineBarProps {
 const PERIODS: { id: Period; label: string }[] = [
   { id: "baseline", label: "RECENT PAST" },
   { id: "2030", label: "2021-2050" },
+  { id: "2050", label: "2041-2070" },
   { id: "2080", label: "2051-2080" },
 ];
 
@@ -35,7 +36,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   };
 
   return (
-    <div className="timeline-bar">
+    <div className="timeline-bar" data-tour="scenarios">
       {/* Climate Change Slider Section */}
       <div className="timeline-section" data-tour="climate-change">
         <span className="section-label">
@@ -64,7 +65,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
           TIME PERIOD
           <span className="info-icon" title="Select time period for climate projections">i</span>
         </span>
-        <div className="scenario-slider">
+        <div className="scenario-slider time-period-slider">
           <input
             type="range"
             min="0"
@@ -73,7 +74,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
             value={currentPeriodIndex}
             onChange={handlePeriodSlider}
           />
-          <div className="scenario-labels">
+          <div className="scenario-labels period-labels">
             {PERIODS.map((period, index) => (
               <span
                 key={period.id}

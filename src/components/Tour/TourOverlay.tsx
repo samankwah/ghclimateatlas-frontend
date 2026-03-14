@@ -22,7 +22,7 @@ const TOUR_STEPS: TourStep[] = [
   },
   {
     id: "scenarios",
-    selector: '[data-tour="time-period"]',
+    selector: '[data-tour="scenarios"]',
     title: "Scenarios",
     paragraphs: [
       "Use these controls to toggle between scenarios resulting in more or less climate change based on future greenhouse gas emissions.",

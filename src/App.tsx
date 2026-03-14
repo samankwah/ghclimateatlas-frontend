@@ -21,6 +21,10 @@ import {
 import { useMapControls } from "./hooks/useMapControls";
 import type { ColorScaleType } from "./utils/colorScales";
 import type { Scenario, Period } from "./types/climate";
+import {
+  getPeriodRangeLabel,
+  getScenarioLabel,
+} from "./utils/climateLabels";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -37,13 +41,14 @@ function ClimateAtlas() {
 
   // Map layer toggles state
   const [showGrid, setShowGrid] = useState(false);
-  const [showAverage, setShowAverage] = useState(false);
   const [showCities, setShowCities] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showStories, setShowStories] = useState(true);
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+  const [mobileChangeToggleOpen, setMobileChangeToggleOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   // Category tab state
   const [activeCategory, setActiveCategory] = useState<Category>("temperature");
@@ -196,23 +201,46 @@ function ClimateAtlas() {
     setTourOpen(true);
   }, []);
 
+  const handleShareMap = useCallback(async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const sharePayload = {
+      title: document.title,
+      text: "Explore this Ghana Climate Atlas view.",
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(sharePayload);
+        setShareStatus("Map link shared.");
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(sharePayload.url);
+        setShareStatus("Map link copied.");
+        return;
+      }
+
+      setShareStatus("Sharing is not available on this device.");
+    } catch {
+      setShareStatus("Sharing was cancelled.");
+    }
+  }, []);
+
   useEffect(() => {
-    const periodLabel =
-      period === "baseline"
-        ? "Recent Past"
-        : period === "2030"
-          ? "2021-2050"
-          : period === "2050"
-            ? "2041-2070"
-            : "2051-2080";
+    if (!shareStatus) {
+      return;
+    }
 
-    const scenarioLabel =
-      period === "baseline"
-        ? "Historical"
-        : scenario === "rcp45"
-          ? "Low Carbon"
-          : "High Carbon";
+    const timer = window.setTimeout(() => setShareStatus(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [shareStatus]);
 
+  useEffect(() => {
     const variableLabel =
       selectedParameterLabel?.trim() ||
       effectiveVariable?.name ||
@@ -222,10 +250,11 @@ function ClimateAtlas() {
       selectedDistrictId
         ? districts?.features.find((f) => f.properties.id === selectedDistrictId)?.properties.name
         : null;
+    const scenarioTitle = period === "baseline" ? "Historical" : getScenarioLabel(scenario);
 
     document.title = districtName
-      ? `${districtName} | ${variableLabel} | ${scenarioLabel} ${periodLabel} | Ghana Climate Atlas`
-      : `${variableLabel} | ${scenarioLabel} ${periodLabel} | Ghana Climate Atlas`;
+      ? `${districtName} | ${variableLabel} | ${scenarioTitle} ${getPeriodRangeLabel(period)} | Ghana Climate Atlas`
+      : `${variableLabel} | ${scenarioTitle} ${getPeriodRangeLabel(period)} | Ghana Climate Atlas`;
   }, [
     districts,
     effectiveVariable,
@@ -247,8 +276,10 @@ function ClimateAtlas() {
         colorScaleType={colorScaleType}
         showChange={showChange}
         parameterLabel={selectedParameterLabel}
+        shareStatus={shareStatus}
         onOpenHelp={handleOpenHelp}
         onOpenTour={handleOpenTour}
+        onShare={handleShareMap}
       />
 
       {/* Map container - full bleed with all floating overlays inside */}
@@ -307,11 +338,9 @@ function ClimateAtlas() {
         {/* Floating sidebar with layer toggles + search */}
         <MapLayerToggles
           showGrid={showGrid}
-          showAverage={showAverage}
           showCities={showCities}
           showStories={showStories}
           onToggleGrid={() => setShowGrid(!showGrid)}
-          onToggleAverage={() => setShowAverage(!showAverage)}
           showWater={showWater}
           onToggleCities={() => setShowCities(!showCities)}
           onToggleWater={() => setShowWater(!showWater)}
@@ -326,15 +355,28 @@ function ClimateAtlas() {
 
         {/* Show change toggle */}
         {period !== "baseline" && (
-          <div className="change-toggle-overlay">
-            <label className="change-toggle">
-              <input
-                type="checkbox"
-                checked={showChange}
-                onChange={toggleShowChange}
-              />
-              <span>Show change from baseline</span>
-            </label>
+          <div className={`change-toggle-overlay ${mobileChangeToggleOpen ? "mobile-open" : ""}`}>
+            <button
+              type="button"
+              className={`change-toggle-mobile-trigger ${showChange ? "active" : ""}`}
+              onClick={() => setMobileChangeToggleOpen((current) => !current)}
+              aria-expanded={mobileChangeToggleOpen}
+              aria-controls="change-toggle-panel"
+            >
+            </button>
+            <div
+              id="change-toggle-panel"
+              className="change-toggle-panel"
+            >
+              <label className="change-toggle">
+                <input
+                  type="checkbox"
+                  checked={showChange}
+                  onChange={toggleShowChange}
+                />
+                <span>Show change from baseline</span>
+              </label>
+            </div>
           </div>
         )}
 
@@ -376,19 +418,17 @@ function ClimateAtlas() {
       </div>
 
       {/* Bottom control bar */}
-      <div className={`bottom-control-bar ${selectedDistrictId ? (mobileControlsOpen ? "mobile-expanded" : "mobile-collapsed") : "mobile-expanded"}`}>
-        {selectedDistrictId && (
-          <button
-            className="mobile-panel-toggle"
-            onClick={() => setMobileControlsOpen((o) => !o)}
-            aria-label={mobileControlsOpen ? "Collapse controls" : "Expand controls"}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 12 12 6 18 12" />
-              <polyline points="6 18 12 12 18 18" />
-            </svg>
-          </button>
-        )}
+      <div className={`bottom-control-bar ${mobileControlsOpen ? "mobile-expanded" : "mobile-collapsed"}`}>
+        <button
+          className="mobile-panel-toggle"
+          onClick={() => setMobileControlsOpen((o) => !o)}
+          aria-label={mobileControlsOpen ? "Collapse controls" : "Expand controls"}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 12 12 6 18 12" />
+            <polyline points="6 18 12 12 18 18" />
+          </svg>
+        </button>
         <div className="bottom-control-content">
           <TimelineBar
             selectedPeriod={period}
@@ -404,6 +444,7 @@ function ClimateAtlas() {
             scenario={scenario as Scenario}
             period={period as Period}
             availableVariables={variables}
+            controlsExpanded={mobileControlsOpen}
           />
         </div>
       </div>

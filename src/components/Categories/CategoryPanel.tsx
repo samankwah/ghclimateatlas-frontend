@@ -1,6 +1,6 @@
 // Dropdown panel for selecting climate parameters - matches Canada Climate Atlas style
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Parameter } from './categoryParameters';
 
@@ -56,7 +56,10 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
   const submenuRef = useRef<HTMLDivElement>(null);
   const hasNestedParameters = parameters.some((param) => (param.children?.length ?? 0) > 0);
   const activeParent = parameters.find((param) => param.id === activeParentId) ?? null;
-  const activeChildren = hasNestedParameters ? activeParent?.children ?? [] : [];
+  const activeChildren = useMemo(
+    () => (hasNestedParameters ? activeParent?.children ?? [] : []),
+    [activeParent, hasNestedParameters]
+  );
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [submenuPosition, setSubmenuPosition] = useState({ bottom: 0, left: 0 });
 
@@ -105,11 +108,6 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
 
   useLayoutEffect(() => {
     if (isMobileViewport) {
-      setSubmenuPosition((current) => (
-        current.bottom === 0 && current.left === 0
-          ? current
-          : { bottom: 0, left: 0 }
-      ));
       return;
     }
 
