@@ -106,8 +106,14 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
     return `${variableName} (${displayUnit})`;
   }, [displayUnit, variableName]);
+  const lowerVariableName = variableName.toLowerCase();
+  const isMinimumTemperatureChart = lowerVariableName.includes("minimum temperature");
+  const isTemperatureChart =
+    lowerVariableName.includes("temperature") && !displayUnit.includes("days");
   const selectedPeriodBand = useMemo(() => {
     switch (selectedPeriod) {
+      case "baseline":
+        return { from: 1976, to: 2005 };
       case "2030":
         return { from: 2021, to: 2050 };
       case "2050":
@@ -175,16 +181,20 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
     const padding = (maxValue - minValue) * 0.15;
+    const yAxisStep = isMinimumTemperatureChart ? 1 : isTemperatureChart ? 2 : 5;
+    const yMinPadding = isMinimumTemperatureChart ? padding * 0.12 : isTemperatureChart ? padding * 0.2 : padding * 0.35;
+    const yMaxPadding = isMinimumTemperatureChart ? padding * 0.12 : isTemperatureChart ? padding * 0.22 : padding * 0.45;
 
     return {
       historicalLine: historicalData.lineData,
       historicalRange: historicalData.rangeData,
       projectedLine: projectedData.lineData,
       projectedRange: projectedData.rangeData,
-      yMin: Math.floor((minValue - padding * 0.35) / 5) * 5,
-      yMax: Math.ceil((maxValue + padding * 0.45) / 5) * 5,
+      yAxisStep,
+      yMin: Math.floor((minValue - yMinPadding) / yAxisStep) * yAxisStep,
+      yMax: Math.ceil((maxValue + yMaxPadding) / yAxisStep) * yAxisStep,
     };
-  }, [data]);
+  }, [data, isMinimumTemperatureChart, isTemperatureChart]);
 
   if (!data || data.length === 0 || !chartData) {
     return (
@@ -262,7 +272,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       max: chartData.yMax,
       startOnTick: false,
       endOnTick: false,
-      tickInterval: 5, // Y-axis intervals of 5
+      tickInterval: chartData.yAxisStep,
       title: {
         text: axisMetricLabel,
         style: {
@@ -338,7 +348,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
                 fontSize: "9px",
               },
             },
-            tickInterval: 10,
+            tickInterval: chartData.yAxisStep,
           },
           xAxis: {
             labels: {

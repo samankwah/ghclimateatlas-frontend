@@ -54,6 +54,12 @@ src/
 
 The frontend expects the FastAPI backend to serve climate and district data. By default, development uses the local backend on `http://localhost:8000`.
 
+For hosted deployments such as Netlify, set:
+
+```bash
+VITE_API_URL=https://ghana-climate-atlas-api.onrender.com/api
+```
+
 ## Getting Started
 
 Install dependencies:

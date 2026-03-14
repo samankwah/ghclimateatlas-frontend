@@ -11,7 +11,24 @@ import type {
   Scenario,
 } from "../types/climate";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const getDefaultApiBase = () => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const isLocalHost =
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0";
+
+    if (isLocalHost) {
+      return "http://127.0.0.1:8000/api";
+    }
+  }
+
+  // Production fallback inferred from the Render service name in backend/render.yaml.
+  return "https://ghana-climate-atlas-api.onrender.com/api";
+};
+
+const API_BASE = import.meta.env.VITE_API_URL || getDefaultApiBase();
 
 const api = axios.create({
   baseURL: API_BASE,
