@@ -1,37 +1,30 @@
 // Category tabs for filtering climate variables
 
-import { useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CategoryPanel from './CategoryPanel';
 import ParameterInfoModal from './ParameterInfoModal';
-import { CATEGORY_PARAMETERS, CATEGORY_COLORS, getCategoryLabel, PARAMETER_TO_VARIABLE } from './categoryParameters';
-import type { Period, Scenario } from '../../types/climate';
+import {
+  CATEGORY_PARAMETERS,
+  CATEGORY_COLORS,
+  getCategoryLabel,
+  PARAMETER_TO_VARIABLE,
+  type Parameter,
+} from './categoryParameters';
+import type { ClimateVariable, Period, Scenario } from '../../types/climate';
 
 export type Category = "hot_weather" | "cold_weather" | "temperature" | "precipitation" | "agriculture";
-
-const SCENARIO_LABELS: Record<Scenario, string> = {
-  rcp45: "Less (RCP 4.5)",
-  rcp85: "More (RCP 8.5)",
-};
-
-const PERIOD_LABELS: Record<Period, string> = {
-  baseline: "Recent Past (1991-2020)",
-  "2030": "2021-2050",
-  "2050": "2041-2060",
-  "2080": "2051-2080",
-};
 
 interface CategoryTabsProps {
   activeCategory: Category;
   onCategoryChange: (category: Category) => void;
-  onParameterSelect: (variableId: string) => void;
+  onParameterSelect: (variableId: string, parameterId: string) => void;
   onParameterLabelChange?: (label: string) => void;
-  onParameterDescriptionChange?: (description: string | null) => void;
   scenario: Scenario;
   period: Period;
+  availableVariables?: ClimateVariable[];
 }
 
-// SVG Icons for each category
 const SunIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="4" />
@@ -79,146 +72,192 @@ const CATEGORIES: CategoryConfig[] = [
   { id: "agriculture", label: "Agriculture", icon: LeafIcon },
 ];
 
-// State for tracking selections across all categories
 type SelectionsState = Record<Category, string[]>;
+type ActiveParentState = Record<Category, string | null>;
+
+const EMPTY_SELECTIONS: SelectionsState = {
+  precipitation: [],
+  agriculture: [],
+  hot_weather: [],
+  temperature: [],
+  cold_weather: [],
+};
+
+const INITIAL_ACTIVE_PARENTS: ActiveParentState = {
+  precipitation: null,
+  agriculture: null,
+  hot_weather: null,
+  temperature: null,
+  cold_weather: null,
+};
+
+const SEASONAL_VARIABLE_IDS = [
+  'mean_temp_major_south',
+  'mean_temp_major_north',
+  'mean_temp_minor_south',
+  'mean_temp_dry_season',
+  'max_temp_major_south',
+  'max_temp_major_north',
+  'max_temp_minor_south',
+  'max_temp_dry_season',
+  'min_temp_major_south',
+  'min_temp_major_north',
+  'min_temp_minor_south',
+  'min_temp_dry_season',
+  'precipitation_major_south',
+  'precipitation_major_north',
+  'precipitation_minor_south',
+  'precipitation_dry_season',
+  'precipitation_growing_season',
+];
+
+const cloneEmptySelections = (): SelectionsState => ({
+  precipitation: [],
+  agriculture: [],
+  hot_weather: [],
+  temperature: [],
+  cold_weather: [],
+});
+
+const findParameterById = (categoryId: Category, parameterId: string): Parameter | undefined => {
+  for (const param of CATEGORY_PARAMETERS[categoryId]) {
+    if (param.id === parameterId) {
+      return param;
+    }
+
+    const child = param.children?.find((item) => item.id === parameterId);
+    if (child) {
+      return child;
+    }
+  }
+
+  return undefined;
+};
+
+const markParameterAvailability = (
+  parameter: Parameter,
+  availableVariableIds: Set<string>
+): Parameter => {
+  const children = parameter.children?.map((child) => markParameterAvailability(child, availableVariableIds));
+  const hasEnabledChild = children?.some((child) => child.disabled !== true) ?? false;
+  const variableSupported =
+    !parameter.variableId ||
+    availableVariableIds.has(parameter.variableId) ||
+    parameter.variableId === "wet_days";
+
+  const selectable = parameter.isSelectable === true || !!parameter.variableId || !children?.length;
+  const disabled = parameter.disabled === true || (!hasEnabledChild && selectable && !variableSupported);
+
+  return {
+    ...parameter,
+    children,
+    disabled,
+  };
+};
 
 const CategoryTabs: React.FC<CategoryTabsProps> = ({
   activeCategory,
   onCategoryChange,
   onParameterSelect,
   onParameterLabelChange,
-  onParameterDescriptionChange,
   scenario,
   period,
+  availableVariables,
 }) => {
-  // Track which panel is open
   const [openPanel, setOpenPanel] = useState<Category | null>(null);
-
-  // Refs for each tab button to position the panel
-  const tabRefs = useRef<Record<Category, HTMLButtonElement | null>>({
-    hot_weather: null,
-    cold_weather: null,
-    temperature: null,
-    precipitation: null,
-    agriculture: null,
-  });
-
-  // Track parameter selections for each category
-  const [selections, setSelections] = useState<SelectionsState>({
-    precipitation: [],
-    agriculture: [],
-    hot_weather: [],
-    temperature: [],
-    cold_weather: [],
-  });
-
-  // Track modal state for parameter info
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [selections, setSelections] = useState<SelectionsState>(EMPTY_SELECTIONS);
+  const [activeParents, setActiveParents] = useState<ActiveParentState>(INITIAL_ACTIVE_PARENTS);
   const [modalParam, setModalParam] = useState<{
     id: string;
     label: string;
     categoryColor: string;
   } | null>(null);
 
+  const availableVariableIds = new Set((availableVariables ?? []).map((variable) => variable.id));
+  availableVariableIds.add('dry_days');
+  availableVariableIds.add('wet_days');
+  SEASONAL_VARIABLE_IDS.forEach((variableId) => availableVariableIds.add(variableId));
+
   const handleCategoryClick = (categoryId: Category) => {
     if (openPanel === categoryId) {
-      // Close if clicking same category
       setOpenPanel(null);
-    } else {
-      // Open panel for this category
-      setOpenPanel(categoryId);
-      onCategoryChange(categoryId);
-
-      // Reset selections — user must click a parameter to update the map
-      setSelections({
-        precipitation: [],
-        agriculture: [],
-        hot_weather: [],
-        temperature: [],
-        cold_weather: [],
-      });
+      setActiveParents(INITIAL_ACTIVE_PARENTS);
+      return;
     }
+
+    setOpenPanel(categoryId);
+    onCategoryChange(categoryId);
+    setSelections(cloneEmptySelections());
+    setActiveParents(INITIAL_ACTIVE_PARENTS);
+  };
+
+  const handleParentSelect = (categoryId: Category, parameterId: string | null) => {
+    setActiveParents((current) => ({
+      ...current,
+      [categoryId]: parameterId,
+    }));
   };
 
   const handleToggleParameter = (categoryId: Category, parameterId: string) => {
-    // Single-select: clear all categories, set only the clicked parameter
     setSelections({
-      precipitation: [],
-      agriculture: [],
-      hot_weather: [],
-      temperature: [],
-      cold_weather: [],
+      ...cloneEmptySelections(),
       [categoryId]: [parameterId],
     });
 
-    // Map frontend parameter to backend variable and notify parent
     const variableId = PARAMETER_TO_VARIABLE[parameterId];
     if (variableId) {
-      onParameterSelect(variableId);
+      onParameterSelect(variableId, parameterId);
     }
 
-    // Report the clicked parameter's label + description for the header
-    const param = CATEGORY_PARAMETERS[categoryId].find((p) => p.id === parameterId);
+    const param = findParameterById(categoryId, parameterId);
     if (param && onParameterLabelChange) {
-      onParameterLabelChange(param.label);
-    }
-    if (onParameterDescriptionChange) {
-      onParameterDescriptionChange(param?.description || null);
+      onParameterLabelChange(param.description ?? param.label);
     }
 
-    // Open the parameter info modal
     setModalParam({
-      id: parameterId,
-      label: param?.label || parameterId,
+      id: param?.infoId ?? parameterId,
+      label: param?.description ?? param?.label ?? parameterId,
       categoryColor: CATEGORY_COLORS[categoryId],
     });
 
-    // Close the panel after selection
     setOpenPanel(null);
   };
 
   const handleClosePanel = () => {
     setOpenPanel(null);
-  };
-
-  const handleOpenParameterInfo = (categoryId: Category, parameterId: string, label: string) => {
-    setModalParam({
-      id: parameterId,
-      label: label,
-      categoryColor: CATEGORY_COLORS[categoryId],
-    });
-
-    // Also select this parameter for map display
-    const variableId = PARAMETER_TO_VARIABLE[parameterId];
-    if (variableId) {
-      onParameterSelect(variableId);
-    }
-
-    const param = CATEGORY_PARAMETERS[categoryId].find((p) => p.id === parameterId);
-    if (param && onParameterLabelChange) {
-      onParameterLabelChange(param.label);
-    }
-    if (onParameterDescriptionChange) {
-      onParameterDescriptionChange(param?.description || null);
-    }
-
-    // Update selections to reflect this parameter
-    setSelections({
-      precipitation: [],
-      agriculture: [],
-      hot_weather: [],
-      temperature: [],
-      cold_weather: [],
-      [categoryId]: [parameterId],
-    });
+    setActiveParents(INITIAL_ACTIVE_PARENTS);
   };
 
   const handleCloseModal = () => {
     setModalParam(null);
   };
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const updateViewport = (event?: MediaQueryListEvent) => {
+      setIsMobileViewport(event ? event.matches : mediaQuery.matches);
+    };
+
+    updateViewport();
+    mediaQuery.addEventListener('change', updateViewport);
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateViewport);
+    };
+  }, []);
+
   return (
-    <div className="category-tabs-wrapper">
-      {/* Category tabs */}
+    <div className="category-tabs-wrapper" data-tour="map-variable">
+      {openPanel && (
+        <button
+          type="button"
+          className="category-panel-backdrop"
+          onClick={handleClosePanel}
+          aria-label="Close category panel"
+        />
+      )}
+
       <div className="category-tabs">
         {CATEGORIES.map((cat) => {
           const IconComponent = cat.icon;
@@ -228,26 +267,28 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
           return (
             <div key={cat.id} className="category-tab-container">
-              {/* Panel appears above this specific tab */}
-              {isOpen && (
+              {isOpen && !isMobileViewport && (
                 <div className="category-panel-anchor">
                   <CategoryPanel
+                    panelId={`category-panel-${cat.id}`}
                     categoryLabel={getCategoryLabel(cat.id)}
                     categoryColor={categoryColor}
-                    parameters={CATEGORY_PARAMETERS[cat.id]}
+                    parameters={CATEGORY_PARAMETERS[cat.id].map((param) => markParameterAvailability(param, availableVariableIds))}
                     selectedParameters={selections[cat.id]}
+                    activeParentId={activeParents[cat.id]}
+                    onParentSelect={(paramId) => handleParentSelect(cat.id, paramId)}
                     onToggleParameter={(paramId) => handleToggleParameter(cat.id, paramId)}
-                    onParameterInfo={(paramId, label) => handleOpenParameterInfo(cat.id, paramId, label)}
                     onClose={handleClosePanel}
                   />
                 </div>
               )}
 
               <button
-                ref={(el) => { tabRefs.current[cat.id] = el; }}
                 className={`category-tab ${activeCategory === cat.id ? "active" : ""} ${isOpen ? "panel-open" : ""}`}
                 onClick={() => handleCategoryClick(cat.id)}
                 type="button"
+                aria-expanded={isOpen}
+                aria-controls={`category-panel-${cat.id}`}
               >
                 <span
                   className="tab-icon"
@@ -267,14 +308,30 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
         })}
       </div>
 
-      {/* Parameter Info Modal - portaled to body to escape stacking context */}
+      {openPanel && isMobileViewport && createPortal(
+        <div className="category-panel-anchor">
+          <CategoryPanel
+            panelId={`category-panel-${openPanel}`}
+            categoryLabel={getCategoryLabel(openPanel)}
+            categoryColor={CATEGORY_COLORS[openPanel]}
+            parameters={CATEGORY_PARAMETERS[openPanel].map((param) => markParameterAvailability(param, availableVariableIds))}
+            selectedParameters={selections[openPanel]}
+            activeParentId={activeParents[openPanel]}
+            onParentSelect={(paramId) => handleParentSelect(openPanel, paramId)}
+            onToggleParameter={(paramId) => handleToggleParameter(openPanel, paramId)}
+            onClose={handleClosePanel}
+          />
+        </div>,
+        document.body
+      )}
+
       {modalParam && createPortal(
         <ParameterInfoModal
           parameterId={modalParam.id}
           parameterLabel={modalParam.label}
           categoryColor={modalParam.categoryColor}
-          scenario={SCENARIO_LABELS[scenario]}
-          timePeriod={PERIOD_LABELS[period]}
+          scenario={scenario}
+          period={period}
           onClose={handleCloseModal}
         />,
         document.body

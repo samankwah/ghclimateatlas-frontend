@@ -39,7 +39,8 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   const { data: timeSeriesData, statistics, isLoading } = useDistrictTimeSeries(
     districtId,
     variable,
-    scenario
+    scenario,
+    period
   );
 
   const unit = variableInfo?.unit || "";
@@ -61,6 +62,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         return p;
     }
   };
+  const selectedPeriodLabel = getPeriodLabel(period);
 
   // Calculate values for display
   const baselineDisplayValue = period === "baseline" ? baselineValue : comparisonData?.baseline;
@@ -98,7 +100,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         <div className="header-period-comparison">
           <div className="period-range">
             <span className="period-baseline">1976-2005</span>
-            <span className="period-future">2051-2080</span>
+            <span className="period-future">{selectedPeriodLabel}</span>
           </div>
 
           <div className="value-display">
@@ -134,7 +136,8 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
           data={timeSeriesData}
           unit={unit}
           variableName={variableName}
-          futurePeriodLabel="2051-2080"
+          selectedPeriod={period}
+          futurePeriodLabel={selectedPeriodLabel}
         />
       )}
 
@@ -168,7 +171,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
             <StatisticsTable
               statistics={statistics}
               unit={unit}
-              futurePeriodLabel={getPeriodLabel("2080")}
+              futurePeriodLabel={selectedPeriodLabel}
             />
 
             <div className="explore-link">

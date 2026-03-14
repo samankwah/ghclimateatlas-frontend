@@ -1,7 +1,7 @@
 // Main Ghana Map component using Leaflet
 
 import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { memo, useEffect, useMemo, useRef, useCallback } from "react";
 import L from "leaflet";
 import type { Layer, PathOptions } from "leaflet";
 import type { Feature, GeoJsonObject } from "geojson";
@@ -12,8 +12,10 @@ import type {
 } from "../../types/climate";
 import { getColorScale, type ColorScaleType } from "../../utils/colorScales";
 import CityMarkers from "./CityMarkers";
+import ClimateStoryMarkers from "./ClimateStoryMarkers";
 import InterpolatedLayer from "./InterpolatedLayer";
 import RegionalBoundaries from "./RegionalBoundaries";
+import WaterBodiesLayer from "./WaterBodiesLayer";
 import MapZoomControls from "./MapZoomControls";
 import GraticuleLayer from "./GraticuleLayer";
 import type { DataPoint } from "../../utils/idwInterpolation";
@@ -33,6 +35,8 @@ interface GhanaMapProps {
   showCities?: boolean;
   dataVersion?: string;
   showGrid?: boolean;
+  showWater?: boolean;
+  showStories?: boolean;
 }
 
 // Ghana center coordinates
@@ -42,14 +46,32 @@ const GHANA_ZOOM = 7;
 // Map bounds for Ghana
 const GHANA_BOUNDS: [[number, number], [number, number]] = [
   [4.5, -3.5],  // Southwest
-  [11.5, 1.5],  // Northeast
+  [12, 1.5],  // Northeast
+];
+
+// Desktop-only max bounds (wider than fit bounds to allow some breathing room)
+const DESKTOP_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [2, -6],   // Southwest
+  [14, 4],   // Northeast
 ];
 
 // Component to fit map to Ghana bounds
 const FitBounds = () => {
   const map = useMap();
   useEffect(() => {
-    map.fitBounds(GHANA_BOUNDS, { padding: [20, 20] });
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      map.fitBounds(GHANA_BOUNDS, {
+        paddingTopLeft: [0, 0],
+        paddingBottomRight: [0, 50],
+      });
+    } else {
+      map.fitBounds(GHANA_BOUNDS, {
+        paddingTopLeft: [20, 10],
+        paddingBottomRight: [20, 150],
+      });
+      map.setMaxBounds(DESKTOP_MAX_BOUNDS);
+    }
   }, [map]);
   return null;
 };
@@ -68,6 +90,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   showCities = false,
   dataVersion,
   showGrid = false,
+  showWater = true,
+  showStories = false,
 }) => {
   // Create a lookup map for climate values
   const valueMap = useMemo(() => {
@@ -100,11 +124,11 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       .filter((point): point is DataPoint => point !== null);
   }, [districts, valueMap]);
 
-  // Get color function
-  const getColor = useMemo(() => {
-    const scaleFn = getColorScale(showChange ? "diverging" : colorScaleType);
-    return (value: number) => scaleFn(value, minValue, maxValue);
-  }, [colorScaleType, showChange, minValue, maxValue]);
+  // Get stable color scale function (only changes when scale type changes)
+  const colorFn = useMemo(
+    () => getColorScale(showChange ? "diverging" : colorScaleType),
+    [colorScaleType, showChange]
+  );
 
   // Ref to track all GeoJSON layers by district ID for imperative style updates
   const layersRef = useRef<Map<string, L.Path>>(new Map());
@@ -185,6 +209,9 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       className="ghana-map"
       zoomControl={false}
       scrollWheelZoom={true}
+      maxBoundsViscosity={1.0}
+      minZoom={6}
+      zoomSnap={0.5}
     >
       <FitBounds />
 
@@ -198,7 +225,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       {dataPoints.length > 0 && (
         <InterpolatedLayer
           dataPoints={dataPoints}
-          colorScale={getColor}
+          colorScale={colorFn}
           minValue={minValue}
           maxValue={maxValue}
           resolution={0.1}
@@ -206,6 +233,9 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
           idwPower={2}
         />
       )}
+
+      {/* Water bodies layer */}
+      <WaterBodiesLayer visible={showWater} />
 
       {/* District polygons (borders only) */}
       <GeoJSON
@@ -229,10 +259,13 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       {/* City markers layer */}
       <CityMarkers visible={showCities} />
 
+      {/* Climate story markers */}
+      <ClimateStoryMarkers visible={showStories} />
+
       {/* Zoom controls - bottom left */}
       <MapZoomControls />
     </MapContainer>
   );
 };
 
-export default GhanaMap;
+export default memo(GhanaMap);

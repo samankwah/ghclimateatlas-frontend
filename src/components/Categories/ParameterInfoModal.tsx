@@ -3,13 +3,44 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getParameterDescription } from './parameterDescriptions';
 import { generateLegendStops } from '../../utils/colorScales';
+import type { Period, Scenario } from '../../types/climate';
+
+const SCENARIO_INFO: Record<Scenario, { label: string; description: string }> = {
+  rcp45: {
+    label: "Low Carbon (RCP 4.5)",
+    description: "A moderate pathway where emissions peak around 2040 and then decline. This scenario assumes significant global efforts to reduce greenhouse gas emissions, resulting in less severe climate impacts."
+  },
+  rcp85: {
+    label: "High Carbon (RCP 8.5)",
+    description: "Emissions continue at current rates. This is the 'business as usual' scenario where greenhouse gas emissions continue to increase through the end of the century, resulting in more severe climate impacts."
+  },
+};
+
+const PERIOD_INFO: Record<Period, { label: string; description: string }> = {
+  baseline: {
+    label: "Recent Past (1991-2020)",
+    description: "The observed reference period used to compare how climate conditions have changed and will continue to change across Ghana."
+  },
+  "2030": {
+    label: "The Immediate Future (2021-2050)",
+    description: "Climate change begins to take hold in the coming years. Changes are already underway and will become more noticeable within the next two decades."
+  },
+  "2050": {
+    label: "Mid-Century (2041-2060)",
+    description: "A period of significant transition where the effects of climate change become clearly established across Ghana's regions."
+  },
+  "2080": {
+    label: "Late Century (2051-2080)",
+    description: "The long-term outlook where the full extent of climate change impacts will be felt, varying significantly depending on the emission pathway followed."
+  },
+};
 
 interface ParameterInfoModalProps {
   parameterId: string;
   parameterLabel: string;
   categoryColor: string;
-  scenario: string;
-  timePeriod: string;
+  scenario: Scenario;
+  period: Period;
   onClose: () => void;
 }
 
@@ -50,11 +81,14 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
   parameterLabel,
   categoryColor,
   scenario,
-  timePeriod,
+  period,
   onClose,
 }) => {
   const [techExpanded, setTechExpanded] = useState(false);
   const description = getParameterDescription(parameterId);
+
+  const scenarioInfo = SCENARIO_INFO[scenario] ?? { label: scenario, description: "" };
+  const periodInfo = PERIOD_INFO[period] ?? { label: period, description: "" };
 
   // Close on Escape key
   useEffect(() => {
@@ -95,12 +129,14 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
         <div className="parameter-modal-left">
           <div className="modal-section">
             <h4>Emissions</h4>
-            <p className="modal-highlight">{scenario}</p>
+            <p className="modal-highlight">{scenarioInfo.label}</p>
+            <p className="modal-section-desc">{scenarioInfo.description}</p>
           </div>
 
           <div className="modal-section">
             <h4>Time Period</h4>
-            <p className="modal-highlight">{timePeriod}</p>
+            <p className="modal-highlight">{periodInfo.label}</p>
+            <p className="modal-section-desc">{periodInfo.description}</p>
           </div>
 
           <div className="modal-divider" />

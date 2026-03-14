@@ -15,38 +15,44 @@ export type ColorScaleType =
   | "dry_days"
   | "diverging";
 
-// Temperature scale: cool blue to hot red
+const DEGREE_C = "\u00B0C";
+const DEGREE_C_DAYS = "\u00B0C\u00B7days";
+
+export const normalizeUnit = (unit: string): string => {
+  return unit
+    .replace(/Ã‚Â°CÃ‚Â·days/g, DEGREE_C_DAYS)
+    .replace(/Â°CÂ·days/g, DEGREE_C_DAYS)
+    .replace(/Ã‚Â°C/g, DEGREE_C)
+    .replace(/Â°C/g, DEGREE_C)
+    .trim();
+};
+
 export const temperatureScale = (value: number, min: number, max: number): string => {
   const scale = scaleSequential(interpolateYlOrRd).domain([min, max]);
   return scale(value);
 };
 
-// Precipitation scale: brown (dry) to blue (wet)
 export const precipitationScale = (value: number, min: number, max: number): string => {
   const scale = scaleSequential(interpolateBlues).domain([min, max]);
   return scale(value);
 };
 
-// Hot days scale: yellow to dark red
 export const hotDaysScale = (value: number, min: number, max: number): string => {
   const scale = scaleSequential(interpolateYlOrRd).domain([min, max]);
   return scale(value);
 };
 
-// Dry days scale
 export const dryDaysScale = (value: number, min: number, max: number): string => {
-  const scale = scaleSequential(interpolateBrBG).domain([max, min]); // Inverted: more dry = more brown
+  const scale = scaleSequential(interpolateBrBG).domain([max, min]);
   return scale(value);
 };
 
-// Diverging scale for change values (decrease = blue, increase = red)
 export const divergingScale = (value: number, min: number, max: number): string => {
   const absMax = Math.max(Math.abs(min), Math.abs(max));
   const scale = scaleSequential(interpolateRdBu).domain([absMax, -absMax]);
   return scale(value);
 };
 
-// Get the appropriate color scale function based on variable type
 export const getColorScale = (
   colorScaleType: ColorScaleType
 ): ((value: number, min: number, max: number) => string) => {
@@ -66,7 +72,6 @@ export const getColorScale = (
   }
 };
 
-// Generate legend stops for a scale
 export const generateLegendStops = (
   min: number,
   max: number,
@@ -87,37 +92,39 @@ export const generateLegendStops = (
   return stops;
 };
 
-// Format value with unit
 export const formatValue = (value: number, unit: string): string => {
-  if (unit === "°C") {
-    return `${value.toFixed(1)}${unit}`;
+  const normalizedUnit = normalizeUnit(unit);
+
+  if (normalizedUnit === DEGREE_C) {
+    return `${value.toFixed(1)}${normalizedUnit}`;
   }
-  if (unit === "mm") {
-    return `${Math.round(value)} ${unit}`;
+  if (normalizedUnit === "mm") {
+    return `${Math.round(value)} ${normalizedUnit}`;
   }
-  if (unit === "days" || unit === "events") {
-    return `${Math.round(value)} ${unit}`;
+  if (normalizedUnit === "days" || normalizedUnit === "events") {
+    return `${Math.round(value)} ${normalizedUnit}`;
   }
-  if (unit === "°C·days" || unit === "Degree Days" || unit === "MHU") {
-    return `${Math.round(value).toLocaleString()} ${unit}`;
+  if (normalizedUnit === DEGREE_C_DAYS || normalizedUnit === "Degree Days" || normalizedUnit === "MHU") {
+    return `${Math.round(value).toLocaleString()} ${normalizedUnit}`;
   }
-  return `${Math.round(value)} ${unit}`;
+  return `${Math.round(value)} ${normalizedUnit}`;
 };
 
-// Format change value
 export const formatChange = (change: number, unit: string): string => {
+  const normalizedUnit = normalizeUnit(unit);
   const sign = change >= 0 ? "+" : "";
-  if (unit === "°C") {
-    return `${sign}${change.toFixed(1)}${unit}`;
+
+  if (normalizedUnit === DEGREE_C) {
+    return `${sign}${change.toFixed(1)}${normalizedUnit}`;
   }
-  if (unit === "mm") {
-    return `${sign}${Math.round(change)} ${unit}`;
+  if (normalizedUnit === "mm") {
+    return `${sign}${Math.round(change)} ${normalizedUnit}`;
   }
-  if (unit === "days" || unit === "events") {
-    return `${sign}${Math.round(change)} ${unit}`;
+  if (normalizedUnit === "days" || normalizedUnit === "events") {
+    return `${sign}${Math.round(change)} ${normalizedUnit}`;
   }
-  if (unit === "°C·days" || unit === "Degree Days" || unit === "MHU") {
-    return `${sign}${Math.round(change).toLocaleString()} ${unit}`;
+  if (normalizedUnit === DEGREE_C_DAYS || normalizedUnit === "Degree Days" || normalizedUnit === "MHU") {
+    return `${sign}${Math.round(change).toLocaleString()} ${normalizedUnit}`;
   }
-  return `${sign}${Math.round(change)} ${unit}`;
+  return `${sign}${Math.round(change)} ${normalizedUnit}`;
 };

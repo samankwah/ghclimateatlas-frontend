@@ -1,6 +1,6 @@
 // Ghana Climate Atlas - Main Application (Redesigned UI)
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GhanaMap from "./components/Map/GhanaMap";
 import Header from "./components/Header/Header";
@@ -9,6 +9,8 @@ import TimelineBar from "./components/Timeline/TimelineBar";
 import CategoryTabs, { type Category } from "./components/Categories/CategoryTabs";
 import DistrictDetailPanel from "./components/InfoPanel/DistrictDetailPanel";
 import DistrictSearch from "./components/Search/DistrictSearch";
+import HelpOverlay from "./components/Help/HelpOverlay";
+import TourOverlay from "./components/Tour/TourOverlay";
 import {
   useDistricts,
   useClimateVariables,
@@ -37,11 +39,16 @@ function ClimateAtlas() {
   const [showGrid, setShowGrid] = useState(false);
   const [showAverage, setShowAverage] = useState(false);
   const [showCities, setShowCities] = useState(true);
+  const [showWater, setShowWater] = useState(true);
+  const [showStories, setShowStories] = useState(true);
+  const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
 
   // Category tab state
   const [activeCategory, setActiveCategory] = useState<Category>("temperature");
+  const [selectedParameterId, setSelectedParameterId] = useState<string | null>(null);
   const [selectedParameterLabel, setSelectedParameterLabel] = useState<string | null>(null);
-  const [selectedParameterDescription, setSelectedParameterDescription] = useState<string | null>(null);
 
   // Map controls state
   const {
@@ -57,9 +64,11 @@ function ClimateAtlas() {
     toggleShowChange,
   } = useMapControls();
 
-  const handleParameterSelect = useCallback((variableId: string) => {
+  const handleParameterSelect = useCallback((variableId: string, parameterId: string) => {
+    setSelectedParameterId(parameterId);
     setVariable(variableId);
   }, [setVariable]);
+
 
   // Data fetching
   const { data: districts, isLoading: loadingDistricts, isError: districtsError, refetch: refetchDistricts } = useDistricts();
@@ -80,30 +89,157 @@ function ClimateAtlas() {
     [variables, variable]
   );
 
+  const effectiveVariable = useMemo(() => {
+    if (!currentVariable) return currentVariable;
+
+    if (selectedParameterId === "wet_days") {
+      return {
+        ...currentVariable,
+        id: "wet_days",
+        name: "Wet Days",
+        description: "Number of days per year with measurable precipitation",
+        unit: "days",
+        color_scale: "precipitation",
+      };
+    }
+
+    return currentVariable;
+  }, [currentVariable, selectedParameterId]);
+
+  const displayedClimateData = useMemo(() => {
+    if (!climateData?.data) return climateData?.data;
+    if (selectedParameterId !== "wet_days") return climateData.data;
+
+    return climateData.data.map((entry) => ({
+      ...entry,
+      value: Math.max(0, 365 - entry.value),
+    }));
+  }, [climateData, selectedParameterId]);
+
+  const displayedComparisonData = useMemo(() => {
+    if (!comparisonData?.data) return comparisonData?.data;
+    if (selectedParameterId !== "wet_days") return comparisonData.data;
+
+    return comparisonData.data.map((entry) => {
+      const baseline = Math.max(0, 365 - entry.baseline);
+      const future = Math.max(0, 365 - entry.future);
+      const change = future - baseline;
+      const changePercent = baseline !== 0 ? (change / baseline) * 100 : 0;
+
+      return {
+        ...entry,
+        baseline,
+        future,
+        change,
+        change_percent: changePercent,
+      };
+    });
+  }, [comparisonData, selectedParameterId]);
+
+  const displayedPanelComparisonData = useMemo(() => {
+    if (!panelComparisonData?.data) return panelComparisonData?.data;
+    if (selectedParameterId !== "wet_days") return panelComparisonData.data;
+
+    return panelComparisonData.data.map((entry) => {
+      const baseline = Math.max(0, 365 - entry.baseline);
+      const future = Math.max(0, 365 - entry.future);
+      const change = future - baseline;
+      const changePercent = baseline !== 0 ? (change / baseline) * 100 : 0;
+
+      return {
+        ...entry,
+        baseline,
+        future,
+        change,
+        change_percent: changePercent,
+      };
+    });
+  }, [panelComparisonData, selectedParameterId]);
+
+  const displayedRangeData = useMemo(() => {
+    if (!rangeData) return rangeData;
+    if (selectedParameterId !== "wet_days") return rangeData;
+
+    return {
+      min: Math.max(0, 365 - rangeData.max),
+      max: Math.max(0, 365 - rangeData.min),
+      mean: Math.max(0, 365 - rangeData.mean),
+    };
+  }, [rangeData, selectedParameterId]);
+
   // Calculate min/max for color scale
   const { minValue, maxValue } = useMemo(() => {
-    if (showChange && comparisonData) {
-      const changes = comparisonData.data.map((d) => d.change);
+    if (showChange && displayedComparisonData) {
+      const changes = displayedComparisonData.map((d) => d.change);
       const absMax = Math.max(...changes.map(Math.abs));
       return { minValue: -absMax, maxValue: absMax };
     }
-    if (rangeData) {
-      return { minValue: rangeData.min, maxValue: rangeData.max };
+    if (displayedRangeData) {
+      return { minValue: displayedRangeData.min, maxValue: displayedRangeData.max };
     }
     return { minValue: 0, maxValue: 100 };
-  }, [rangeData, comparisonData, showChange]);
+  }, [displayedRangeData, displayedComparisonData, showChange]);
 
   // Get color scale type
   const colorScaleType: ColorScaleType = useMemo(() => {
     if (showChange) return "diverging";
-    return (currentVariable?.color_scale as ColorScaleType) || "temperature";
-  }, [currentVariable, showChange]);
+    return (effectiveVariable?.color_scale as ColorScaleType) || "temperature";
+  }, [effectiveVariable, showChange]);
+
+  const handleOpenHelp = useCallback(() => {
+    setTourOpen(false);
+    setHelpOpen(true);
+  }, []);
+
+  const handleOpenTour = useCallback(() => {
+    setHelpOpen(false);
+    setTourOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const periodLabel =
+      period === "baseline"
+        ? "Recent Past"
+        : period === "2030"
+          ? "2021-2050"
+          : period === "2050"
+            ? "2041-2070"
+            : "2051-2080";
+
+    const scenarioLabel =
+      period === "baseline"
+        ? "Historical"
+        : scenario === "rcp45"
+          ? "Low Carbon"
+          : "High Carbon";
+
+    const variableLabel =
+      selectedParameterLabel?.trim() ||
+      effectiveVariable?.name ||
+      "Climate Atlas";
+
+    const districtName =
+      selectedDistrictId
+        ? districts?.features.find((f) => f.properties.id === selectedDistrictId)?.properties.name
+        : null;
+
+    document.title = districtName
+      ? `${districtName} | ${variableLabel} | ${scenarioLabel} ${periodLabel} | Ghana Climate Atlas`
+      : `${variableLabel} | ${scenarioLabel} ${periodLabel} | Ghana Climate Atlas`;
+  }, [
+    districts,
+    effectiveVariable,
+    period,
+    scenario,
+    selectedDistrictId,
+    selectedParameterLabel,
+  ]);
 
   return (
     <div className="climate-atlas-redesign">
       {/* Header with Legend */}
       <Header
-        variable={currentVariable}
+        variable={effectiveVariable}
         period={period}
         scenario={scenario}
         minValue={minValue}
@@ -111,7 +247,8 @@ function ClimateAtlas() {
         colorScaleType={colorScaleType}
         showChange={showChange}
         parameterLabel={selectedParameterLabel}
-        parameterDescription={selectedParameterDescription}
+        onOpenHelp={handleOpenHelp}
+        onOpenTour={handleOpenTour}
       />
 
       {/* Map container - full bleed with all floating overlays inside */}
@@ -127,7 +264,7 @@ function ClimateAtlas() {
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
                 <h3>Unable to load map data</h3>
-                <p>Please ensure the backend server is running on port 8000</p>
+                <p>Could not connect to the server. Please try again later.</p>
                 <button className="retry-btn" onClick={() => refetchDistricts()}>
                   Retry
                 </button>
@@ -150,8 +287,8 @@ function ClimateAtlas() {
 
           <GhanaMap
             districts={districts}
-            climateData={climateData?.data}
-            comparisonData={comparisonData?.data}
+            climateData={displayedClimateData}
+            comparisonData={displayedComparisonData}
             showChange={showChange}
             colorScaleType={colorScaleType}
             minValue={minValue}
@@ -160,8 +297,10 @@ function ClimateAtlas() {
             onDistrictClick={selectDistrict}
             onDistrictHover={setHoveredDistrict}
             showCities={showCities}
-            dataVersion={`${variable}-${period}-${scenario}-${showChange}`}
+            dataVersion={`${variable}-${period}-${scenario}`}
             showGrid={showGrid}
+            showWater={showWater}
+            showStories={showStories}
           />
         </div>
 
@@ -170,9 +309,13 @@ function ClimateAtlas() {
           showGrid={showGrid}
           showAverage={showAverage}
           showCities={showCities}
+          showStories={showStories}
           onToggleGrid={() => setShowGrid(!showGrid)}
           onToggleAverage={() => setShowAverage(!showAverage)}
+          showWater={showWater}
           onToggleCities={() => setShowCities(!showCities)}
+          onToggleWater={() => setShowWater(!showWater)}
+          onToggleStories={() => setShowStories(!showStories)}
           searchContent={
             <DistrictSearch
               districts={districts}
@@ -205,12 +348,12 @@ function ClimateAtlas() {
           const regionName = districtFeature?.properties.region || "Ghana";
 
           // Find comparison data for this district (use panel comparison data which always fetches 2080)
-          const districtComparison = panelComparisonData?.data.find(
+          const districtComparison = displayedPanelComparisonData?.find(
             (d) => d.district_id === selectedDistrictId
           );
 
           // Find baseline value from climate data
-          const baselineValue = climateData?.data.find(
+          const baselineValue = displayedClimateData?.find(
             (d) => d.district_id === selectedDistrictId
           )?.value;
 
@@ -220,7 +363,7 @@ function ClimateAtlas() {
               districtName={districtName}
               regionName={regionName}
               variable={variable}
-              variableInfo={currentVariable}
+              variableInfo={effectiveVariable}
               scenario={scenario as Scenario}
               period={period as Period}
               comparisonData={districtComparison}
@@ -230,8 +373,23 @@ function ClimateAtlas() {
           );
         })()}
 
-        {/* Bottom control bar - timeline + category tabs */}
-        <div className="bottom-control-bar">
+      </div>
+
+      {/* Bottom control bar */}
+      <div className={`bottom-control-bar ${selectedDistrictId ? (mobileControlsOpen ? "mobile-expanded" : "mobile-collapsed") : "mobile-expanded"}`}>
+        {selectedDistrictId && (
+          <button
+            className="mobile-panel-toggle"
+            onClick={() => setMobileControlsOpen((o) => !o)}
+            aria-label={mobileControlsOpen ? "Collapse controls" : "Expand controls"}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 12 12 6 18 12" />
+              <polyline points="6 18 12 12 18 18" />
+            </svg>
+          </button>
+        )}
+        <div className="bottom-control-content">
           <TimelineBar
             selectedPeriod={period}
             onPeriodChange={setPeriod}
@@ -243,12 +401,15 @@ function ClimateAtlas() {
             onCategoryChange={setActiveCategory}
             onParameterSelect={handleParameterSelect}
             onParameterLabelChange={setSelectedParameterLabel}
-            onParameterDescriptionChange={setSelectedParameterDescription}
             scenario={scenario as Scenario}
             period={period as Period}
+            availableVariables={variables}
           />
         </div>
       </div>
+
+      {helpOpen && <HelpOverlay onClose={() => setHelpOpen(false)} onStartTour={handleOpenTour} />}
+      {tourOpen && <TourOverlay onClose={() => setTourOpen(false)} />}
     </div>
   );
 }

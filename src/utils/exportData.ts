@@ -1,6 +1,7 @@
 // Data export utilities for CSV and PDF generation
 
 import type { TimeSeriesPoint } from "../hooks/useDistrictTimeSeries";
+import { normalizeUnit } from "./colorScales";
 
 interface ExportOptions {
   districtName: string;
@@ -11,11 +12,10 @@ interface ExportOptions {
   data: TimeSeriesPoint[];
 }
 
-// Generate and download CSV file
 export const exportToCSV = (options: ExportOptions): void => {
   const { districtName, regionName, variableName, unit, scenario, data } = options;
+  const displayUnit = normalizeUnit(unit);
 
-  // Build CSV content
   const headers = ["Period", "Year", "Low", "Median", "High", "Unit"];
   const rows = data.map((point) => [
     point.label,
@@ -23,19 +23,18 @@ export const exportToCSV = (options: ExportOptions): void => {
     point.low.toFixed(2),
     point.median.toFixed(2),
     point.high.toFixed(2),
-    unit,
+    displayUnit,
   ]);
 
-  // Add metadata header
   const metadata = [
-    `# Ghana Climate Atlas - Climate Data Export`,
+    "# Ghana Climate Atlas - Climate Data Export",
     `# District: ${districtName}`,
     `# Region: ${regionName}`,
     `# Variable: ${variableName}`,
     `# Scenario: ${scenario === "rcp45" ? "Low Carbon (RCP 4.5)" : "High Carbon (RCP 8.5)"}`,
     `# Generated: ${new Date().toISOString()}`,
-    `# Data Source: CORDEX-Africa`,
-    ``,
+    "# Data Source: CORDEX-Africa",
+    "",
   ];
 
   const csvContent = [
@@ -44,7 +43,6 @@ export const exportToCSV = (options: ExportOptions): void => {
     ...rows.map((row) => row.join(",")),
   ].join("\n");
 
-  // Create and download file
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
@@ -60,19 +58,17 @@ export const exportToCSV = (options: ExportOptions): void => {
   URL.revokeObjectURL(url);
 };
 
-// Generate and download PDF report
 export const exportToPDF = (options: ExportOptions): void => {
   const { districtName, regionName, variableName, unit, scenario, data } = options;
+  const displayUnit = normalizeUnit(unit);
 
-  // Build simple text-based report (in lieu of a full PDF library)
-  // For a production app, you'd use a library like jsPDF
   const scenarioLabel =
     scenario === "rcp45" ? "Low Carbon (RCP 4.5)" : "High Carbon (RCP 8.5)";
 
   const formatValue = (value: number) => {
-    if (unit === "°C") return `${value.toFixed(1)}${unit}`;
-    if (unit === "mm" || unit === "days") return `${Math.round(value)} ${unit}`;
-    return `${value.toFixed(1)} ${unit}`;
+    if (displayUnit === "°C") return `${value.toFixed(1)}${displayUnit}`;
+    if (displayUnit === "mm" || displayUnit === "days") return `${Math.round(value)} ${displayUnit}`;
+    return `${value.toFixed(1)} ${displayUnit}`;
   };
 
   const baseline = data.find((d) => d.period === "baseline");
@@ -123,7 +119,6 @@ Generated: ${new Date().toLocaleDateString("en-GB", {
 Ghana Climate Atlas | https://climate.ghana.gov.gh
 `.trim();
 
-  // Create and download as text file (would be PDF in production)
   const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
@@ -139,10 +134,8 @@ Ghana Climate Atlas | https://climate.ghana.gov.gh
   URL.revokeObjectURL(url);
 };
 
-// Export all data (combines both formats in a single download)
 export const exportAll = (options: ExportOptions): void => {
   exportToCSV(options);
-  // Small delay to prevent browser blocking multiple downloads
   setTimeout(() => {
     exportToPDF(options);
   }, 500);

@@ -55,7 +55,8 @@ const calculateUncertaintyRange = (
 export const useDistrictTimeSeries = (
   districtId: string | null,
   variable: string,
-  scenario: Scenario
+  scenario: Scenario,
+  selectedPeriod: Period = "2080"
 ): UseDistrictTimeSeriesResult => {
   // Fetch baseline data
   const baselineQuery = useQueries({
@@ -110,7 +111,7 @@ export const useDistrictTimeSeries = (
       });
 
       // Future periods from comparison data
-      let latestFutureStats: { low: number; median: number; high: number } | null = null;
+      let selectedFutureStats: { low: number; median: number; high: number } | null = null;
 
       PERIOD_CONFIG.slice(1).forEach((config, index) => {
         const comparisonData = comparisonQueries[index]?.data;
@@ -132,18 +133,17 @@ export const useDistrictTimeSeries = (
             ...uncertainty,
           });
 
-          // Keep track of the latest (2080) stats for the statistics table
-          if (config.period === "2080") {
-            latestFutureStats = uncertainty;
+          if (config.period === selectedPeriod) {
+            selectedFutureStats = uncertainty;
           }
         }
       });
 
       // Build statistics object
-      if (latestFutureStats) {
+      if (selectedFutureStats) {
         statistics = {
           baseline: baselineUncertainty,
-          future: latestFutureStats,
+          future: selectedFutureStats,
           // Estimate grid points based on typical district size
           // Ghana has ~261 districts, ~238,533 km², average ~914 km² per district
           // At 0.05° resolution (~5.5km), roughly 30-40 grid points per district

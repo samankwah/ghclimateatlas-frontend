@@ -3,19 +3,19 @@
 import { useMemo } from "react";
 import type { ClimateVariable, Period, Scenario } from "../../types/climate";
 import type { ColorScaleType } from "../../utils/colorScales";
-import { generateLegendStops } from "../../utils/colorScales";
+import { generateLegendStops, normalizeUnit } from "../../utils/colorScales";
 
 interface HeaderProps {
   variable: ClimateVariable | undefined;
   period: Period;
   scenario: Scenario;
-  // Legend props
   minValue: number;
   maxValue: number;
   colorScaleType: ColorScaleType;
   showChange: boolean;
   parameterLabel?: string | null;
-  parameterDescription?: string | null;
+  onOpenHelp: () => void;
+  onOpenTour: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -27,7 +27,8 @@ const Header: React.FC<HeaderProps> = ({
   colorScaleType,
   showChange,
   parameterLabel,
-  parameterDescription,
+  onOpenHelp,
+  onOpenTour,
 }) => {
   const getPeriodLabel = (p: Period): string => {
     switch (p) {
@@ -45,10 +46,9 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   const getScenarioText = (s: Scenario): string => {
-    return s === "rcp85" ? "High Carbon → More climate change" : "Low Carbon → Less climate change";
+    return s === "rcp85" ? "High Carbon -> More climate change" : "Low Carbon -> Less climate change";
   };
 
-  // Generate legend gradient
   const gradientStyle = useMemo(() => {
     const stops = generateLegendStops(
       minValue,
@@ -62,18 +62,27 @@ const Header: React.FC<HeaderProps> = ({
     };
   }, [minValue, maxValue, colorScaleType, showChange]);
 
+  const displayUnit = normalizeUnit(variable?.unit || "°C");
+
   return (
     <header className="new-header">
       <div className="header-content">
-        {/* Left: MAP label + Legend */}
         <div className="header-left">
           <div className="map-label">
             <span className="map-text">MAP</span>
-            <span className="info-icon-orange">i</span>
+            <button
+              type="button"
+              className="info-icon-orange"
+              onClick={onOpenHelp}
+              aria-label="Open help"
+              data-tour="map-information"
+            >
+              i
+            </button>
           </div>
           <div className="header-legend">
             <span className="legend-label">
-              {showChange ? "Change" : "Average value"} ({variable?.unit || "°C"})
+              {showChange ? "Change" : "Average value"} ({displayUnit})
             </span>
             <div className="legend-bar-container">
               <span className="legend-value">{minValue.toFixed(0)}</span>
@@ -83,13 +92,9 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center: Variable name + scenario info */}
         <div className="header-center">
           <h1 className="variable-title">{parameterLabel || variable?.name || "Climate Variable"}</h1>
-          {parameterDescription && (
-            <span className="variable-description">{parameterDescription}</span>
-          )}
-          <div className="scenario-info">
+          <div className="scenario-info" data-tour="scenarios">
             {period !== "baseline" ? (
               <>
                 <span className="scenario-text">{getScenarioText(scenario)}</span>
@@ -102,9 +107,8 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Action buttons */}
         <div className="header-right">
-          <button className="header-btn-labeled" title="Help">
+          <button className="header-btn-labeled" title="Help" onClick={onOpenHelp}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
@@ -112,14 +116,14 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
             <span>HELP</span>
           </button>
-          <button className="header-btn-labeled" title="Tour">
+          <button className="header-btn-labeled" title="Tour" onClick={onOpenTour}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <polygon points="10 8 16 12 10 16 10 8" />
             </svg>
             <span>TOUR</span>
           </button>
-          <button className="header-btn-labeled" title="Share">
+          <button className="header-btn-labeled" title="Share" data-tour="share-map">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="18" cy="5" r="3" />
               <circle cx="6" cy="12" r="3" />

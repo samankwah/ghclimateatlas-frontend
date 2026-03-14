@@ -5,6 +5,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import type { TimeSeriesPoint } from "../../hooks/useDistrictTimeSeries";
+import { normalizeUnit } from "../../utils/colorScales";
+import type { Period } from "../../types/climate";
 
 // Track if highcharts-more has been initialized
 let highchartsMoreInitialized = false;
@@ -30,6 +32,7 @@ interface ClimateChartProps {
   data: TimeSeriesPoint[];
   unit: string;
   variableName: string;
+  selectedPeriod: Period;
   futurePeriodLabel?: string;
 }
 
@@ -85,9 +88,36 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   data,
   unit,
   variableName,
+  selectedPeriod,
   futurePeriodLabel = "2051-2080",
 }) => {
   const [chartReady, setChartReady] = useState(highchartsMoreInitialized);
+  const displayUnit = normalizeUnit(unit);
+  const axisMetricLabel = useMemo(() => {
+    const lowerName = variableName.toLowerCase();
+
+    if (lowerName.includes("precipitation") || displayUnit === "mm") {
+      return `Precipitation (${displayUnit})`;
+    }
+
+    if (lowerName.includes("temperature") || displayUnit.includes("C")) {
+      return `Temperature (${displayUnit})`;
+    }
+
+    return `${variableName} (${displayUnit})`;
+  }, [displayUnit, variableName]);
+  const selectedPeriodBand = useMemo(() => {
+    switch (selectedPeriod) {
+      case "2030":
+        return { from: 2021, to: 2050 };
+      case "2050":
+        return { from: 2041, to: 2070 };
+      case "2080":
+        return { from: 2051, to: 2080 };
+      default:
+        return null;
+    }
+  }, [selectedPeriod]);
 
   useEffect(() => {
     if (!chartReady) {
@@ -131,7 +161,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
     // Generate projected data (2006-2095) - red region
     const projectedData = generateVariabilityData(
-      2006, 2095,
+      2006, 2080,
       baselineValue, baselineLow, baselineHigh,
       endMedian, endLow, endHigh,
       seed + 1000
@@ -151,8 +181,8 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       historicalRange: historicalData.rangeData,
       projectedLine: projectedData.lineData,
       projectedRange: projectedData.rangeData,
-      yMin: Math.floor(minValue - padding),
-      yMax: Math.ceil(maxValue + padding),
+      yMin: Math.floor((minValue - padding * 0.35) / 5) * 5,
+      yMax: Math.ceil((maxValue + padding * 0.45) / 5) * 5,
     };
   }, [data]);
 
@@ -176,14 +206,14 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   const options: Highcharts.Options = {
     chart: {
       backgroundColor: "transparent",
-      height: 280,
+      height: 300,
       style: {
         fontFamily: "inherit",
       },
-      spacingTop: 5,
-      spacingRight: 10,
-      spacingBottom: 5,
-      spacingLeft: 5,
+      spacingTop: 4,
+      spacingRight: 6,
+      spacingBottom: 0,
+      spacingLeft: 2,
       reflow: true,
     },
     title: {
@@ -201,60 +231,63 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     xAxis: {
       type: "linear",
       min: 1950,
-      max: 2095,
-      tickPositions: [1950, 2000, 2050],
+      max: 2080,
+      tickPositions: [1950, 1975, 2000, 2025, 2050, 2075],
       title: {
         text: "Year",
         style: {
-          color: "#e2e8f0",
-          fontSize: "11px",
+          color: "rgba(226, 232, 240, 0.8)",
+          fontSize: "10px",
+          fontWeight: "500",
         },
+        margin: 10,
       },
       labels: {
         style: {
-          color: "#e2e8f0",
-          fontSize: "11px",
+          color: "rgba(226, 232, 240, 0.78)",
+          fontSize: "10px",
         },
       },
       lineColor: "#64748b",
       tickColor: "#64748b",
       gridLineWidth: 0,
-      plotBands: [{
-        from: 2051,
-        to: 2080,
+      plotBands: selectedPeriodBand ? [{
+        from: selectedPeriodBand.from,
+        to: selectedPeriodBand.to,
         color: "rgba(100, 116, 139, 0.25)",
-      }],
+      }] : [],
     },
     yAxis: {
-      min: chartData.yMin - 15,
-      max: chartData.yMax + 10,
+      min: chartData.yMin,
+      max: chartData.yMax,
       startOnTick: false,
       endOnTick: false,
       tickInterval: 5, // Y-axis intervals of 5
       title: {
-        text: `${variableName} (${unit})`,
+        text: axisMetricLabel,
         style: {
-          color: "#e2e8f0",
-          fontSize: "11px",
+          color: "rgba(226, 232, 240, 0.8)",
+          fontSize: "10px",
+          fontWeight: "500",
         },
-        margin: 8,
+        margin: 6,
       },
       labels: {
         style: {
-          color: "#e2e8f0",
-          fontSize: "11px",
+          color: "rgba(226, 232, 240, 0.78)",
+          fontSize: "10px",
         },
         format: "{value:.0f}",
       },
-      gridLineColor: "rgba(71, 85, 105, 0.5)",
+      gridLineColor: "rgba(148, 163, 184, 0.12)",
       gridLineWidth: 1,
-      gridLineDashStyle: "Dot",
+      gridLineDashStyle: "ShortDot",
       lineColor: "#64748b",
       lineWidth: 0,
     },
     tooltip: {
       shared: true,
-      valueSuffix: ` ${unit}`,
+      valueSuffix: ` ${displayUnit}`,
       valueDecimals: 0, // No decimal places in tooltip
       backgroundColor: "rgba(15, 23, 42, 0.95)",
       borderColor: "#475569",
@@ -295,7 +328,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
           },
           yAxis: {
             title: {
-              text: unit,
+              text: axisMetricLabel,
               style: {
                 fontSize: "9px",
               },
@@ -329,8 +362,8 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         type: "arearange",
         data: chartData.historicalRange,
         lineWidth: 0,
-        color: "rgba(148, 163, 184, 0.6)",
-        fillOpacity: 0.6,
+        color: "rgba(241, 245, 249, 0.18)",
+        fillOpacity: 1,
         zIndex: 0,
         marker: { enabled: false },
         showInLegend: false,
@@ -341,8 +374,8 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         type: "arearange",
         data: chartData.projectedRange,
         lineWidth: 0,
-        color: "rgba(248, 113, 113, 0.6)",
-        fillOpacity: 0.6,
+        color: "rgba(239, 68, 68, 0.42)",
+        fillOpacity: 1,
         zIndex: 0,
         marker: { enabled: false },
         showInLegend: false,
@@ -353,8 +386,8 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         type: "line",
         data: chartData.historicalLine,
         zIndex: 2,
-        color: "#cbd5e1",
-        lineWidth: 1.5,
+        color: "rgba(248, 250, 252, 0.92)",
+        lineWidth: 1.6,
         marker: { enabled: false },
         showInLegend: false,
       },
@@ -364,8 +397,8 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         type: "line",
         data: chartData.projectedLine,
         zIndex: 2,
-        color: "#1e293b",
-        lineWidth: 2,
+        color: "#111827",
+        lineWidth: 2.2,
         marker: { enabled: false },
         showInLegend: false,
       },

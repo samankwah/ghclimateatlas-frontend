@@ -6,9 +6,13 @@ interface MapLayerTogglesProps {
   showGrid: boolean;
   showAverage: boolean;
   showCities: boolean;
+  showWater?: boolean;
+  showStories?: boolean;
   onToggleGrid: () => void;
   onToggleAverage: () => void;
+  onToggleWater?: () => void;
   onToggleCities: () => void;
+  onToggleStories?: () => void;
   searchContent?: React.ReactNode;
 }
 
@@ -16,9 +20,13 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
   showGrid,
   showAverage,
   showCities,
+  showWater = true,
+  showStories = true,
   onToggleGrid,
   onToggleAverage,
+  onToggleWater,
   onToggleCities,
+  onToggleStories,
   searchContent,
 }) => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -54,6 +62,19 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
           <span className="toggle-label">Grid</span>
         </button>
 
+        {onToggleWater && (
+          <button
+            className={`layer-toggle ${showWater ? "active" : ""}`}
+            onClick={onToggleWater}
+            title="Toggle Water Bodies"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+            </svg>
+            <span className="toggle-label">Water</span>
+          </button>
+        )}
+
         <button
           className={`layer-toggle ${showAverage ? "active" : ""}`}
           onClick={onToggleAverage}
@@ -82,6 +103,21 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
           </svg>
           <span className="toggle-label">Cities</span>
         </button>
+
+        {onToggleStories && (
+          <button
+            className={`layer-toggle ${showStories ? "active" : ""}`}
+            onClick={onToggleStories}
+            title="Toggle Climate Stories"
+            data-tour="stories"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+            <span className="toggle-label">Stories</span>
+          </button>
+        )}
       </div>
 
       {/* Search panel - slides out next to sidebar */}

@@ -37,7 +37,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   return (
     <div className="timeline-bar">
       {/* Climate Change Slider Section */}
-      <div className="timeline-section">
+      <div className="timeline-section" data-tour="climate-change">
         <span className="section-label">
           CLIMATE CHANGE
           <span className="info-icon" title="RCP scenario - Less (RCP4.5) or More (RCP8.5) carbon emissions">i</span>
@@ -59,7 +59,7 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
       </div>
 
       {/* Time Period Slider Section */}
-      <div className="timeline-section">
+      <div className="timeline-section" data-tour="time-period">
         <span className="section-label">
           TIME PERIOD
           <span className="info-icon" title="Select time period for climate projections">i</span>

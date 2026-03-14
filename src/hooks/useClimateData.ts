@@ -54,6 +54,7 @@ export const useClimateComparison = (
     queryFn: () => fetchClimateComparison(variable, period, scenario),
     enabled: !!variable && period !== "baseline",
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 };
 

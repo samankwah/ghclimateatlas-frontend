@@ -1,73 +1,115 @@
-# React + TypeScript + Vite
+# Ghana Climate Atlas Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite frontend for the Ghana Climate Atlas.
 
-Currently, two official plugins are available:
+This application renders an interactive district-level climate map of Ghana with a floating control system, comparison timelines, category-based variable browsing, and a district side panel for charts and summary statistics.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Current State
 
-## React Compiler
+The frontend currently supports:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- interactive Ghana district map with climate coloring
+- period switching for `baseline`, `2030`, `2050`, and `2080`
+- scenario switching for `rcp45` and `rcp85`
+- variable browsing by category:
+  - hot weather
+  - cold weather
+  - temperature
+  - precipitation
+  - agriculture
+- district detail side panel with:
+  - selected district summary
+  - baseline vs selected future-period comparison
+  - period-aware chart highlight band
+  - statistics table tied to the active selected period
+  - downloads section
+- month-level submenu support for temperature and precipitation when the backend exposes monthly variables
+- dynamic browser page titles based on district, variable, scenario, and period
 
-## Expanding the ESLint configuration
+## Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19
+- TypeScript
+- Vite
+- TanStack Query
+- Leaflet / React Leaflet
+- Highcharts
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Project Structure
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+  api/                API client helpers
+  components/         UI, map, panels, categories, charts
+  hooks/              data-fetching and map state hooks
+  data/               local story/config data
+  types/              shared frontend types
+  utils/              formatting and color scale helpers
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Requirements
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Node.js 18+ recommended
+- backend API running locally from `../backend`
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The frontend expects the FastAPI backend to serve climate and district data. By default, development uses the local backend on `http://localhost:8000`.
+
+## Getting Started
+
+Install dependencies:
+
+```bash
+npm install
 ```
+
+Start the frontend dev server:
+
+```bash
+npm run dev
+```
+
+Start the backend separately from the sibling `backend` folder:
+
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+## Available Scripts
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+```
+
+## Build Notes
+
+TypeScript compilation is validated with:
+
+```bash
+npx tsc -b
+```
+
+In some restricted Windows environments, `vite build` can fail with an `esbuild spawn EPERM` process-spawn error even when the code is valid. That is an environment restriction, not a frontend TypeScript issue.
+
+## Backend Dependency Notes
+
+Recent frontend behavior depends on backend support for:
+
+- annual variables
+- seasonal variables
+- monthly temperature variables such as `mean_temp_mar`, `max_temp_jul`, `min_temp_dec`
+- monthly precipitation variables such as `precipitation_sep`
+
+If monthly submenu items remain disabled, verify that `GET /api/climate/variables` is returning those monthly IDs.
+
+## Status
+
+This is no longer a starter Vite app. It is an actively customized atlas interface with:
+
+- custom map overlays
+- dynamic side panel behavior
+- period-aware chart rendering
+- backend-driven category availability
+- tailored Ghana climate indicators and labels

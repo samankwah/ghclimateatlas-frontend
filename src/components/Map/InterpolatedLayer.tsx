@@ -158,12 +158,12 @@ const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
     };
   }, [map, imageDataUrl]);
 
-  // Ensure overlay stays below district borders
+  // Ensure overlay stays below district borders (only when overlay changes)
   useEffect(() => {
     if (imageOverlayRef.current) {
       imageOverlayRef.current.bringToBack();
     }
-  });
+  }, [imageDataUrl]);
 
   return null;
 };
