@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find \"C:\\\\Users\\\\CRAFT\\\\Desktop\\\\future MEST projects\\\\Backend\\\\atlas-gh\\\\frontend\" -type f -name \"*.shp\" -o -name \"*.dbf\" -o -name \"*.prj\" 2>/dev/null | head -20)"
+    ]
+  }
+}
