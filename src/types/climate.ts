@@ -30,7 +30,7 @@ export interface ClimateVariable {
   name: string;
   description: string;
   unit: string;
-  category: "temperature" | "precipitation";
+  category: "temperature" | "precipitation" | "agriculture";
   color_scale: string;
 }
 

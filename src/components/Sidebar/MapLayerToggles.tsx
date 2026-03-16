@@ -1,6 +1,6 @@
 // Map layer toggles - slim sidebar with icon-based toggles
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface MapLayerTogglesProps {
   showGrid: boolean;
@@ -26,9 +26,36 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
   searchContent,
 }) => {
   const [searchOpen, setSearchOpen] = useState(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!searchOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!asideRef.current?.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [searchOpen]);
 
   return (
-    <aside className="slim-sidebar">
+    <aside ref={asideRef} className="slim-sidebar">
       <div className="layer-toggles">
         {/* Search toggle */}
         <button

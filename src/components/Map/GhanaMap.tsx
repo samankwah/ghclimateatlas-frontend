@@ -42,6 +42,8 @@ interface GhanaMapProps {
 // Ghana center coordinates
 const GHANA_CENTER: [number, number] = [7.9465, -1.0232];
 const GHANA_ZOOM = 7;
+const MOBILE_INITIAL_CENTER: [number, number] = [7.35, -1.05];
+const MOBILE_INITIAL_ZOOM = 6.6;
 
 // Map bounds for Ghana
 const GHANA_BOUNDS: [[number, number], [number, number]] = [
@@ -64,10 +66,7 @@ const FitBounds = () => {
 
       const isMobile = window.innerWidth <= 768;
       if (isMobile) {
-        map.fitBounds(GHANA_BOUNDS, {
-          paddingTopLeft: [18, 24],
-          paddingBottomRight: [18, 54],
-        });
+        map.setView(MOBILE_INITIAL_CENTER, MOBILE_INITIAL_ZOOM, { animate: false });
         return;
       }
 
@@ -80,10 +79,12 @@ const FitBounds = () => {
 
     applyBounds();
     const timer = window.setTimeout(applyBounds, 180);
+    const settleTimer = window.setTimeout(applyBounds, 420);
     window.addEventListener("resize", applyBounds);
 
     return () => {
       window.clearTimeout(timer);
+      window.clearTimeout(settleTimer);
       window.removeEventListener("resize", applyBounds);
     };
   }, [map]);

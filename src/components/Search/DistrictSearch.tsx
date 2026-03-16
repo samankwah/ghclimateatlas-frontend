@@ -108,6 +108,11 @@ const DistrictSearch: React.FC<DistrictSearchProps> = ({ districts, onSelectDist
           ))}
         </div>
       )}
+      {isOpen && query.trim() && filtered.length === 0 && (
+        <div className="district-search-empty">
+          No districts match "{query.trim()}".
+        </div>
+      )}
     </div>
   );
 };

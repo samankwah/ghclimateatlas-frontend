@@ -13,6 +13,7 @@ interface CategoryPanelProps {
   activeParentId?: string | null;
   onParentSelect?: (parameterId: string | null) => void;
   onToggleParameter: (parameterId: string) => void;
+  onOpenParameterInfo: (parameterId: string) => void;
   onClose: () => void;
 }
 
@@ -35,9 +36,22 @@ const BackArrow = () => (
   </svg>
 );
 
+const InfoIcon = () => <span aria-hidden="true">i</span>;
+
+const SelectedMark = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+    <path d="M2 2l6 6" />
+    <path d="M8 2L2 8" />
+  </svg>
+);
+
 const SelectionIndicator: React.FC<{ selected: boolean }> = ({ selected }) => (
   <span className={`category-panel-checkbox ${selected ? 'selected' : ''}`} aria-hidden="true">
-    {selected && <span className="category-panel-checkbox-mark">×</span>}
+    {selected && (
+      <span className="category-panel-checkbox-mark">
+        <SelectedMark />
+      </span>
+    )}
   </span>
 );
 
@@ -50,6 +64,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
   activeParentId,
   onParentSelect,
   onToggleParameter,
+  onOpenParameterInfo,
   onClose,
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -151,6 +166,11 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
     items.map((item) => {
       const isSelected = selectedParameters.includes(item.id);
       const isSelectable = item.isSelectable === true && item.disabled !== true;
+      const infoTargetId = item.infoId ?? item.id;
+      const handleInfoOpen = (event: React.MouseEvent | React.KeyboardEvent) => {
+        event.stopPropagation();
+        onOpenParameterInfo(infoTargetId);
+      };
 
       if (isMobileViewport && depth === 0 && item.children?.length) {
         return (
@@ -158,11 +178,20 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
             <div className="category-subpanel-item static">
               <SelectionIndicator selected={false} />
               <span className="category-subpanel-label">{item.label}</span>
+              <button
+                type="button"
+                className="category-panel-info-btn"
+                aria-label={`Open information for ${item.label}`}
+                onClick={handleInfoOpen}
+              >
+                <InfoIcon />
+              </button>
             </div>
             <div className="category-subpanel-children-row">
               {item.children.map((child) => {
                 const isChildSelected = selectedParameters.includes(child.id);
                 const isChildSelectable = child.isSelectable === true && child.disabled !== true;
+                const childInfoTargetId = child.infoId ?? child.id;
 
                 return (
                 <div
@@ -180,6 +209,22 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
                 >
                   <SelectionIndicator selected={selectedParameters.includes(child.id)} />
                   <span className="category-subpanel-label">{child.label}</span>
+                  <button
+                    type="button"
+                    className="category-panel-info-btn"
+                    aria-label={`Open information for ${child.label}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onOpenParameterInfo(childInfoTargetId);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.stopPropagation();
+                      }
+                    }}
+                  >
+                    <InfoIcon />
+                  </button>
                 </div>
                 );
               })}
@@ -205,6 +250,19 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
           >
             <SelectionIndicator selected={isSelected} />
             <span className="category-subpanel-label">{item.label}</span>
+            <button
+              type="button"
+              className="category-panel-info-btn"
+              aria-label={`Open information for ${item.label}`}
+              onClick={handleInfoOpen}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.stopPropagation();
+                }
+              }}
+            >
+              <InfoIcon />
+            </button>
           </div>
           {item.children?.length ? renderSubmenuItems(item.children, depth + 1) : null}
         </div>
@@ -249,6 +307,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
             const isSelected = isParameterSelected(param);
             const isActiveParent = hasNestedParameters && activeParent?.id === param.id;
             const isDisabled = param.disabled === true;
+            const infoTargetId = param.infoId ?? param.id;
             const handleActivate = () => {
               if (isDisabled) {
                 return;
@@ -288,6 +347,22 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
                     {param.label}
                   </span>
                 </span>
+                <button
+                  type="button"
+                  className="category-panel-info-btn"
+                  aria-label={`Open information for ${param.label}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenParameterInfo(infoTargetId);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.stopPropagation();
+                    }
+                  }}
+                >
+                  <InfoIcon />
+                </button>
               </div>
             );
           })}
