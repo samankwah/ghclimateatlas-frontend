@@ -40,11 +40,12 @@ function ClimateAtlas() {
   const [, setHoveredDistrict] = useState<string | null>(null);
 
   // Map layer toggles state
-  const [showGrid, setShowGrid] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
   const [showCities, setShowCities] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showStories, setShowStories] = useState(true);
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
+  const [mobileHeaderActionsOpen, setMobileHeaderActionsOpen] = useState(false);
   const [mobileChangeToggleOpen, setMobileChangeToggleOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
@@ -192,11 +193,13 @@ function ClimateAtlas() {
   }, [effectiveVariable, showChange]);
 
   const handleOpenHelp = useCallback(() => {
+    setMobileHeaderActionsOpen(false);
     setTourOpen(false);
     setHelpOpen(true);
   }, []);
 
   const handleOpenTour = useCallback(() => {
+    setMobileHeaderActionsOpen(false);
     setHelpOpen(false);
     setTourOpen(true);
   }, []);
@@ -205,6 +208,8 @@ function ClimateAtlas() {
     if (typeof window === "undefined") {
       return;
     }
+
+    setMobileHeaderActionsOpen(false);
 
     const sharePayload = {
       title: document.title,
@@ -277,6 +282,8 @@ function ClimateAtlas() {
         showChange={showChange}
         parameterLabel={selectedParameterLabel}
         shareStatus={shareStatus}
+        mobileActionsOpen={mobileHeaderActionsOpen}
+        onToggleMobileActions={() => setMobileHeaderActionsOpen((open) => !open)}
         onOpenHelp={handleOpenHelp}
         onOpenTour={handleOpenTour}
         onShare={handleShareMap}

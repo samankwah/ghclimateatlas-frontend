@@ -169,7 +169,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
     setOpenPanel(categoryId);
     onCategoryChange(categoryId);
-    setSelections(cloneEmptySelections());
     setActiveParents(INITIAL_ACTIVE_PARENTS);
   };
 
@@ -181,6 +180,8 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   };
 
   const handleToggleParameter = (categoryId: Category, parameterId: string) => {
+    const param = findParameterById(categoryId, parameterId);
+
     setSelections({
       ...cloneEmptySelections(),
       [categoryId]: [parameterId],
@@ -191,18 +192,22 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
       onParameterSelect(variableId, parameterId);
     }
 
-    const param = findParameterById(categoryId, parameterId);
     if (param && onParameterLabelChange) {
       onParameterLabelChange(param.description ?? param.label);
     }
+
+    setOpenPanel(null);
+    setActiveParents(INITIAL_ACTIVE_PARENTS);
+  };
+
+  const handleOpenParameterInfo = (categoryId: Category, parameterId: string) => {
+    const param = findParameterById(categoryId, parameterId);
 
     setModalParam({
       id: param?.infoId ?? parameterId,
       label: param?.description ?? param?.label ?? parameterId,
       categoryColor: CATEGORY_COLORS[categoryId],
     });
-
-    setOpenPanel(null);
   };
 
   const handleClosePanel = () => {
@@ -259,6 +264,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
                     activeParentId={activeParents[cat.id]}
                     onParentSelect={(paramId) => handleParentSelect(cat.id, paramId)}
                     onToggleParameter={(paramId) => handleToggleParameter(cat.id, paramId)}
+                    onOpenParameterInfo={(paramId) => handleOpenParameterInfo(cat.id, paramId)}
                     onClose={handleClosePanel}
                   />
                 </div>
@@ -300,6 +306,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
             activeParentId={activeParents[openPanel]}
             onParentSelect={(paramId) => handleParentSelect(openPanel, paramId)}
             onToggleParameter={(paramId) => handleToggleParameter(openPanel, paramId)}
+            onOpenParameterInfo={(paramId) => handleOpenParameterInfo(openPanel, paramId)}
             onClose={handleClosePanel}
           />
         </div>,
