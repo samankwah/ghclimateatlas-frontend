@@ -173,10 +173,22 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
       };
 
       if (isMobileViewport && depth === 0 && item.children?.length) {
+        const isGroupSelected = selectedParameters.includes(item.id);
         return (
           <div key={item.id} className="category-subpanel-group mobile-grouped">
-            <div className="category-subpanel-item static">
-              <SelectionIndicator selected={false} />
+            <div
+              className={`category-subpanel-item ${isGroupSelected ? 'selected' : ''} ${isSelectable ? 'selectable' : 'static'} ${item.disabled ? 'disabled' : ''}`}
+              onClick={isSelectable ? () => onToggleParameter(item.id) : undefined}
+              role={isSelectable ? "button" : undefined}
+              tabIndex={isSelectable ? 0 : -1}
+              onKeyDown={(e) => {
+                if (isSelectable && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  onToggleParameter(item.id);
+                }
+              }}
+            >
+              <SelectionIndicator selected={isGroupSelected} />
               <span className="category-subpanel-label">{item.label}</span>
               <button
                 type="button"

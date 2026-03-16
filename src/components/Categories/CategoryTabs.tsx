@@ -75,6 +75,10 @@ const CATEGORIES: CategoryConfig[] = [
 
 type SelectionsState = Record<Category, string[]>;
 type ActiveParentState = Record<Category, string | null>;
+type ParameterLookupResult = {
+  parameter: Parameter;
+  ancestors: Parameter[];
+};
 
 const EMPTY_SELECTIONS: SelectionsState = {
   precipitation: [],
@@ -100,31 +104,126 @@ const cloneEmptySelections = (): SelectionsState => ({
   cold_weather: [],
 });
 
-const findParameterById = (categoryId: Category, parameterId: string): Parameter | undefined => {
-  for (const param of CATEGORY_PARAMETERS[categoryId]) {
-    if (param.id === parameterId) {
-      return param;
+const findParameterWithAncestors = (
+  parameters: Parameter[],
+  parameterId: string,
+  ancestors: Parameter[] = [],
+): ParameterLookupResult | undefined => {
+  for (const parameter of parameters) {
+    if (parameter.id === parameterId) {
+      return {
+        parameter,
+        ancestors,
+      };
     }
 
-    const child = param.children?.find((item) => item.id === parameterId);
-    if (child) {
-      return child;
+    if (parameter.children?.length) {
+      const nestedMatch = findParameterWithAncestors(
+        parameter.children,
+        parameterId,
+        [...ancestors, parameter],
+      );
+
+      if (nestedMatch) {
+        return nestedMatch;
+      }
     }
   }
 
   return undefined;
 };
 
+const findParameterById = (categoryId: Category, parameterId: string): Parameter | undefined =>
+  findParameterWithAncestors(CATEGORY_PARAMETERS[categoryId], parameterId)?.parameter;
+
+const getAnnualFallbackVariableId = (parameter: Parameter, ancestors: Parameter[]): string | null => {
+  const lineage = [...ancestors, parameter].map((item) => item.id);
+
+  if (lineage.includes("mean_temp")) {
+    return "annual_mean_temp";
+  }
+
+  if (lineage.includes("max_temp")) {
+    return "annual_max_temp";
+  }
+
+  if (lineage.includes("min_temp")) {
+    return "annual_min_temp";
+  }
+
+  if (lineage.includes("precipitation_total")) {
+    if (parameter.id === "precipitation_growing_season") {
+      return "wet_season_precipitation";
+    }
+
+    if (
+      parameter.id === "precipitation_spring" ||
+      parameter.id === "precipitation_summer" ||
+      parameter.id === "precipitation_fall"
+    ) {
+      return "wet_season_precipitation";
+    }
+
+    return "annual_precipitation";
+  }
+
+  return null;
+};
+
+const getSupportedVariableId = (
+  categoryId: Category,
+  parameterId: string,
+  availableVariableIds: Set<string>,
+): string | undefined => {
+  const match = findParameterWithAncestors(CATEGORY_PARAMETERS[categoryId], parameterId);
+  if (!match) {
+    return PARAMETER_TO_VARIABLE[parameterId];
+  }
+
+  const { parameter, ancestors } = match;
+  const candidates = new Set<string>();
+  const addCandidate = (candidate?: string | null) => {
+    if (candidate) {
+      candidates.add(candidate);
+    }
+  };
+
+  addCandidate(parameter.variableId);
+  addCandidate(PARAMETER_TO_VARIABLE[parameter.id]);
+
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const ancestor = ancestors[index];
+    addCandidate(ancestor.variableId);
+    addCandidate(PARAMETER_TO_VARIABLE[ancestor.id]);
+  }
+
+  addCandidate(getAnnualFallbackVariableId(parameter, ancestors));
+
+  if (parameter.id === "wet_days") {
+    addCandidate("wet_days");
+    addCandidate("dry_days");
+  }
+
+  for (const candidate of candidates) {
+    if (availableVariableIds.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates.values().next().value;
+};
+
 const markParameterAvailability = (
+  categoryId: Category,
   parameter: Parameter,
   availableVariableIds: Set<string>
 ): Parameter => {
-  const children = parameter.children?.map((child) => markParameterAvailability(child, availableVariableIds));
+  const children = parameter.children?.map((child) =>
+    markParameterAvailability(categoryId, child, availableVariableIds)
+  );
   const hasEnabledChild = children?.some((child) => child.disabled !== true) ?? false;
-  const variableSupported =
-    !parameter.variableId ||
-    availableVariableIds.has(parameter.variableId) ||
-    parameter.variableId === "wet_days";
+  const supportedVariableId = getSupportedVariableId(categoryId, parameter.id, availableVariableIds);
+  const variableSupported = !parameter.isSelectable || !!supportedVariableId;
 
   const selectable = parameter.isSelectable === true || !!parameter.variableId || !children?.length;
   const disabled = parameter.disabled === true || (!hasEnabledChild && selectable && !variableSupported);
@@ -181,16 +280,18 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
   const handleToggleParameter = (categoryId: Category, parameterId: string) => {
     const param = findParameterById(categoryId, parameterId);
+    const variableId = getSupportedVariableId(categoryId, parameterId, availableVariableIds);
+
+    if (!variableId) {
+      return;
+    }
 
     setSelections({
       ...cloneEmptySelections(),
       [categoryId]: [parameterId],
     });
 
-    const variableId = PARAMETER_TO_VARIABLE[parameterId];
-    if (variableId) {
-      onParameterSelect(variableId, parameterId);
-    }
+    onParameterSelect(variableId, parameterId);
 
     if (param && onParameterLabelChange) {
       onParameterLabelChange(param.description ?? param.label);
@@ -259,7 +360,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
                     panelId={`category-panel-${cat.id}`}
                     categoryLabel={getCategoryLabel(cat.id)}
                     categoryColor={categoryColor}
-                    parameters={CATEGORY_PARAMETERS[cat.id].map((param) => markParameterAvailability(param, availableVariableIds))}
+                    parameters={CATEGORY_PARAMETERS[cat.id].map((param) => markParameterAvailability(cat.id, param, availableVariableIds))}
                     selectedParameters={selections[cat.id]}
                     activeParentId={activeParents[cat.id]}
                     onParentSelect={(paramId) => handleParentSelect(cat.id, paramId)}
@@ -301,7 +402,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
             panelId={`category-panel-${openPanel}`}
             categoryLabel={getCategoryLabel(openPanel)}
             categoryColor={CATEGORY_COLORS[openPanel]}
-            parameters={CATEGORY_PARAMETERS[openPanel].map((param) => markParameterAvailability(param, availableVariableIds))}
+            parameters={CATEGORY_PARAMETERS[openPanel].map((param) => markParameterAvailability(openPanel, param, availableVariableIds))}
             selectedParameters={selections[openPanel]}
             activeParentId={activeParents[openPanel]}
             onParentSelect={(paramId) => handleParentSelect(openPanel, paramId)}
