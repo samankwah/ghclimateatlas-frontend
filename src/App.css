@@ -2225,11 +2225,11 @@ body {
     font-size: 0.8125rem;
   }
 
-  /* --- Zoom controls: move to right side so they don't overlap sidebar --- */
+  /* --- Zoom controls: move to bottom-right so they don't overlap sidebar --- */
   .map-zoom-controls {
     left: auto;
     right: 0.75rem;
-    bottom: 9rem;
+    bottom: 12rem;
   }
 
   /* --- Bottom bar: keep position:fixed (same as desktop), just enable touch --- */
