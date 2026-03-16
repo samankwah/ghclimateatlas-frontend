@@ -1956,9 +1956,9 @@ body {
 
   .mobile-header-title {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1.2rem;
     line-height: 1.1;
-    font-weight: 700;
+    font-weight: 800;
     color: #f8fafc;
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -1971,9 +1971,9 @@ body {
     display: block;
     margin-top: 0.28rem;
     max-width: 100%;
-    font-size: 0.54rem;
+    font-size: 0.7rem;
     line-height: 1.24;
-    font-weight: 600;
+    font-weight: 700;
     color: rgba(226, 232, 240, 0.92);
     white-space: nowrap;
     overflow: hidden;
@@ -2042,9 +2042,9 @@ body {
   }
 
   .mobile-header-action span {
-    font-size: 0.66rem;
+    font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     white-space: nowrap;
   }
 
@@ -2064,7 +2064,7 @@ body {
     min-height: 0.95rem;
     padding-top: 0.15rem;
     text-align: center;
-    font-size: 0.62rem;
+    font-size: 0.78rem;
     color: #cbd5e1;
   }
 
@@ -2090,7 +2090,8 @@ body {
   }
 
   .section-label {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 800;
     letter-spacing: 0.08em;
   }
 
@@ -2100,7 +2101,8 @@ body {
   }
 
   .scenario-slider span {
-    font-size: 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 700;
     min-width: 32px;
   }
 
@@ -2118,7 +2120,8 @@ body {
   }
 
   .period-option .period-label {
-    font-size: 0.6875rem;
+    font-size: 0.82rem;
+    font-weight: 700;
   }
 
   .period-selector::before {
@@ -2153,7 +2156,8 @@ body {
   }
 
   .tab-label {
-    font-size: 0.6875rem;
+    font-size: 0.8rem;
+    font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2305,7 +2309,11 @@ body {
   }
 
   .mobile-header-title {
-    font-size: 0.8rem;
+    font-size: 0.96rem;
+  }
+
+  .mobile-header-scenario {
+    font-size: 0.58rem;
   }
 
   .mobile-header-actions {
@@ -2317,7 +2325,7 @@ body {
   }
 
   .mobile-header-action span {
-    font-size: 0.52rem;
+    font-size: 0.64rem;
   }
 
   .mobile-header-action svg {
@@ -2326,7 +2334,7 @@ body {
   }
 
   .mobile-share-status {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
   }
 
   /* --- Timeline — stacked, full-width sliders --- */
@@ -2352,7 +2360,7 @@ body {
   }
 
   .section-label {
-    font-size: 0.6875rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
   }
@@ -2394,8 +2402,8 @@ body {
   }
 
   .period-option .period-label {
-    font-size: 0.625rem;
-    font-weight: 500;
+    font-size: 0.72rem;
+    font-weight: 700;
   }
 
   .period-selector::before {
@@ -2432,7 +2440,7 @@ body {
   }
 
   .tab-label {
-    font-size: 0.5rem;
+    font-size: 0.66rem;
     font-weight: 600;
     letter-spacing: 0;
     overflow: hidden;
@@ -2475,7 +2483,8 @@ body {
   }
 
   .map-zoom-controls {
-    left: 0.75rem;
+    left: auto;
+    right: 0.75rem;
     bottom: calc(17rem + env(safe-area-inset-bottom, 0px));
   }
 
@@ -2546,8 +2555,8 @@ body {
   }
 
   .category-tabs {
-    gap: 0.0625rem;
-    padding: 0.375rem 0.125rem;
+    gap: 0.1rem;
+    padding: 0.4rem 0.2rem;
   }
 
   .category-tab {
@@ -2556,8 +2565,8 @@ body {
   }
 
   .tab-icon {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 6px;
   }
 
@@ -2567,7 +2576,8 @@ body {
   }
 
   .tab-label {
-    font-size: 0.5rem;
+    font-size: 0.58rem;
+    font-weight: 700;
   }
 
 
@@ -2587,7 +2597,8 @@ body {
   }
 
   .map-zoom-controls {
-    left: 0.5rem;
+    left: auto;
+    right: 0.5rem;
     bottom: calc(16.25rem + env(safe-area-inset-bottom, 0px));
   }
 }
@@ -4216,6 +4227,19 @@ body {
     z-index: 700;
   }
 
+  .district-search-input {
+    font-size: 0.98rem;
+  }
+
+  .district-search-result-item .result-name {
+    font-size: 0.96rem;
+    font-weight: 600;
+  }
+
+  .district-search-result-item .result-region {
+    font-size: 0.8rem;
+  }
+
   .district-search {
     width: 100%;
     background: rgba(45, 45, 45, 0.98);
@@ -4233,7 +4257,7 @@ body {
   }
 
   .district-search-input {
-    font-size: 0.88rem;
+    font-size: 0.94rem;
   }
 
   .district-search-results,
@@ -4251,11 +4275,12 @@ body {
   }
 
   .district-search-result-item .result-name {
-    font-size: 0.88rem;
+    font-size: 0.94rem;
+    font-weight: 600;
   }
 
   .district-search-result-item .result-region {
-    font-size: 0.7rem;
+    font-size: 0.78rem;
     margin-top: 0.1rem;
   }
 
@@ -4272,12 +4297,14 @@ body {
   }
 
   .category-tabs {
-    justify-content: flex-start;
-    gap: 0.5rem;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
-    padding: 0.625rem 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    justify-content: stretch;
+    gap: 0.2rem;
+    overflow-x: visible;
+    overscroll-behavior-x: auto;
+    scroll-snap-type: none;
+    padding: 0.625rem 0.35rem;
     scrollbar-width: none;
   }
 
@@ -4286,14 +4313,15 @@ body {
   }
 
   .category-tab-container {
-    flex: 0 0 auto;
-    scroll-snap-align: center;
+    min-width: 0;
+    scroll-snap-align: none;
   }
 
   .category-tab {
-    flex: 0 0 auto;
-    min-width: 4.75rem;
-    padding: 0.25rem 0.125rem;
+    flex: none;
+    min-width: 0;
+    width: 100%;
+    padding: 0.25rem 0;
   }
 
   .category-panel-backdrop {
@@ -4553,7 +4581,8 @@ body {
   }
 
   .period-labels span {
-      font-size: 0.68rem;
+      font-size: 0.76rem;
+      font-weight: 700;
     }
 
   .category-tab {
@@ -4561,7 +4590,8 @@ body {
   }
 
   .tab-label {
-    font-size: 0.625rem;
+    font-size: 0.7rem;
+    font-weight: 700;
   }
 
   .category-panel-anchor {
