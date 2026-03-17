@@ -30,7 +30,7 @@ export interface ClimateVariable {
   name: string;
   description: string;
   unit: string;
-  category: "temperature" | "precipitation" | "agriculture";
+  category: "temperature" | "precipitation" | "agriculture" | "sea_level";
   color_scale: string;
 }
 
@@ -73,7 +73,7 @@ export interface RegionInfo {
 }
 
 export type Period = "baseline" | "2030" | "2050" | "2080";
-export type Scenario = "rcp45" | "rcp85";
+export type Scenario = "rcp45" | "rcp60" | "rcp85";
 
 export interface MapState {
   variable: string;

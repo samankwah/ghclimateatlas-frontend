@@ -31,6 +31,7 @@ const initHighchartsMore = async () => {
 interface ClimateChartProps {
   data: TimeSeriesPoint[];
   unit: string;
+  variableId: string;
   variableName: string;
   selectedPeriod: Period;
   futurePeriodLabel?: string;
@@ -87,6 +88,7 @@ const generateVariabilityData = (
 const ClimateChart: React.FC<ClimateChartProps> = ({
   data,
   unit,
+  variableId,
   variableName,
   selectedPeriod,
   futurePeriodLabel = "2051-2080",
@@ -94,17 +96,23 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   const [chartReady, setChartReady] = useState(highchartsMoreInitialized);
   const displayUnit = normalizeUnit(unit);
   const lowerName = variableName.toLowerCase();
+  const lowerVariableId = variableId.toLowerCase();
   const axisMetricLabel =
     lowerName.includes("precipitation") || displayUnit === "mm"
       ? `Precipitation (${displayUnit})`
       : lowerName.includes("temperature") || displayUnit.includes("C")
         ? `Temperature (${displayUnit})`
         : `${variableName} (${displayUnit})`;
-  const lowerVariableName = variableName.toLowerCase();
-  const isMinimumTemperatureChart = lowerVariableName.includes("minimum temperature");
-  const isMaximumTemperatureChart = lowerVariableName.includes("maximum temperature");
+  const isMeanTemperatureChart = lowerVariableId.includes("mean_temp") || lowerVariableId.includes("annual_mean_temp");
+  const isMinimumTemperatureChart = lowerVariableId.includes("min_temp") || lowerVariableId.includes("annual_min_temp");
+  const isMaximumTemperatureChart = lowerVariableId.includes("max_temp") || lowerVariableId.includes("annual_max_temp");
+  const isSeaLevelRiseChart = lowerVariableId === "sea_level_rise";
+  const isStormSurgeRiskChart = lowerVariableId === "storm_surge_flood_risk";
+  const isCoastalErosionRiskChart = lowerVariableId === "coastal_erosion_risk";
+  const isSaltwaterIntrusionRiskChart = lowerVariableId === "saltwater_intrusion_risk";
   const isTemperatureChart =
-    lowerVariableName.includes("temperature") && !displayUnit.includes("days");
+    (isMeanTemperatureChart || isMinimumTemperatureChart || isMaximumTemperatureChart || lowerName.includes("temperature")) &&
+    !displayUnit.includes("days");
   const selectedPeriodBand =
     selectedPeriod === "baseline"
       ? { from: 1976, to: 2005 }
@@ -180,7 +188,12 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
     const padding = (maxValue - minValue) * 0.15;
-    const yAxisStep = 5;
+    const yAxisStep =
+      isSeaLevelRiseChart
+        ? 5
+        : isStormSurgeRiskChart || isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
+          ? 4
+          : 5;
     const yMinPadding = isTemperatureChart ? padding * 0.2 : padding * 0.35;
     const yMaxPadding = isTemperatureChart ? padding * 0.22 : padding * 0.45;
 
@@ -192,22 +205,38 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       projectedLine: projectedData.lineData,
       projectedRange: projectedData.rangeData,
       yAxisStep,
-      yMin: isMinimumTemperatureChart
+      yMin: isSeaLevelRiseChart
+        ? 5
+        : isStormSurgeRiskChart
+          ? 5
+          : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
+            ? 1
+          : isMinimumTemperatureChart
         ? 15
         : isMaximumTemperatureChart
           ? 25
-          : isTemperatureChart
-            ? 5
+          : isMeanTemperatureChart
+            ? 20
+            : isTemperatureChart
+              ? computedYMin
             : computedYMin,
-      yMax: isTemperatureChart
-        ? (
-            isMinimumTemperatureChart
-              ? 30
-              : isMaximumTemperatureChart
-                ? 45
-                : (computedYMax <= 35 ? 35 : 40)
-          )
-        : computedYMax,
+      yMax: isSeaLevelRiseChart
+        ? 35
+        : isStormSurgeRiskChart
+          ? 16
+          : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
+            ? 16
+          : isTemperatureChart
+            ? (
+                isMinimumTemperatureChart
+                  ? 30
+                  : isMaximumTemperatureChart
+                    ? 40
+                    : isMeanTemperatureChart
+                      ? 35
+                      : computedYMax
+              )
+            : computedYMax,
     };
   }
 

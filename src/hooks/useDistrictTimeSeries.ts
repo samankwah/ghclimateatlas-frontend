@@ -2,7 +2,17 @@
 
 import { useQueries } from "@tanstack/react-query";
 import { fetchClimateData, fetchClimateComparison } from "../api/climate";
-import type { Scenario, Period } from "../types/climate";
+import type {
+  ClimateComparisonResponse,
+  ClimateResponse,
+  Scenario,
+  Period,
+} from "../types/climate";
+import {
+  aggregateClimateComparisonResponses,
+  aggregateClimateDataResponses,
+  getDerivedClimateVariable,
+} from "../utils/derivedClimate";
 
 export interface TimeSeriesPoint {
   period: Period;
@@ -58,26 +68,29 @@ export const useDistrictTimeSeries = (
   scenario: Scenario,
   selectedPeriod: Period = "2080"
 ): UseDistrictTimeSeriesResult => {
+  const definition = getDerivedClimateVariable(variable);
+  const sourceVariableIds = definition?.sourceVariableIds ?? [variable];
+
   // Fetch baseline data
   const baselineQuery = useQueries({
-    queries: [
-      {
-        queryKey: ["district-baseline", variable, districtId],
-        queryFn: () => fetchClimateData(variable, "baseline", scenario),
+    queries: sourceVariableIds.map((sourceVariableId) => ({
+        queryKey: ["district-baseline", variable, sourceVariableId, districtId],
+        queryFn: () => fetchClimateData(sourceVariableId, "baseline", scenario),
         enabled: !!districtId && !!variable,
         staleTime: 5 * 60 * 1000,
-      },
-    ],
+      })),
   });
 
   // Fetch comparison data for future periods
   const comparisonQueries = useQueries({
-    queries: PERIOD_CONFIG.filter((p) => p.period !== "baseline").map((p) => ({
-      queryKey: ["district-comparison", variable, p.period, scenario, districtId],
-      queryFn: () => fetchClimateComparison(variable, p.period, scenario),
+    queries: PERIOD_CONFIG
+      .filter((p) => p.period !== "baseline")
+      .flatMap((p) => sourceVariableIds.map((sourceVariableId) => ({
+      queryKey: ["district-comparison", variable, sourceVariableId, p.period, scenario, districtId],
+      queryFn: () => fetchClimateComparison(sourceVariableId, p.period, scenario),
       enabled: !!districtId && !!variable,
       staleTime: 5 * 60 * 1000,
-    })),
+    }))),
   });
 
   const isLoading =
@@ -92,9 +105,21 @@ export const useDistrictTimeSeries = (
   // Build time series data
   const data: TimeSeriesPoint[] = [];
   let statistics: DistrictStatistics | null = null;
+  const isClimateResponse = (response: ClimateResponse | undefined): response is ClimateResponse =>
+    response !== undefined;
+  const isClimateComparisonResponse = (
+    response: ClimateComparisonResponse | undefined,
+  ): response is ClimateComparisonResponse => response !== undefined;
 
   if (!isLoading && !error && districtId) {
-    const baselineData = baselineQuery[0]?.data;
+    const baselineData = definition
+      ? aggregateClimateDataResponses(
+          definition,
+          baselineQuery.map((query) => query.data).filter(isClimateResponse),
+          "baseline",
+          scenario,
+        )
+      : baselineQuery[0]?.data;
     const districtBaseline = baselineData?.data.find(
       (d) => d.district_id === districtId
     );
@@ -114,7 +139,16 @@ export const useDistrictTimeSeries = (
       let selectedFutureStats: { low: number; median: number; high: number } | null = null;
 
       PERIOD_CONFIG.slice(1).forEach((config, index) => {
-        const comparisonData = comparisonQueries[index]?.data;
+        const comparisonData = definition
+          ? aggregateClimateComparisonResponses(
+              definition,
+              sourceVariableIds
+                .map((_, sourceIndex) => comparisonQueries[index * sourceVariableIds.length + sourceIndex]?.data)
+                .filter(isClimateComparisonResponse),
+              config.period,
+              scenario,
+            )
+          : comparisonQueries[index]?.data;
         const districtComparison = comparisonData?.data.find(
           (d) => d.district_id === districtId
         );

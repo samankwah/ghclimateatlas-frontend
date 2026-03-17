@@ -10,6 +10,10 @@ const SCENARIO_INFO: Record<Scenario, { label: string; description: string }> = 
     label: "Low Carbon (RCP 4.5)",
     description: "A moderate pathway where emissions peak around 2040 and then decline. This scenario assumes significant global efforts to reduce greenhouse gas emissions, resulting in less severe climate impacts."
   },
+  rcp60: {
+    label: "Medium Carbon (RCP 6.0)",
+    description: "A middle pathway where emissions reductions are more limited and warming continues beyond the low-carbon case. This scenario produces climate impacts between the less and more severe futures."
+  },
   rcp85: {
     label: "High Carbon (RCP 8.5)",
     description: "Emissions continue at current rates. This is the 'business as usual' scenario where greenhouse gas emissions continue to increase through the end of the century, resulting in more severe climate impacts."

@@ -1,21 +1,47 @@
 // Custom hooks for climate data fetching
 
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import {
   fetchDistricts,
   fetchClimateVariables,
   fetchClimateData,
   fetchClimateComparison,
-  fetchClimateRange,
 } from "../api/climate";
-import type { Period, Scenario } from "../types/climate";
+import type {
+  ClimateComparisonResponse,
+  ClimateResponse,
+  Period,
+  Scenario,
+} from "../types/climate";
+import {
+  aggregateClimateComparisonResponses,
+  aggregateClimateDataResponses,
+  buildRangeFromClimateResponse,
+  getDerivedClimateVariable,
+} from "../utils/derivedClimate";
+
+const getSourceVariableIds = (variable: string): string[] =>
+  getDerivedClimateVariable(variable)?.sourceVariableIds ?? [variable];
+
+const getClimateQueryKey = (
+  prefix: string,
+  variable: string,
+  period: Period,
+  scenario: Scenario,
+  sourceVariableId?: string,
+) => [prefix, variable, period, scenario, sourceVariableId ?? variable];
+
+const allQueriesSucceeded = (
+  results: Array<{ data?: unknown; isSuccess: boolean }>,
+): boolean => results.length > 0 && results.every((result) => result.isSuccess && !!result.data);
 
 // Fetch all districts with GeoJSON geometry
 export const useDistricts = () => {
   return useQuery({
     queryKey: ["districts"],
     queryFn: fetchDistricts,
-    staleTime: Infinity, // Districts don't change
+    staleTime: Infinity,
   });
 };
 
@@ -32,43 +58,100 @@ export const useClimateVariables = () => {
 export const useClimateData = (
   variable: string,
   period: Period,
-  scenario: Scenario
+  scenario: Scenario,
 ) => {
-  return useQuery({
-    queryKey: ["climate-data", variable, period, scenario],
-    queryFn: () => fetchClimateData(variable, period, scenario),
-    enabled: !!variable,
-    staleTime: 5 * 60 * 1000,
-    placeholderData: keepPreviousData,
+  const definition = getDerivedClimateVariable(variable);
+  const sourceVariableIds = getSourceVariableIds(variable);
+  const queryResults = useQueries({
+    queries: sourceVariableIds.map((sourceVariableId) => ({
+      queryKey: getClimateQueryKey("climate-data", variable, period, scenario, sourceVariableId),
+      queryFn: () => fetchClimateData(sourceVariableId, period, scenario),
+      enabled: !!variable,
+      staleTime: 5 * 60 * 1000,
+      placeholderData: keepPreviousData,
+    })),
   });
+
+  const data = useMemo<ClimateResponse | undefined>(() => {
+    if (!allQueriesSucceeded(queryResults)) {
+      return undefined;
+    }
+
+    if (!definition) {
+      return queryResults[0]?.data as ClimateResponse | undefined;
+    }
+
+    return aggregateClimateDataResponses(
+      definition,
+      queryResults.map((result) => result.data as ClimateResponse),
+      period,
+      scenario,
+    );
+  }, [definition, period, queryResults, scenario]);
+
+  return {
+    data,
+    isLoading: queryResults.some((result) => result.isLoading),
+    isFetching: queryResults.some((result) => result.isFetching),
+    error: queryResults.find((result) => result.error)?.error ?? null,
+  };
 };
 
 // Fetch climate comparison (baseline vs future)
 export const useClimateComparison = (
   variable: string,
   period: Period,
-  scenario: Scenario
+  scenario: Scenario,
 ) => {
-  return useQuery({
-    queryKey: ["climate-comparison", variable, period, scenario],
-    queryFn: () => fetchClimateComparison(variable, period, scenario),
-    enabled: !!variable && period !== "baseline",
-    staleTime: 5 * 60 * 1000,
-    placeholderData: keepPreviousData,
+  const definition = getDerivedClimateVariable(variable);
+  const sourceVariableIds = getSourceVariableIds(variable);
+  const queryResults = useQueries({
+    queries: sourceVariableIds.map((sourceVariableId) => ({
+      queryKey: getClimateQueryKey("climate-comparison", variable, period, scenario, sourceVariableId),
+      queryFn: () => fetchClimateComparison(sourceVariableId, period, scenario),
+      enabled: !!variable && period !== "baseline",
+      staleTime: 5 * 60 * 1000,
+      placeholderData: keepPreviousData,
+    })),
   });
+
+  const data = useMemo<ClimateComparisonResponse | undefined>(() => {
+    if (period === "baseline" || !allQueriesSucceeded(queryResults)) {
+      return undefined;
+    }
+
+    if (!definition) {
+      return queryResults[0]?.data as ClimateComparisonResponse | undefined;
+    }
+
+    return aggregateClimateComparisonResponses(
+      definition,
+      queryResults.map((result) => result.data as ClimateComparisonResponse),
+      period,
+      scenario,
+    );
+  }, [definition, period, queryResults, scenario]);
+
+  return {
+    data,
+    isLoading: queryResults.some((result) => result.isLoading),
+    isFetching: queryResults.some((result) => result.isFetching),
+    error: queryResults.find((result) => result.error)?.error ?? null,
+  };
 };
 
 // Fetch min/max range for a variable
 export const useClimateRange = (
   variable: string,
   period: Period,
-  scenario: Scenario
+  scenario: Scenario,
 ) => {
-  return useQuery({
-    queryKey: ["climate-range", variable, period, scenario],
-    queryFn: () => fetchClimateRange(variable, period, scenario),
-    enabled: !!variable,
-    staleTime: 5 * 60 * 1000,
-    placeholderData: keepPreviousData,
-  });
+  const climateDataResult = useClimateData(variable, period, scenario);
+
+  return {
+    data: buildRangeFromClimateResponse(climateDataResult.data),
+    isLoading: climateDataResult.isLoading,
+    isFetching: climateDataResult.isFetching,
+    error: climateDataResult.error,
+  };
 };

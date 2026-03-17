@@ -16,11 +16,13 @@ export const PERIOD_SHORT_LABELS: Record<Period, string> = {
 
 export const SCENARIO_LABELS: Record<Scenario, string> = {
   rcp45: "Low Carbon",
+  rcp60: "Medium Carbon",
   rcp85: "High Carbon",
 };
 
 export const SCENARIO_DESCRIPTIONS: Record<Scenario, string> = {
   rcp45: "Less climate change",
+  rcp60: "Medium climate change",
   rcp85: "More climate change",
 };
 

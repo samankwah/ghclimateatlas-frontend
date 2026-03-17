@@ -3,11 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface MapLayerTogglesProps {
-  showGrid: boolean;
   showCities: boolean;
   showWater?: boolean;
   showStories?: boolean;
-  onToggleGrid: () => void;
   onToggleWater?: () => void;
   onToggleCities: () => void;
   onToggleStories?: () => void;
@@ -15,11 +13,9 @@ interface MapLayerTogglesProps {
 }
 
 const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
-  showGrid,
   showCities,
   showWater = true,
   showStories = true,
-  onToggleGrid,
   onToggleWater,
   onToggleCities,
   onToggleStories,
@@ -68,21 +64,6 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <span className="toggle-label">Search</span>
-        </button>
-
-        <button
-          className={`layer-toggle ${showGrid ? "active" : ""}`}
-          onClick={onToggleGrid}
-          title="Toggle Grid"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <line x1="3" y1="9" x2="21" y2="9" />
-            <line x1="3" y1="15" x2="21" y2="15" />
-            <line x1="9" y1="3" x2="9" y2="21" />
-            <line x1="15" y1="3" x2="15" y2="21" />
-          </svg>
-          <span className="toggle-label">Grid</span>
         </button>
 
         {onToggleWater && (

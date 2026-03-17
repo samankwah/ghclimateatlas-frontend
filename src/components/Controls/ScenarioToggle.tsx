@@ -15,6 +15,11 @@ const SCENARIOS: { value: Scenario; label: string; description: string }[] = [
     description: "Moderate emissions - Less climate change",
   },
   {
+    value: "rcp60",
+    label: "RCP 6.0",
+    description: "Middle pathway - Medium climate change",
+  },
+  {
     value: "rcp85",
     label: "RCP 8.5",
     description: "High emissions - More climate change",

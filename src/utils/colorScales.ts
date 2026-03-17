@@ -6,6 +6,7 @@ import {
   interpolateBlues,
   interpolateBrBG,
   interpolateRdBu,
+  interpolatePuBuGn,
 } from "d3-scale-chromatic";
 
 export type ColorScaleType =
@@ -13,6 +14,7 @@ export type ColorScaleType =
   | "precipitation"
   | "hot_days"
   | "dry_days"
+  | "sea_level"
   | "diverging";
 
 const DEGREE_C = "\u00B0C";
@@ -53,6 +55,11 @@ export const divergingScale = (value: number, min: number, max: number): string 
   return scale(value);
 };
 
+export const seaLevelScale = (value: number, min: number, max: number): string => {
+  const scale = scaleSequential(interpolatePuBuGn).domain([min, max]);
+  return scale(value);
+};
+
 export const getColorScale = (
   colorScaleType: ColorScaleType
 ): ((value: number, min: number, max: number) => string) => {
@@ -67,6 +74,8 @@ export const getColorScale = (
       return dryDaysScale;
     case "diverging":
       return divergingScale;
+    case "sea_level":
+      return seaLevelScale;
     default:
       return temperatureScale;
   }
@@ -104,6 +113,12 @@ export const formatValue = (value: number, unit: string): string => {
   if (normalizedUnit === "days" || normalizedUnit === "events") {
     return `${Math.round(value)} ${normalizedUnit}`;
   }
+  if (normalizedUnit === "cm") {
+    return `${value.toFixed(1)} ${normalizedUnit}`;
+  }
+  if (normalizedUnit === "index") {
+    return `${value.toFixed(1)} ${normalizedUnit}`;
+  }
   if (normalizedUnit === DEGREE_C_DAYS || normalizedUnit === "Degree Days" || normalizedUnit === "MHU") {
     return `${Math.round(value).toLocaleString()} ${normalizedUnit}`;
   }
@@ -122,6 +137,9 @@ export const formatChange = (change: number, unit: string): string => {
   }
   if (normalizedUnit === "days" || normalizedUnit === "events") {
     return `${sign}${Math.round(change)} ${normalizedUnit}`;
+  }
+  if (normalizedUnit === "cm" || normalizedUnit === "index") {
+    return `${sign}${change.toFixed(1)} ${normalizedUnit}`;
   }
   if (normalizedUnit === DEGREE_C_DAYS || normalizedUnit === "Degree Days" || normalizedUnit === "MHU") {
     return `${sign}${Math.round(change).toLocaleString()} ${normalizedUnit}`;

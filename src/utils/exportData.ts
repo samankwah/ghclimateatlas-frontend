@@ -3,6 +3,12 @@
 import type { TimeSeriesPoint } from "../hooks/useDistrictTimeSeries";
 import { normalizeUnit } from "./colorScales";
 
+const getScenarioExportLabel = (scenario: string): string => {
+  if (scenario === "rcp45") return "Low Carbon (RCP 4.5)";
+  if (scenario === "rcp60") return "Medium Carbon (RCP 6.0)";
+  return "High Carbon (RCP 8.5)";
+};
+
 interface ExportOptions {
   districtName: string;
   regionName: string;
@@ -31,7 +37,7 @@ export const exportToCSV = (options: ExportOptions): void => {
     `# District: ${districtName}`,
     `# Region: ${regionName}`,
     `# Variable: ${variableName}`,
-    `# Scenario: ${scenario === "rcp45" ? "Low Carbon (RCP 4.5)" : "High Carbon (RCP 8.5)"}`,
+    `# Scenario: ${getScenarioExportLabel(scenario)}`,
     `# Generated: ${new Date().toISOString()}`,
     "# Data Source: CORDEX-Africa",
     "",
@@ -62,8 +68,7 @@ export const exportToPDF = (options: ExportOptions): void => {
   const { districtName, regionName, variableName, unit, scenario, data } = options;
   const displayUnit = normalizeUnit(unit);
 
-  const scenarioLabel =
-    scenario === "rcp45" ? "Low Carbon (RCP 4.5)" : "High Carbon (RCP 8.5)";
+  const scenarioLabel = getScenarioExportLabel(scenario);
 
   const formatValue = (value: number) => {
     if (displayUnit === "°C") return `${value.toFixed(1)}${displayUnit}`;

@@ -22,9 +22,16 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
   scenario = "rcp45",
   onScenarioChange,
 }) => {
+  const scenarioValue = scenario === "rcp45" ? 0 : scenario === "rcp60" ? 1 : 2;
+
   const handleScenarioSlider = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onScenarioChange) {
-      onScenarioChange(e.target.value === "0" ? "rcp45" : "rcp85");
+      const nextScenario = e.target.value === "0"
+        ? "rcp45"
+        : e.target.value === "1"
+          ? "rcp60"
+          : "rcp85";
+      onScenarioChange(nextScenario);
     }
   };
 
@@ -41,19 +48,20 @@ const TimelineBar: React.FC<TimelineBarProps> = ({
       <div className="timeline-section" data-tour="climate-change">
         <span className="section-label">
           CLIMATE CHANGE
-          <span className="info-icon" title="RCP scenario - Less (RCP4.5) or More (RCP8.5) carbon emissions">i</span>
+          <span className="info-icon" title="Climate change scenario - Less (RCP4.5), Medium (RCP6.0), or More (RCP8.5) emissions">i</span>
         </span>
         <div className="scenario-slider">
           <input
             type="range"
             min="0"
-            max="1"
+            max="2"
             step="1"
-            value={scenario === "rcp45" ? 0 : 1}
+            value={scenarioValue}
             onChange={handleScenarioSlider}
           />
-          <div className="scenario-labels">
+          <div className="scenario-labels climate-change-labels">
             <span className={scenario === "rcp45" ? "active" : ""}>LESS</span>
+            <span className={scenario === "rcp60" ? "active" : ""}>MEDIUM</span>
             <span className={scenario === "rcp85" ? "active" : ""}>MORE</span>
           </div>
         </div>

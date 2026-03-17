@@ -51,6 +51,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   const baselineDisplayValue = period === "baseline" ? baselineValue : comparisonData?.baseline;
   const futureValue = comparisonData?.future;
   const change = comparisonData?.change;
+  const hasComparison = period !== "baseline" && futureValue !== undefined;
 
   return (
     <div className="district-detail-panel">
@@ -71,28 +72,47 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         </div>
 
         <div className="header-period-comparison">
-          <div className="period-range">
-            <span className="period-baseline">{getPeriodRangeLabel("baseline")}</span>
-            <span className="period-future">{selectedPeriodLabel}</span>
-          </div>
+          {hasComparison ? (
+            <>
+              <div className="period-range">
+                <span className="period-baseline">{getPeriodRangeLabel("baseline")}</span>
+                <span className="period-future">{selectedPeriodLabel}</span>
+              </div>
 
-          <div className="value-display">
-            <span className="value-baseline">
-              {baselineDisplayValue !== undefined ? formatValue(baselineDisplayValue, unit) : "-"}
-            </span>
-            <span className="value-arrow">{"->"}</span>
-            <span className="value-future">
-              {futureValue !== undefined ? formatValue(futureValue, unit) : "-"}
-            </span>
-          </div>
+              <div className="value-display">
+                <span className="value-baseline">
+                  {baselineDisplayValue !== undefined ? formatValue(baselineDisplayValue, unit) : "-"}
+                </span>
+                <span className="value-arrow" aria-hidden="true">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12h14" />
+                    <path d="m13 6 6 6-6 6" />
+                  </svg>
+                </span>
+                <span className="value-future">
+                  {futureValue !== undefined ? formatValue(futureValue, unit) : "-"}
+                </span>
+              </div>
 
-          {change !== undefined && (
-            <div className={`change-indicator ${change < 0 ? "decrease" : ""}`}>
-              <span className="change-direction">{change >= 0 ? "Up" : "Down"}</span>
-              <span className="change-triangle">{change >= 0 ? "△" : "▽"}</span>
-              <span className={`change-value ${change >= 0 ? "increase" : "decrease"}`}>
-                {change >= 0 ? "+" : ""}
-                {change.toFixed(1)}
+              {change !== undefined && (
+                <div className={`change-indicator ${change < 0 ? "decrease" : ""}`}>
+                  <span className="change-direction">{change >= 0 ? "Up" : "Down"}</span>
+                  <span className="change-triangle" aria-hidden="true">
+                    {change >= 0 ? "▲" : "▼"}
+                  </span>
+                  <span className={`change-value ${change >= 0 ? "increase" : "decrease"}`}>
+                    {change >= 0 ? "+" : ""}
+                    {change.toFixed(1)}
+                    {unit}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="baseline-only-display">
+              <span className="period-baseline">{getPeriodRangeLabel("baseline")}</span>
+              <span className="value-baseline">
+                {baselineDisplayValue !== undefined ? formatValue(baselineDisplayValue, unit) : "-"}
               </span>
             </div>
           )}
@@ -108,6 +128,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         <ClimateChart
           data={timeSeriesData}
           unit={unit}
+          variableId={variable}
           variableName={variableName}
           selectedPeriod={period}
           futurePeriodLabel={selectedPeriodLabel}
