@@ -164,15 +164,15 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     return {
       fillColor: isIndirectSeaRisk ? "rgba(8, 47, 73, 0.65)" : undefined,
       fillOpacity: isIndirectSeaRisk ? 0.22 : 0,
-      weight: isSelected ? 2 : 0.5,
-      color: isSelected ? "#fff" : "#333",
-      opacity: isSelected ? 0.8 : 0.3,
+      weight: isSelected ? 2.2 : 0.8,
+      color: isSelected ? "#0f172a" : "#475569",
+      opacity: isSelected ? 0.95 : 0.6,
     };
   }, [activeVariableId]);
 
   const style = useCallback((feature: Feature | undefined): PathOptions => {
     if (!feature?.properties) {
-      return { fillOpacity: 0, weight: 0.5, color: "#333", opacity: 0.3 };
+      return { fillOpacity: 0, weight: 0.8, color: "#475569", opacity: 0.6 };
     }
     const districtId = feature.properties.id as string;
     const districtName = feature.properties.name as string;
@@ -276,7 +276,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
           minValue={minValue}
           maxValue={maxValue}
           resolution={0.1}
-          opacity={0.75}
+          opacity={0.92}
           idwPower={2}
         />
       )}
@@ -295,9 +295,9 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       {/* Regional boundaries overlay */}
       <RegionalBoundaries
         visible={true}
-        color="#ffffff"
-        weight={2}
-        opacity={0.7}
+        color="#64748b"
+        weight={1.4}
+        opacity={0.5}
       />
 
       {/* Lat/Lon grid overlay */}

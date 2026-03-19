@@ -12,7 +12,7 @@ interface WaterBodiesLayerProps {
 
 const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
   visible = true,
-  opacity = 0.4,
+  opacity = 0.55,
 }) => {
   const [waterData, setWaterData] = useState<FeatureCollection | null>(null);
 
@@ -33,9 +33,9 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
       return {
         fillColor: "rgba(65, 145, 220, 1)",
         fillOpacity: isPerennial ? opacity : opacity * 0.6,
-        weight: 0.5,
+        weight: 0.7,
         color: "#4191dc",
-        opacity: 0.6,
+        opacity: 0.75,
         interactive: false,
       };
     },
