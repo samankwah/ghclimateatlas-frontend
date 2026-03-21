@@ -197,13 +197,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
     const padding = (maxValue - minValue) * 0.15;
-    // Compute a reasonable tick interval based on the actual y-axis range
-    const computeTickInterval = (yRange: number): number => {
-      if (yRange <= 4) return 1;
-      if (yRange <= 10) return 2;
-      if (yRange <= 20) return 5;
-      return Math.ceil(yRange / 5);
-    };
 
     const yAxisStep =
       isSeaLevelRiseChart
