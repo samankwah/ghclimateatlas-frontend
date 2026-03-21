@@ -3,7 +3,6 @@
 import { scaleSequential } from "d3-scale";
 import {
   interpolateYlOrRd,
-  interpolateBlues,
   interpolateGnBu,
   interpolateBrBG,
   interpolateRdBu,
