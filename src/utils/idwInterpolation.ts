@@ -15,6 +15,7 @@ export interface InterpolationOptions {
 export interface GridResult {
   grid: number[][];
   mask: boolean[][]; // true if point is inside Ghana boundary
+  coverage: number[][]; // 0..1 fraction of each cell covered by Ghana boundary
   bounds: {
     north: number;
     south: number;
@@ -190,10 +191,12 @@ export function generateInterpolatedGrid(
 
   const grid: number[][] = [];
   const mask: boolean[][] = [];
+  const coverage: number[][] = [];
 
   for (let row = 0; row < rows; row++) {
     const gridRow: number[] = [];
     const maskRow: boolean[] = [];
+    const coverageRow: number[] = [];
     const lat = bounds.north - row * resolution - resolution / 2;
 
     for (let col = 0; col < cols; col++) {
@@ -203,24 +206,53 @@ export function generateInterpolatedGrid(
 
       // Check if point is inside Ghana boundary
       if (ghanaBoundary) {
-        maskRow.push(pointInGhanaBoundary(lon, lat, ghanaBoundary));
+        const coverageValue = estimateCellCoverage(lon, lat, resolution, ghanaBoundary);
+        coverageRow.push(coverageValue);
+        maskRow.push(coverageValue > 0);
       } else {
         maskRow.push(true); // No boundary = show everything
+        coverageRow.push(1);
       }
     }
 
     grid.push(gridRow);
     mask.push(maskRow);
+    coverage.push(coverageRow);
   }
 
   return {
     grid,
     mask,
+    coverage,
     bounds,
     resolution,
     rows,
     cols,
   };
+}
+
+function estimateCellCoverage(
+  lon: number,
+  lat: number,
+  resolution: number,
+  ghanaBoundary: { type: string; coordinates: Polygon | MultiPolygon }[]
+): number {
+  const offsets = [-1 / 3, 0, 1 / 3];
+  let insideSamples = 0;
+  let totalSamples = 0;
+
+  for (const latOffset of offsets) {
+    for (const lonOffset of offsets) {
+      totalSamples += 1;
+      const sampleLat = lat + latOffset * (resolution / 2);
+      const sampleLon = lon + lonOffset * (resolution / 2);
+      if (pointInGhanaBoundary(sampleLon, sampleLat, ghanaBoundary)) {
+        insideSamples += 1;
+      }
+    }
+  }
+
+  return insideSamples / totalSamples;
 }
 
 /**
@@ -289,7 +321,7 @@ export function gridToImageData(
   colorScale: (value: number, min: number, max: number) => string,
   opacity: number = 0.8
 ): ImageData {
-  const { grid, mask, rows, cols } = gridResult;
+  const { grid, mask, coverage, rows, cols } = gridResult;
   const imageData = new ImageData(cols, rows);
 
   for (let row = 0; row < rows; row++) {
@@ -309,11 +341,12 @@ export function gridToImageData(
       const value = grid[row][col];
       const color = valueToColor(value, minValue, maxValue, colorScale);
       const [r, g, b] = parseColor(color);
+      const alpha = Math.round(opacity * coverage[row][col] * 255);
 
       imageData.data[pixelIndex] = r;
       imageData.data[pixelIndex + 1] = g;
       imageData.data[pixelIndex + 2] = b;
-      imageData.data[pixelIndex + 3] = Math.round(opacity * 255);
+      imageData.data[pixelIndex + 3] = alpha;
     }
   }
 
