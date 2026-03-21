@@ -11,9 +11,9 @@ import type {
   Scenario,
 } from "../types/climate";
 
-const PRODUCTION_API_BASE = "https://ghana-climate-atlas-api.onrender.com/api";
+const PRODUCTION_API_BASE = "https://ghclimateatlas-backend.onrender.com/api";
 const LEGACY_API_HOSTS = new Set([
-  "ghclimateatlas-backend.onrender.com",
+  "ghana-climate-atlas-api.onrender.com",
 ]);
 
 const normalizeApiBase = (value?: string) => {
@@ -46,7 +46,7 @@ const getDefaultApiBase = () => {
     }
   }
 
-  // Production fallback inferred from the Render service name in backend/render.yaml.
+  // Production fallback inferred from the active Render service.
   return PRODUCTION_API_BASE;
 };
 

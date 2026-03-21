@@ -57,10 +57,10 @@ The frontend expects the FastAPI backend to serve climate and district data. By 
 For hosted deployments such as Netlify, set:
 
 ```bash
-VITE_API_URL=https://ghana-climate-atlas-api.onrender.com/api
+VITE_API_URL=https://ghclimateatlas-backend.onrender.com/api
 ```
 
-If an older deployment still points to `https://ghclimateatlas-backend.onrender.com`, update it to the URL above. The frontend now normalizes that legacy hostname back to the intended Render service, but the deployment environment should still be corrected.
+If an older deployment still points to `https://ghana-climate-atlas-api.onrender.com`, update it to the URL above. The frontend normalizes that stale hostname back to the active Render service, but the deployment environment should still be corrected.
 
 ## Getting Started
 
