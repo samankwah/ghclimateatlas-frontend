@@ -1,37 +1,49 @@
 // Full-screen modal for displaying detailed parameter information
 
-import { useState, useEffect, useMemo } from 'react';
-import { getParameterDescription } from './parameterDescriptions';
-import { generateLegendStops } from '../../utils/colorScales';
-import type { Period, Scenario } from '../../types/climate';
+import { useState, useEffect, useMemo } from "react";
+import { getParameterDescription } from "./parameterDescriptions";
+import { generateLegendStops } from "../../utils/colorScales";
+import type { Period, Scenario } from "../../types/climate";
 
-const SCENARIO_INFO: Record<Scenario, { label: string; description: string }> = {
-  rcp45: {
-    label: "Low Carbon (RCP 4.5)",
-    description: "A moderate pathway where emissions peak around 2040 and then decline. This scenario assumes significant global efforts to reduce greenhouse gas emissions, resulting in less severe climate impacts."
-  },
-  rcp85: {
-    label: "High Carbon (RCP 8.5)",
-    description: "Emissions continue at current rates. This is the 'business as usual' scenario where greenhouse gas emissions continue to increase through the end of the century, resulting in more severe climate impacts."
-  },
-};
+const SCENARIO_INFO: Record<Scenario, { label: string; description: string }> =
+  {
+    rcp26: {
+      label: "Lower Carbon (RCP 2.6)",
+      description:
+        "A strong mitigation pathway where emissions fall quickly. This produces the least warming and the mildest long-term climate impacts among the scenarios shown in the atlas.",
+    },
+    rcp45: {
+      label: "Moderate Carbon (RCP 4.5)",
+      description:
+        "A moderate pathway where emissions peak around 2040 and then decline. This scenario assumes significant global efforts to reduce greenhouse gas emissions, resulting in less severe climate impacts.",
+    },
+    rcp85: {
+      label: "High Carbon (RCP 8.5)",
+      description:
+        "Emissions continue at current rates. This is the 'business as usual' scenario where greenhouse gas emissions continue to increase through the end of the century, resulting in more severe climate impacts.",
+    },
+  };
 
 const PERIOD_INFO: Record<Period, { label: string; description: string }> = {
   baseline: {
-    label: "Recent Past (1991-2020)",
-    description: "The observed reference period used to compare how climate conditions have changed and will continue to change across Ghana."
+    label: "Reference (1991-2020)",
+    description:
+      "The observed reference period used to compare how climate conditions have changed and will continue to change across Ghana.",
   },
   "2030": {
-    label: "The Immediate Future (2021-2050)",
-    description: "Climate change begins to take hold in the coming years. Changes are already underway and will become more noticeable within the next two decades."
+    label: "The Immediate Future (2021-2040)",
+    description:
+      "Climate change begins to take hold in the coming years. Changes are already underway and will become more noticeable within the next two decades.",
   },
   "2050": {
-    label: "Mid-Century (2041-2070)",
-    description: "A period of significant transition where the effects of climate change become clearly established across Ghana's regions."
+    label: "Mid-Century (2041-2060)",
+    description:
+      "A period of significant transition where the effects of climate change become clearly established across Ghana's regions.",
   },
   "2080": {
-    label: "Late Century (2051-2080)",
-    description: "The long-term outlook where the full extent of climate change impacts will be felt, varying significantly depending on the emission pathway followed."
+    label: "Late Century (2080-2100)",
+    description:
+      "The long-term outlook where the full extent of climate change impacts will be felt, varying significantly depending on the emission pathway followed.",
   },
 };
 
@@ -45,7 +57,14 @@ interface ParameterInfoModalProps {
 }
 
 const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <line x1="18" y1="6" x2="6" y2="18" />
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
@@ -60,8 +79,8 @@ const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
     stroke="currentColor"
     strokeWidth="2"
     style={{
-      transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)',
-      transition: 'transform 0.2s ease'
+      transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+      transition: "transform 0.2s ease",
     }}
   >
     <path d="M9 18l6-6-6-6" />
@@ -69,7 +88,14 @@ const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
 );
 
 const GlobeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="12" cy="12" r="10" />
     <line x1="2" y1="12" x2="22" y2="12" />
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -87,26 +113,29 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
   const [techExpanded, setTechExpanded] = useState(false);
   const description = getParameterDescription(parameterId);
 
-  const scenarioInfo = SCENARIO_INFO[scenario] ?? { label: scenario, description: "" };
+  const scenarioInfo = SCENARIO_INFO[scenario] ?? {
+    label: scenario,
+    description: "",
+  };
   const periodInfo = PERIOD_INFO[period] ?? { label: period, description: "" };
 
   // Close on Escape key
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -116,11 +145,15 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
       description.legendMin,
       description.legendMax,
       description.colorScaleType,
-      10
+      10,
     );
-    const colors = stops.map((s) => s.color).join(', ');
+    const colors = stops.map((s) => s.color).join(", ");
     return { background: `linear-gradient(to right, ${colors})` };
-  }, [description.legendMin, description.legendMax, description.colorScaleType]);
+  }, [
+    description.legendMin,
+    description.legendMax,
+    description.colorScaleType,
+  ]);
 
   return (
     <div className="parameter-modal-overlay" onClick={onClose}>
@@ -153,7 +186,11 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
         <div className="parameter-modal-right">
           <div className="modal-header">
             <h2>About this variable</h2>
-            <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
+            <button
+              className="modal-close-btn"
+              onClick={onClose}
+              aria-label="Close modal"
+            >
               <CloseIcon />
             </button>
           </div>
@@ -174,7 +211,9 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
               {description.formula && (
                 <p className="modal-formula">{description.formula}</p>
               )}
-              <p className="modal-tech-text">{description.technicalDescription}</p>
+              <p className="modal-tech-text">
+                {description.technicalDescription}
+              </p>
             </div>
           )}
 
@@ -184,8 +223,12 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
             <p className="modal-legend-unit">{description.unit}</p>
             <div className="modal-legend-gradient" style={gradientStyle} />
             <div className="modal-legend-labels">
-              <span>{description.legendMin} {description.unit}</span>
-              <span>{description.legendMax} {description.unit}</span>
+              <span>
+                {description.legendMin} {description.unit}
+              </span>
+              <span>
+                {description.legendMax} {description.unit}
+              </span>
             </div>
           </div>
         </div>

@@ -10,9 +10,14 @@ interface ScenarioToggleProps {
 
 const SCENARIOS: { value: Scenario; label: string; description: string }[] = [
   {
+    value: "rcp26",
+    label: "RCP 2.6",
+    description: "Strong emissions cuts - Less climate change",
+  },
+  {
     value: "rcp45",
     label: "RCP 4.5",
-    description: "Moderate emissions - Less climate change",
+    description: "Moderate emissions - Moderate climate change",
   },
   {
     value: "rcp85",

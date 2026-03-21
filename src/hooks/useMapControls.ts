@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { Period, Scenario, MapState } from "../types/climate";
 
 const DEFAULT_STATE: MapState = {
-  variable: "annual_max_temp",
+  variable: "annual_mean_temp",
   period: "baseline",
   scenario: "rcp45",
   selectedDistrictId: null,
@@ -12,7 +12,7 @@ const DEFAULT_STATE: MapState = {
 };
 
 const PERIOD_VALUES: Period[] = ["baseline", "2030", "2050", "2080"];
-const SCENARIO_VALUES: Scenario[] = ["rcp45", "rcp85"];
+const SCENARIO_VALUES: Scenario[] = ["rcp26", "rcp45", "rcp85"];
 
 const getInitialState = (): MapState => {
   if (typeof window === "undefined") {

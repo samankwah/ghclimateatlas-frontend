@@ -8,12 +8,13 @@ import {
   CATEGORY_PARAMETERS,
   CATEGORY_COLORS,
   getCategoryLabel,
-  PARAMETER_TO_VARIABLE,
+  getParameterVariableId,
+  hasDerivedVariableSources,
   type Parameter,
 } from './categoryParameters';
 import type { ClimateVariable, Period, Scenario } from '../../types/climate';
 
-export type Category = "hot_weather" | "cold_weather" | "temperature" | "precipitation" | "agriculture";
+export type Category = "temperature" | "precipitation" | "sea_level";
 
 interface CategoryTabsProps {
   activeCategory: Category;
@@ -25,20 +26,6 @@ interface CategoryTabsProps {
   availableVariables?: ClimateVariable[];
   controlsExpanded?: boolean;
 }
-
-const SunIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="4" />
-    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-  </svg>
-);
-
-const SnowflakeIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="2" x2="12" y2="22" />
-    <path d="M20 16l-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4" />
-  </svg>
-);
 
 const ThermometerIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -52,10 +39,11 @@ const DropletIcon = () => (
   </svg>
 );
 
-const LeafIcon = () => (
+const WavesIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    <path d="M2 14c1.4 0 1.4-1 2.8-1s1.4 1 2.8 1 1.4-1 2.8-1 1.4 1 2.8 1 1.4-1 2.8-1 1.4 1 2.8 1" />
+    <path d="M2 18c1.4 0 1.4-1 2.8-1s1.4 1 2.8 1 1.4-1 2.8-1 1.4 1 2.8 1 1.4-1 2.8-1 1.4 1 2.8 1" />
+    <path d="M4 10c2.5-3 5-4 8-4s5.5 1 8 4" />
   </svg>
 );
 
@@ -66,15 +54,12 @@ interface CategoryConfig {
 }
 
 const CATEGORIES: CategoryConfig[] = [
-  { id: "hot_weather", label: "Hot Weather", icon: SunIcon },
-  { id: "cold_weather", label: "Cold Weather", icon: SnowflakeIcon },
   { id: "temperature", label: "Temperature", icon: ThermometerIcon },
   { id: "precipitation", label: "Precipitation", icon: DropletIcon },
-  { id: "agriculture", label: "Agriculture", icon: LeafIcon },
+  { id: "sea_level", label: "Sea Level", icon: WavesIcon },
 ];
 
 type SelectionsState = Record<Category, string[]>;
-type ActiveParentState = Record<Category, string | null>;
 type ParameterLookupResult = {
   parameter: Parameter;
   ancestors: Parameter[];
@@ -82,26 +67,14 @@ type ParameterLookupResult = {
 
 const EMPTY_SELECTIONS: SelectionsState = {
   precipitation: [],
-  agriculture: [],
-  hot_weather: [],
   temperature: [],
-  cold_weather: [],
-};
-
-const INITIAL_ACTIVE_PARENTS: ActiveParentState = {
-  precipitation: null,
-  agriculture: null,
-  hot_weather: null,
-  temperature: null,
-  cold_weather: null,
+  sea_level: [],
 };
 
 const cloneEmptySelections = (): SelectionsState => ({
   precipitation: [],
-  agriculture: [],
-  hot_weather: [],
   temperature: [],
-  cold_weather: [],
+  sea_level: [],
 });
 
 const findParameterWithAncestors = (
@@ -136,38 +109,15 @@ const findParameterWithAncestors = (
 const findParameterById = (categoryId: Category, parameterId: string): Parameter | undefined =>
   findParameterWithAncestors(CATEGORY_PARAMETERS[categoryId], parameterId)?.parameter;
 
-const getAnnualFallbackVariableId = (parameter: Parameter, ancestors: Parameter[]): string | null => {
-  const lineage = [...ancestors, parameter].map((item) => item.id);
-
-  if (lineage.includes("mean_temp")) {
-    return "annual_mean_temp";
-  }
-
-  if (lineage.includes("max_temp")) {
-    return "annual_max_temp";
-  }
-
-  if (lineage.includes("min_temp")) {
-    return "annual_min_temp";
-  }
-
-  if (lineage.includes("precipitation_total")) {
-    if (parameter.id === "precipitation_growing_season") {
-      return "wet_season_precipitation";
+const findParameterByInfoId = (parameters: Parameter[], infoId: string): Parameter | undefined => {
+  for (const param of parameters) {
+    if (param.infoId === infoId) return param;
+    if (param.children?.length) {
+      const found = findParameterByInfoId(param.children, infoId);
+      if (found) return found;
     }
-
-    if (
-      parameter.id === "precipitation_spring" ||
-      parameter.id === "precipitation_summer" ||
-      parameter.id === "precipitation_fall"
-    ) {
-      return "wet_season_precipitation";
-    }
-
-    return "annual_precipitation";
   }
-
-  return null;
+  return undefined;
 };
 
 const getSupportedVariableId = (
@@ -177,7 +127,7 @@ const getSupportedVariableId = (
 ): string | undefined => {
   const match = findParameterWithAncestors(CATEGORY_PARAMETERS[categoryId], parameterId);
   if (!match) {
-    return PARAMETER_TO_VARIABLE[parameterId];
+    return getParameterVariableId(parameterId);
   }
 
   const { parameter, ancestors } = match;
@@ -189,15 +139,17 @@ const getSupportedVariableId = (
   };
 
   addCandidate(parameter.variableId);
-  addCandidate(PARAMETER_TO_VARIABLE[parameter.id]);
+  addCandidate(getParameterVariableId(parameter.id));
 
   for (let index = ancestors.length - 1; index >= 0; index -= 1) {
     const ancestor = ancestors[index];
     addCandidate(ancestor.variableId);
-    addCandidate(PARAMETER_TO_VARIABLE[ancestor.id]);
+    addCandidate(getParameterVariableId(ancestor.id));
   }
 
-  addCandidate(getAnnualFallbackVariableId(parameter, ancestors));
+  if (hasDerivedVariableSources(parameter.id, availableVariableIds)) {
+    addCandidate(parameter.id);
+  }
 
   if (parameter.id === "wet_days") {
     addCandidate("wet_days");
@@ -248,7 +200,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   const [openPanel, setOpenPanel] = useState<Category | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [selections, setSelections] = useState<SelectionsState>(EMPTY_SELECTIONS);
-  const [activeParents, setActiveParents] = useState<ActiveParentState>(INITIAL_ACTIVE_PARENTS);
   const [modalParam, setModalParam] = useState<{
     id: string;
     label: string;
@@ -262,20 +213,11 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   const handleCategoryClick = (categoryId: Category) => {
     if (openPanel === categoryId) {
       setOpenPanel(null);
-      setActiveParents(INITIAL_ACTIVE_PARENTS);
       return;
     }
 
     setOpenPanel(categoryId);
     onCategoryChange(categoryId);
-    setActiveParents(INITIAL_ACTIVE_PARENTS);
-  };
-
-  const handleParentSelect = (categoryId: Category, parameterId: string | null) => {
-    setActiveParents((current) => ({
-      ...current,
-      [categoryId]: parameterId,
-    }));
   };
 
   const handleToggleParameter = (categoryId: Category, parameterId: string) => {
@@ -298,11 +240,11 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
     }
 
     setOpenPanel(null);
-    setActiveParents(INITIAL_ACTIVE_PARENTS);
   };
 
   const handleOpenParameterInfo = (categoryId: Category, parameterId: string) => {
-    const param = findParameterById(categoryId, parameterId);
+    const param = findParameterById(categoryId, parameterId)
+      ?? findParameterByInfoId(CATEGORY_PARAMETERS[categoryId], parameterId);
 
     setModalParam({
       id: param?.infoId ?? parameterId,
@@ -313,7 +255,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
   const handleClosePanel = () => {
     setOpenPanel(null);
-    setActiveParents(INITIAL_ACTIVE_PARENTS);
   };
 
   const handleCloseModal = () => {
@@ -362,8 +303,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
                     categoryColor={categoryColor}
                     parameters={CATEGORY_PARAMETERS[cat.id].map((param) => markParameterAvailability(cat.id, param, availableVariableIds))}
                     selectedParameters={selections[cat.id]}
-                    activeParentId={activeParents[cat.id]}
-                    onParentSelect={(paramId) => handleParentSelect(cat.id, paramId)}
                     onToggleParameter={(paramId) => handleToggleParameter(cat.id, paramId)}
                     onOpenParameterInfo={(paramId) => handleOpenParameterInfo(cat.id, paramId)}
                     onClose={handleClosePanel}
@@ -404,8 +343,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
             categoryColor={CATEGORY_COLORS[openPanel]}
             parameters={CATEGORY_PARAMETERS[openPanel].map((param) => markParameterAvailability(openPanel, param, availableVariableIds))}
             selectedParameters={selections[openPanel]}
-            activeParentId={activeParents[openPanel]}
-            onParentSelect={(paramId) => handleParentSelect(openPanel, paramId)}
             onToggleParameter={(paramId) => handleToggleParameter(openPanel, paramId)}
             onOpenParameterInfo={(paramId) => handleOpenParameterInfo(openPanel, paramId)}
             onClose={handleClosePanel}

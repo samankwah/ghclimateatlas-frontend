@@ -8,6 +8,7 @@ import {
   getScenarioDescription,
   getScenarioLabel,
 } from "../../utils/climateLabels";
+import { isSeaLevelVariable } from "../../utils/coastalExposure";
 
 interface HeaderProps {
   variable: ClimateVariable | undefined;
@@ -25,6 +26,13 @@ interface HeaderProps {
   onOpenTour: () => void;
   onShare: () => void;
 }
+
+const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
+  sea_level_rise: "Sea Level Rise",
+  storm_surge_flood_risk: "Storm Surge Flood Risk",
+  coastal_erosion_risk: "Coastal Erosion Risk",
+  saltwater_intrusion_risk: "Saltwater Intrusion Risk",
+};
 
 const Header: React.FC<HeaderProps> = ({
   variable,
@@ -56,8 +64,13 @@ const Header: React.FC<HeaderProps> = ({
   }, [minValue, maxValue, colorScaleType, showChange]);
 
   const displayUnit = normalizeUnit(variable?.unit || "\u00B0C");
-  const headerTitle = parameterLabel || variable?.name || "Climate Variable";
-  const mobileHeaderTitle = variable?.name || parameterLabel || "Climate Variable";
+  const rawHeaderTitle = parameterLabel || variable?.name || "Climate Variable";
+  const conciseHeaderTitle =
+    variable?.id && isSeaLevelVariable(variable.id)
+      ? SEA_LEVEL_HEADER_TITLES[variable.id] || rawHeaderTitle
+      : rawHeaderTitle;
+  const headerTitle = conciseHeaderTitle;
+  const mobileHeaderTitle = conciseHeaderTitle;
   const scenarioSummary =
     period !== "baseline"
       ? `${getScenarioLabel(scenario)} -> ${getScenarioDescription(scenario)} | ${getPeriodRangeLabel(period)}`

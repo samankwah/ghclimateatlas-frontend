@@ -40,7 +40,7 @@ function ClimateAtlas() {
   const [, setHoveredDistrict] = useState<string | null>(null);
 
   // Map layer toggles state
-  const [showGrid, setShowGrid] = useState(true);
+  const [showGrid] = useState(true);
   const [showCities, setShowCities] = useState(true);
   const [showWater, setShowWater] = useState(true);
   const [showStories, setShowStories] = useState(true);
@@ -328,6 +328,7 @@ function ClimateAtlas() {
             climateData={displayedClimateData}
             comparisonData={displayedComparisonData}
             showChange={showChange}
+            activeVariableId={variable}
             colorScaleType={colorScaleType}
             minValue={minValue}
             maxValue={maxValue}
@@ -335,6 +336,7 @@ function ClimateAtlas() {
             onDistrictClick={selectDistrict}
             onDistrictHover={setHoveredDistrict}
             showCities={showCities}
+            unit={effectiveVariable?.unit || ""}
             dataVersion={`${variable}-${period}-${scenario}`}
             showGrid={showGrid}
             showWater={showWater}
@@ -344,10 +346,8 @@ function ClimateAtlas() {
 
         {/* Floating sidebar with layer toggles + search */}
         <MapLayerToggles
-          showGrid={showGrid}
           showCities={showCities}
           showStories={showStories}
-          onToggleGrid={() => setShowGrid(!showGrid)}
           showWater={showWater}
           onToggleCities={() => setShowCities(!showCities)}
           onToggleWater={() => setShowWater(!showWater)}

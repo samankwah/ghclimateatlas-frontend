@@ -26,7 +26,7 @@ const TOUR_STEPS: TourStep[] = [
     title: "Scenarios",
     paragraphs: [
       "Use these controls to toggle between scenarios resulting in more or less climate change based on future greenhouse gas emissions.",
-      "The map can also display different time periods so you can compare the recent past with future conditions.",
+      "The map can also display different time periods so you can compare the reference period with future conditions.",
       "You can click on the info icons to get more information about these greenhouse gas scenarios and time periods.",
     ],
   },

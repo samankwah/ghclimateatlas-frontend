@@ -55,10 +55,11 @@ export const fetchClimateVariables = async (): Promise<ClimateVariable[]> => {
 export const fetchClimateData = async (
   variable: string,
   period: Period,
-  scenario: Scenario
+  scenario: Scenario,
+  percentile: "p10" | "p50" | "p90" = "p50",
 ): Promise<ClimateResponse> => {
   const response = await api.get<ClimateResponse>(`/climate/${variable}`, {
-    params: { period, scenario },
+    params: { period, scenario, percentile },
   });
   return response.data;
 };
@@ -66,12 +67,13 @@ export const fetchClimateData = async (
 export const fetchClimateComparison = async (
   variable: string,
   period: Period,
-  scenario: Scenario
+  scenario: Scenario,
+  percentile: "p10" | "p50" | "p90" = "p50",
 ): Promise<ClimateComparisonResponse> => {
   const response = await api.get<ClimateComparisonResponse>(
     `/climate/${variable}/compare`,
     {
-      params: { period, scenario },
+      params: { period, scenario, percentile },
     }
   );
   return response.data;
@@ -80,10 +82,11 @@ export const fetchClimateComparison = async (
 export const fetchClimateRange = async (
   variable: string,
   period: Period,
-  scenario: Scenario
+  scenario: Scenario,
+  percentile: "p10" | "p50" | "p90" = "p50",
 ): Promise<{ min: number; max: number; mean: number }> => {
   const response = await api.get(`/climate/${variable}/range`, {
-    params: { period, scenario },
+    params: { period, scenario, percentile },
   });
   return response.data;
 };
