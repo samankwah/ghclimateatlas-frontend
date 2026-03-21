@@ -11,6 +11,28 @@ import type {
   Scenario,
 } from "../types/climate";
 
+const PRODUCTION_API_BASE = "https://ghana-climate-atlas-api.onrender.com/api";
+const LEGACY_API_HOSTS = new Set([
+  "ghclimateatlas-backend.onrender.com",
+]);
+
+const normalizeApiBase = (value?: string) => {
+  const candidate = value?.trim();
+  if (!candidate) {
+    return null;
+  }
+
+  try {
+    const url = new URL(candidate);
+    if (LEGACY_API_HOSTS.has(url.hostname)) {
+      return PRODUCTION_API_BASE;
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return candidate.replace(/\/$/, "");
+  }
+};
+
 const getDefaultApiBase = () => {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
@@ -25,10 +47,11 @@ const getDefaultApiBase = () => {
   }
 
   // Production fallback inferred from the Render service name in backend/render.yaml.
-  return "https://ghana-climate-atlas-api.onrender.com/api";
+  return PRODUCTION_API_BASE;
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || getDefaultApiBase();
+const API_BASE =
+  normalizeApiBase(import.meta.env.VITE_API_URL) || getDefaultApiBase();
 
 const api = axios.create({
   baseURL: API_BASE,

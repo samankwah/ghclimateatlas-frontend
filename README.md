@@ -60,6 +60,8 @@ For hosted deployments such as Netlify, set:
 VITE_API_URL=https://ghana-climate-atlas-api.onrender.com/api
 ```
 
+If an older deployment still points to `https://ghclimateatlas-backend.onrender.com`, update it to the URL above. The frontend now normalizes that legacy hostname back to the intended Render service, but the deployment environment should still be corrected.
+
 ## Getting Started
 
 Install dependencies:
