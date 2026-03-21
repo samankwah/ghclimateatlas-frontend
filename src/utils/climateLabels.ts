@@ -2,28 +2,28 @@ import type { Period, Scenario } from "../types/climate";
 
 export const PERIOD_RANGE_LABELS: Record<Period, string> = {
   baseline: "1991-2020",
-  "2030": "2021-2050",
-  "2050": "2041-2070",
-  "2080": "2051-2080",
+  "2030": "2021-2040",
+  "2050": "2041-2060",
+  "2080": "2080-2100",
 };
 
 export const PERIOD_SHORT_LABELS: Record<Period, string> = {
-  baseline: "Recent Past",
+  baseline: "Reference",
   "2030": "2030s",
   "2050": "2050s",
   "2080": "2080s",
 };
 
 export const SCENARIO_LABELS: Record<Scenario, string> = {
-  rcp45: "Low Carbon",
-  rcp60: "Medium Carbon",
+  rcp26: "Low Carbon",
+  rcp45: "Medium Carbon",
   rcp85: "High Carbon",
 };
 
 export const SCENARIO_DESCRIPTIONS: Record<Scenario, string> = {
-  rcp45: "Less climate change",
-  rcp60: "Medium climate change",
-  rcp85: "More climate change",
+  rcp26: "Less Climate Change",
+  rcp45: "Moderate Climate Change",
+  rcp85: "More Climate Change",
 };
 
 export const getPeriodRangeLabel = (period: Period): string => PERIOD_RANGE_LABELS[period];

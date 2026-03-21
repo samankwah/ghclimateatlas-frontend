@@ -4,8 +4,8 @@ import type { TimeSeriesPoint } from "../hooks/useDistrictTimeSeries";
 import { normalizeUnit } from "./colorScales";
 
 const getScenarioExportLabel = (scenario: string): string => {
-  if (scenario === "rcp45") return "Low Carbon (RCP 4.5)";
-  if (scenario === "rcp60") return "Medium Carbon (RCP 6.0)";
+  if (scenario === "rcp26") return "Low Carbon (RCP 2.6)";
+  if (scenario === "rcp45") return "Medium Carbon (RCP 4.5)";
   return "High Carbon (RCP 8.5)";
 };
 
@@ -102,7 +102,7 @@ Scenario: ${scenarioLabel}
 SUMMARY
 -------
 Baseline (1991-2020): ${baseline ? formatValue(baseline.median) : "N/A"}
-Projected (2071-2100): ${future2080 ? formatValue(future2080.median) : "N/A"}
+Projected (2080-2100): ${future2080 ? formatValue(future2080.median) : "N/A"}
 Expected Change: ${change >= 0 ? "+" : ""}${formatValue(change)} (${changePercent}%)
 
 TIME SERIES DATA

@@ -9,9 +9,9 @@ interface TimePeriodSliderProps {
 
 const PERIODS: { value: Period; label: string; years: string }[] = [
   { value: "baseline", label: "Baseline", years: "1991-2020" },
-  { value: "2030", label: "2030s", years: "2021-2050" },
-  { value: "2050", label: "2050s", years: "2041-2070" },
-  { value: "2080", label: "2080s", years: "2071-2100" },
+  { value: "2030", label: "2030s", years: "2021-2040" },
+  { value: "2050", label: "2050s", years: "2041-2060" },
+  { value: "2080", label: "2080s", years: "2080-2100" },
 ];
 
 const TimePeriodSlider: React.FC<TimePeriodSliderProps> = ({

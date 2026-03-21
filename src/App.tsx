@@ -336,6 +336,7 @@ function ClimateAtlas() {
             onDistrictClick={selectDistrict}
             onDistrictHover={setHoveredDistrict}
             showCities={showCities}
+            unit={effectiveVariable?.unit || ""}
             dataVersion={`${variable}-${period}-${scenario}`}
             showGrid={showGrid}
             showWater={showWater}

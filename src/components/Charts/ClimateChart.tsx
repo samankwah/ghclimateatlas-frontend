@@ -34,7 +34,7 @@ interface ClimateChartProps {
   variableId: string;
   variableName: string;
   selectedPeriod: Period;
-  futurePeriodLabel?: string;
+
 }
 
 // Seeded random number generator for consistent noise
@@ -58,6 +58,7 @@ const generateVariabilityData = (
   const lineData: [number, number][] = [];
   const rangeData: [number, number, number][] = [];
   const years = endYear - startYear;
+  let previousMedian = baseMedian;
 
   for (let i = 0; i <= years; i++) {
     const year = startYear + i;
@@ -68,17 +69,24 @@ const generateVariabilityData = (
     const low = baseLow + (endLow - baseLow) * t;
     const high = baseHigh + (endHigh - baseHigh) * t;
     const range = high - low;
+    const effectiveRange = Math.max(range, 2.0);
 
-    // Add realistic year-to-year variability
-    const noise1 = (seededRandom(seed + i * 3) - 0.5) * range * 0.8;
-    const noise2 = (seededRandom(seed + i * 7) - 0.5) * range * 0.3;
-    const noise3 = (seededRandom(seed + i * 11) - 0.5) * range * 0.3;
+    // Add stronger short-term variability so the lines read as year-to-year
+    // observations rather than a visually straight trend.
+    const primaryNoise = (seededRandom(seed + i * 3) - 0.5) * effectiveRange * 1.4;
+    const secondaryNoise = (seededRandom(seed + i * 7) - 0.5) * effectiveRange * 0.6;
+    const bandNoise = (seededRandom(seed + i * 11) - 0.5) * range * 0.35;
+    const alternatingPulse = (i % 2 === 0 ? -1 : 1) * effectiveRange * 0.18;
+    const driftCorrection = (median - previousMedian) * 0.25;
 
-    const noisyMedian = median + noise1;
-    const noisyLow = low + noise2 - Math.abs(noise3) * 0.5;
-    const noisyHigh = high + noise3 + Math.abs(noise2) * 0.5;
+    const rawMedian = median + primaryNoise + secondaryNoise + alternatingPulse + driftCorrection;
+    const noisyLow = low + Math.min(secondaryNoise, 0) - Math.abs(bandNoise) * 0.9;
+    const noisyHigh = high + Math.max(secondaryNoise, 0) + Math.abs(bandNoise) * 0.9;
+    const clampedMedian = Math.max(noisyLow + range * 0.03, Math.min(noisyHigh - range * 0.03, rawMedian));
 
-    lineData.push([year, noisyMedian]);
+    previousMedian = clampedMedian;
+
+    lineData.push([year, clampedMedian]);
     rangeData.push([year, noisyLow, noisyHigh]);
   }
 
@@ -91,7 +99,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   variableId,
   variableName,
   selectedPeriod,
-  futurePeriodLabel = "2051-2080",
+
 }) => {
   const [chartReady, setChartReady] = useState(highchartsMoreInitialized);
   const displayUnit = normalizeUnit(unit);
@@ -115,13 +123,13 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     !displayUnit.includes("days");
   const selectedPeriodBand =
     selectedPeriod === "baseline"
-      ? { from: 1976, to: 2005 }
+      ? { from: 1991, to: 2020 }
       : selectedPeriod === "2030"
-        ? { from: 2021, to: 2050 }
+        ? { from: 2021, to: 2040 }
         : selectedPeriod === "2050"
-          ? { from: 2041, to: 2070 }
+          ? { from: 2041, to: 2060 }
           : selectedPeriod === "2080"
-            ? { from: 2051, to: 2080 }
+            ? { from: 2080, to: 2100 }
             : null;
 
   useEffect(() => {
@@ -160,21 +168,22 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const endMedian = lastProjected?.median || baselineValue;
     const endLow = lastProjected?.low || baselineLow;
     const endHigh = lastProjected?.high || baselineHigh;
+    const districtMeanTemperatureCenter = (baselineValue + endMedian) / 2;
 
     // Generate seed from baseline value for consistent randomness
     const seed = Math.round(baselineValue * 100);
 
-    // Generate historical data (1950-2005) - gray region
+    // Generate historical data (1950-2020) - gray region
     const historicalData = generateVariabilityData(
-      1950, 2005,
+      1950, 2020,
       baselineValue, baselineLow, baselineHigh,
       baselineValue, baselineLow, baselineHigh,
       seed
     );
 
-    // Generate projected data (2006-2095) - red region
+    // Generate projected data (2021-2100) - red region
     const projectedData = generateVariabilityData(
-      2006, 2080,
+      2021, 2100,
       baselineValue, baselineLow, baselineHigh,
       endMedian, endLow, endHigh,
       seed + 1000
@@ -188,12 +197,22 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const minValue = Math.min(...allValues);
     const maxValue = Math.max(...allValues);
     const padding = (maxValue - minValue) * 0.15;
+    // Compute a reasonable tick interval based on the actual y-axis range
+    const computeTickInterval = (yRange: number): number => {
+      if (yRange <= 4) return 1;
+      if (yRange <= 10) return 2;
+      if (yRange <= 20) return 5;
+      return Math.ceil(yRange / 5);
+    };
+
     const yAxisStep =
       isSeaLevelRiseChart
         ? 5
         : isStormSurgeRiskChart || isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
           ? 4
-          : 5;
+          : isTemperatureChart
+            ? 2
+            : 5;
     const yMinPadding = isTemperatureChart ? padding * 0.2 : padding * 0.35;
     const yMaxPadding = isTemperatureChart ? padding * 0.22 : padding * 0.45;
 
@@ -209,14 +228,14 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         ? 5
         : isStormSurgeRiskChart
           ? 5
-          : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
-            ? 1
+        : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
+          ? 1
+        : isMeanTemperatureChart
+          ? (districtMeanTemperatureCenter >= 29 ? 26 : 24)
           : isMinimumTemperatureChart
-        ? 15
+          ? 15
         : isMaximumTemperatureChart
-          ? 25
-          : isMeanTemperatureChart
-            ? 20
+            ? 25
             : isTemperatureChart
               ? computedYMin
             : computedYMin,
@@ -224,16 +243,16 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         ? 35
         : isStormSurgeRiskChart
           ? 16
-          : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
-            ? 16
-          : isTemperatureChart
-            ? (
-                isMinimumTemperatureChart
+        : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
+          ? 16
+        : isTemperatureChart
+          ? (
+              isMinimumTemperatureChart
                   ? 30
                   : isMaximumTemperatureChart
                     ? 40
                     : isMeanTemperatureChart
-                      ? 35
+                      ? (districtMeanTemperatureCenter >= 29 ? 32 : 30)
                       : computedYMax
               )
             : computedYMax,
@@ -261,12 +280,12 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       backgroundColor: "transparent",
       height: 300,
       style: {
-        fontFamily: "inherit",
+        fontFamily: 'Lato, "Helvetica Neue", Helvetica, Arial, sans-serif',
       },
       spacingTop: 4,
-      spacingRight: 6,
-      spacingBottom: 0,
-      spacingLeft: 2,
+      spacingRight: 8,
+      spacingBottom: 8,
+      spacingLeft: 4,
       reflow: true,
     },
     title: {
@@ -284,8 +303,8 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     xAxis: {
       type: "linear",
       min: 1950,
-      max: 2080,
-      tickPositions: [1950, 1975, 2000, 2025, 2050, 2075],
+      max: 2100,
+      tickPositions: [1950, 1975, 2000, 2025, 2050, 2075, 2100],
       title: {
         text: "Year",
         style: {
@@ -308,6 +327,17 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         from: selectedPeriodBand.from,
         to: selectedPeriodBand.to,
         color: "rgba(100, 116, 139, 0.25)",
+        label: {
+          text: `${selectedPeriodBand.from}–${selectedPeriodBand.to}`,
+          align: "center",
+          verticalAlign: "top",
+          y: 8,
+          style: {
+            color: "rgba(226, 232, 240, 0.8)",
+            fontSize: "11px",
+            fontWeight: "600",
+          },
+        },
       }] : [],
     },
     yAxis: {
@@ -410,7 +440,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     },
     series: [
       {
-        name: "1950-2005",
+        name: "1950-2020",
         type: "arearange",
         data: chartData.historicalRange,
         lineWidth: 0,
@@ -421,7 +451,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         showInLegend: false,
       },
       {
-        name: "2006-2095",
+        name: "2021-2100",
         type: "arearange",
         data: chartData.projectedRange,
         lineWidth: 0,
@@ -457,9 +487,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
   return (
     <div className="climate-chart-container">
-      <div className="climate-chart-header">
-        <span className="chart-period-label">{futurePeriodLabel}</span>
-      </div>
       <div className="climate-chart-wrapper">
         <HighchartsReact
           highcharts={Highcharts}
@@ -481,11 +508,11 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         <div className="legend-row">
           <div className="legend-item">
             <span className="legend-box legend-historical-box"></span>
-            <span className="legend-label">1950-2005</span>
+            <span className="legend-label">1950-2020</span>
           </div>
           <div className="legend-item">
             <span className="legend-box legend-projected-box"></span>
-            <span className="legend-label">2006-2095</span>
+            <span className="legend-label">2021-2100</span>
           </div>
         </div>
       </div>

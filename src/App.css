@@ -33,8 +33,7 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
+  font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -850,7 +849,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
   border-radius: 6px;
@@ -965,7 +964,7 @@ body {
 }
 
 .section-label {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1142,7 +1141,7 @@ body {
 }
 
 .period-option .period-label {
-  font-size: 0.75rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -1323,7 +1322,7 @@ body {
 }
 
 .tab-label {
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   font-weight: 500;
 }
 
@@ -3065,6 +3064,7 @@ body {
   border-left: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow: -18px 0 36px rgba(2, 6, 23, 0.42);
   padding: 1.75rem;
+  overflow-x: clip;
   overflow-y: auto;
   z-index: 500;
   animation: slideInPanel 0.3s ease-out;
@@ -3166,6 +3166,7 @@ body {
   color: #ffffff;
   font-size: 1.375rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .value-comparison .value.future {
@@ -3874,10 +3875,11 @@ body {
    Climate Chart - Responsive Styles
    ================================ */
 .climate-chart-container {
-  width: 100%;
-  margin: 0.75rem -1.25rem 0;
-  padding: 0 0.5rem 0.25rem;
+  width: auto;
+  margin: 0.75rem -1.75rem 0 -1.75rem;
+  padding: 0 0 0.25rem;
   position: relative;
+  overflow: visible;
 }
 
 .climate-chart-header {
@@ -3898,6 +3900,7 @@ body {
 .climate-chart-wrapper {
   width: 100%;
   min-height: 300px;
+  overflow: visible;
 }
 
 .climate-chart-note {
@@ -3967,8 +3970,8 @@ body {
 /* Climate Chart Responsive */
 @media (max-width: 768px) {
   .climate-chart-container {
-    margin: 0.5rem -1rem;
-    padding: 0 0.5rem;
+    margin: 0.5rem -1.75rem;
+    padding: 0;
   }
 
   .chart-period-label {
@@ -4033,6 +4036,10 @@ body {
   .climate-chart-legend .legend-box {
     width: 12px;
     height: 8px;
+  }
+
+  .climate-chart-container {
+    margin: 0.5rem -1rem;
   }
 }
 

@@ -14,16 +14,6 @@ import {
 } from "../../utils/idwInterpolation";
 import type { ComputeMessage, ResultMessage } from "../../utils/idwWorker";
 
-interface InterpolatedLayerProps {
-  dataPoints: DataPoint[];
-  colorScale: (value: number, min: number, max: number) => string;
-  minValue: number;
-  maxValue: number;
-  resolution?: number;
-  opacity?: number;
-  idwPower?: number;
-}
-
 type BoundaryGeom = { type: string; coordinates: Polygon | MultiPolygon };
 
 // Lazy-load Ghana boundary from GeoJSON (loaded once, cached in module scope)
@@ -43,6 +33,16 @@ function loadGhanaBoundary(): Promise<BoundaryGeom[]> {
   return boundaryPromise;
 }
 
+interface InterpolatedLayerProps {
+  dataPoints: DataPoint[];
+  colorScale: (value: number, min: number, max: number) => string;
+  minValue: number;
+  maxValue: number;
+  resolution?: number;
+  opacity?: number;
+  idwPower?: number;
+}
+
 const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
   dataPoints,
   colorScale,
@@ -59,7 +59,6 @@ const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
   const [gridResult, setGridResult] = useState<GridResult | null>(null);
   const [ghanaBoundary, setGhanaBoundary] = useState<BoundaryGeom[] | null>(null);
 
-  // Lazy-load Ghana boundary
   useEffect(() => {
     loadGhanaBoundary().then(setGhanaBoundary);
   }, []);
@@ -112,13 +111,7 @@ const InterpolatedLayer: React.FC<InterpolatedLayerProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    const imageData = gridToImageData(
-      gridResult,
-      minValue,
-      maxValue,
-      colorScale,
-      opacity
-    );
+    const imageData = gridToImageData(gridResult, minValue, maxValue, colorScale, opacity);
     ctx.putImageData(imageData, 0, 0);
     return canvas.toDataURL();
   }, [gridResult, minValue, maxValue, colorScale, opacity, dataPoints.length]);

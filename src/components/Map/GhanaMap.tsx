@@ -10,7 +10,7 @@ import type {
   ClimateValue,
   ClimateComparison,
 } from "../../types/climate";
-import { getColorScale, type ColorScaleType } from "../../utils/colorScales";
+import { getColorScale, formatValue, formatChange, type ColorScaleType } from "../../utils/colorScales";
 import {
   getCoastalContextLabel,
   getCoastalExposure,
@@ -43,6 +43,7 @@ interface GhanaMapProps {
   showGrid?: boolean;
   showWater?: boolean;
   showStories?: boolean;
+  unit?: string;
 }
 
 // Ghana center coordinates
@@ -114,6 +115,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   showGrid = false,
   showWater = true,
   showStories = false,
+  unit = "",
 }) => {
   // Create a lookup map for climate values
   const valueMap = useMemo(() => {
@@ -213,6 +215,29 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     }
   }, [selectedDistrictId, getStyle]);
 
+  // Imperatively update tooltips when valueMap changes (climate data may arrive after GeoJSON mount)
+  useEffect(() => {
+    layersRef.current.forEach((layer, districtId) => {
+      const typedLayer = layer as L.Path & { feature?: Feature };
+      const props = typedLayer.feature?.properties;
+      if (!props) return;
+
+      const value = valueMap.get(districtId);
+      const coastalContext = getCoastalContextLabel(activeVariableId, props.name as string, props.region as string);
+      const formattedValue = value !== undefined
+        ? (showChange ? formatChange(value, unit) : formatValue(value, unit))
+        : "No data";
+      const tooltipContent = `
+        <strong>${props.name}</strong><br/>
+        ${props.region}<br/>
+        ${coastalContext ? `${coastalContext}<br/>` : ""}
+        ${formattedValue}
+      `;
+      (layer as L.Layer).unbindTooltip();
+      (layer as L.Layer).bindTooltip(tooltipContent, { sticky: true });
+    });
+  }, [valueMap, activeVariableId, showChange, unit]);
+
   // Event handlers for each feature
   const onEachFeature = useCallback((feature: Feature, layer: Layer) => {
     const districtId = feature.properties?.id as string;
@@ -222,14 +247,17 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     // Store reference for imperative updates
     layersRef.current.set(districtId, layer as L.Path);
 
-    // Tooltip - will be updated when valueMap changes via GeoJSON key
+    // Tooltip - will be updated when valueMap changes via useEffect
     const value = valueMap.get(districtId);
     const coastalContext = getCoastalContextLabel(activeVariableId, districtName, region);
+    const formattedValue = value !== undefined
+      ? (showChange ? formatChange(value, unit) : formatValue(value, unit))
+      : "No data";
     const tooltipContent = `
       <strong>${districtName}</strong><br/>
       ${region}<br/>
       ${coastalContext ? `${coastalContext}<br/>` : ""}
-      ${value !== undefined ? `Value: ${value.toFixed(1)}` : "No data"}
+      ${formattedValue}
     `;
     layer.bindTooltip(tooltipContent, { sticky: true });
 
@@ -239,7 +267,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       mouseover: () => onDistrictHover(districtId),
       mouseout: () => onDistrictHover(null),
     });
-  }, [activeVariableId, valueMap, onDistrictClick, onDistrictHover]);
+  }, [activeVariableId, valueMap, showChange, unit, onDistrictClick, onDistrictHover]);
 
   if (!districts) {
     return (

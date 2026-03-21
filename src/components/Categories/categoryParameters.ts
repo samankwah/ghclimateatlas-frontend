@@ -58,7 +58,7 @@ const TEMPERATURE_PARAMETERS: Parameter[] = [
     isSelectable: true,
     infoId: "mean_temp",
     description: "Average Dec-Jan-Feb Temperature",
-    variableId: "mean_temp_dec_jan_feb",
+    variableId: "mean_temp_dry_season",
   },
 ];
 
@@ -145,7 +145,7 @@ export const PARAMETER_TO_VARIABLE: Record<string, string> = {
   mean_temp_apr_may_jun: "mean_temp_apr_may_jun",
   mean_temp_jul_aug_sep: "mean_temp_jul_aug_sep",
   mean_temp_sep_oct_nov: "mean_temp_sep_oct_nov",
-  mean_temp_dec_jan_feb: "mean_temp_dec_jan_feb",
+  mean_temp_dec_jan_feb: "mean_temp_dry_season",
 
   // Hot Weather
   very_hot_days_30: "very_hot_days",
@@ -183,7 +183,7 @@ export const PARAMETER_TO_VARIABLE: Record<string, string> = {
 
 export const CATEGORY_DEFAULT_VARIABLE: Record<Category, string> = {
   temperature: "annual_mean_temp",
-  precipitation: "heavy_precip_10mm",
+  precipitation: "annual_precipitation",
   sea_level: "sea_level_rise",
 };
 

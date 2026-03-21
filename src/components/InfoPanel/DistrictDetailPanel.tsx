@@ -131,7 +131,6 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
           variableId={variable}
           variableName={variableName}
           selectedPeriod={period}
-          futurePeriodLabel={selectedPeriodLabel}
         />
       )}
 

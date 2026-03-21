@@ -4,6 +4,7 @@ import { scaleSequential } from "d3-scale";
 import {
   interpolateYlOrRd,
   interpolateBlues,
+  interpolateGnBu,
   interpolateBrBG,
   interpolateRdBu,
   interpolatePuBuGn,
@@ -35,7 +36,7 @@ export const temperatureScale = (value: number, min: number, max: number): strin
 };
 
 export const precipitationScale = (value: number, min: number, max: number): string => {
-  const scale = scaleSequential(interpolateBlues).domain([min, max]);
+  const scale = scaleSequential(interpolateGnBu).domain([min, max]);
   return scale(value);
 };
 

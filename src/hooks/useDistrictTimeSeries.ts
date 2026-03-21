@@ -1,12 +1,10 @@
-// Hook to fetch time series data for a single district across all periods
-
 import { useQueries } from "@tanstack/react-query";
-import { fetchClimateData, fetchClimateComparison } from "../api/climate";
+import { fetchClimateComparison, fetchClimateData } from "../api/climate";
 import type {
   ClimateComparisonResponse,
   ClimateResponse,
-  Scenario,
   Period,
+  Scenario,
 } from "../types/climate";
 import {
   aggregateClimateComparisonResponses,
@@ -43,144 +41,172 @@ const PERIOD_CONFIG: { period: Period; year: number; label: string }[] = [
   { period: "2050", year: 2065, label: "2050s" },
   { period: "2080", year: 2080, label: "2080s" },
 ];
+const PERCENTILES = ["p10", "p50", "p90"] as const;
+type Percentile = (typeof PERCENTILES)[number];
 
-// Estimate uncertainty range based on change percentage
-// This provides a visual representation of variability
-const calculateUncertaintyRange = (
-  value: number,
-  changePercent: number = 0
-): { low: number; median: number; high: number } => {
-  // Use change percent to estimate uncertainty band width
-  // Larger changes typically have more uncertainty
-  const uncertaintyFactor = Math.max(0.05, Math.abs(changePercent) * 0.01);
-  const range = value * uncertaintyFactor;
-
-  return {
-    low: value - range,
-    median: value,
-    high: value + range,
-  };
-};
+const buildRange = (
+  low: number | undefined,
+  median: number | undefined,
+  high: number | undefined,
+): { low: number; median: number; high: number } => ({
+  low: low ?? median ?? high ?? 0,
+  median: median ?? low ?? high ?? 0,
+  high: high ?? median ?? low ?? 0,
+});
 
 export const useDistrictTimeSeries = (
   districtId: string | null,
   variable: string,
   scenario: Scenario,
-  selectedPeriod: Period = "2080"
+  selectedPeriod: Period = "2080",
 ): UseDistrictTimeSeriesResult => {
   const definition = getDerivedClimateVariable(variable);
   const sourceVariableIds = definition?.sourceVariableIds ?? [variable];
 
-  // Fetch baseline data
-  const baselineQuery = useQueries({
-    queries: sourceVariableIds.map((sourceVariableId) => ({
-        queryKey: ["district-baseline", variable, sourceVariableId, districtId],
-        queryFn: () => fetchClimateData(sourceVariableId, "baseline", scenario),
+  const baselineQueries = useQueries({
+    queries: PERCENTILES.flatMap((percentile) =>
+      sourceVariableIds.map((sourceVariableId) => ({
+        queryKey: ["district-baseline", variable, sourceVariableId, districtId, percentile],
+        queryFn: () => fetchClimateData(sourceVariableId, "baseline", scenario, percentile),
         enabled: !!districtId && !!variable,
         staleTime: 5 * 60 * 1000,
       })),
+    ),
   });
 
-  // Fetch comparison data for future periods
   const comparisonQueries = useQueries({
     queries: PERIOD_CONFIG
-      .filter((p) => p.period !== "baseline")
-      .flatMap((p) => sourceVariableIds.map((sourceVariableId) => ({
-      queryKey: ["district-comparison", variable, sourceVariableId, p.period, scenario, districtId],
-      queryFn: () => fetchClimateComparison(sourceVariableId, p.period, scenario),
-      enabled: !!districtId && !!variable,
-      staleTime: 5 * 60 * 1000,
-    }))),
+      .filter((config) => config.period !== "baseline")
+      .flatMap((config) =>
+        PERCENTILES.flatMap((percentile) =>
+          sourceVariableIds.map((sourceVariableId) => ({
+            queryKey: [
+              "district-comparison",
+              variable,
+              sourceVariableId,
+              config.period,
+              scenario,
+              districtId,
+              percentile,
+            ],
+            queryFn: () => fetchClimateComparison(sourceVariableId, config.period, scenario, percentile),
+            enabled: !!districtId && !!variable,
+            staleTime: 5 * 60 * 1000,
+          })),
+        ),
+      ),
   });
 
   const isLoading =
-    baselineQuery.some((q) => q.isLoading) ||
-    comparisonQueries.some((q) => q.isLoading);
+    baselineQueries.some((query) => query.isLoading) ||
+    comparisonQueries.some((query) => query.isLoading);
 
   const error =
-    baselineQuery.find((q) => q.error)?.error ||
-    comparisonQueries.find((q) => q.error)?.error ||
+    baselineQueries.find((query) => query.error)?.error ||
+    comparisonQueries.find((query) => query.error)?.error ||
     null;
 
-  // Build time series data
-  const data: TimeSeriesPoint[] = [];
-  let statistics: DistrictStatistics | null = null;
   const isClimateResponse = (response: ClimateResponse | undefined): response is ClimateResponse =>
     response !== undefined;
   const isClimateComparisonResponse = (
     response: ClimateComparisonResponse | undefined,
   ): response is ClimateComparisonResponse => response !== undefined;
 
-  if (!isLoading && !error && districtId) {
-    const baselineData = definition
-      ? aggregateClimateDataResponses(
-          definition,
-          baselineQuery.map((query) => query.data).filter(isClimateResponse),
-          "baseline",
-          scenario,
-        )
-      : baselineQuery[0]?.data;
-    const districtBaseline = baselineData?.data.find(
-      (d) => d.district_id === districtId
-    );
+  const getBaselineResponse = (percentile: Percentile): ClimateResponse | undefined => {
+    const offset = PERCENTILES.indexOf(percentile) * sourceVariableIds.length;
+    const responses = sourceVariableIds
+      .map((_, sourceIndex) => baselineQueries[offset + sourceIndex]?.data)
+      .filter(isClimateResponse);
 
-    if (districtBaseline) {
-      // Baseline point
-      const baselineUncertainty = calculateUncertaintyRange(districtBaseline.value, 5);
+    if (!responses.length) {
+      return undefined;
+    }
+
+    return definition
+      ? aggregateClimateDataResponses(definition, responses, "baseline", scenario)
+      : responses[0];
+  };
+
+  const getComparisonResponse = (
+    period: Exclude<Period, "baseline">,
+    percentile: Percentile,
+  ): ClimateComparisonResponse | undefined => {
+    const periodIndex = PERIOD_CONFIG.filter((config) => config.period !== "baseline").findIndex(
+      (config) => config.period === period,
+    );
+    if (periodIndex === -1) {
+      return undefined;
+    }
+
+    const periodOffset = periodIndex * PERCENTILES.length * sourceVariableIds.length;
+    const percentileOffset = PERCENTILES.indexOf(percentile) * sourceVariableIds.length;
+    const responses = sourceVariableIds
+      .map((_, sourceIndex) => comparisonQueries[periodOffset + percentileOffset + sourceIndex]?.data)
+      .filter(isClimateComparisonResponse);
+
+    if (!responses.length) {
+      return undefined;
+    }
+
+    return definition
+      ? aggregateClimateComparisonResponses(definition, responses, period, scenario)
+      : responses[0];
+  };
+
+  const data: TimeSeriesPoint[] = [];
+  let statistics: DistrictStatistics | null = null;
+
+  if (!isLoading && !error && districtId) {
+    const baselineLow = getBaselineResponse("p10")?.data.find((entry) => entry.district_id === districtId)?.value;
+    const baselineMedian = getBaselineResponse("p50")?.data.find((entry) => entry.district_id === districtId)?.value;
+    const baselineHigh = getBaselineResponse("p90")?.data.find((entry) => entry.district_id === districtId)?.value;
+
+    if (baselineLow !== undefined || baselineMedian !== undefined || baselineHigh !== undefined) {
+      const baselineRange = buildRange(baselineLow, baselineMedian, baselineHigh);
       data.push({
         period: "baseline",
         year: PERIOD_CONFIG[0].year,
-        value: districtBaseline.value,
+        value: baselineRange.median,
         label: PERIOD_CONFIG[0].label,
-        ...baselineUncertainty,
+        ...baselineRange,
       });
 
-      // Future periods from comparison data
       let selectedFutureStats: { low: number; median: number; high: number } | null = null;
 
-      PERIOD_CONFIG.slice(1).forEach((config, index) => {
-        const comparisonData = definition
-          ? aggregateClimateComparisonResponses(
-              definition,
-              sourceVariableIds
-                .map((_, sourceIndex) => comparisonQueries[index * sourceVariableIds.length + sourceIndex]?.data)
-                .filter(isClimateComparisonResponse),
-              config.period,
-              scenario,
-            )
-          : comparisonQueries[index]?.data;
-        const districtComparison = comparisonData?.data.find(
-          (d) => d.district_id === districtId
-        );
+      PERIOD_CONFIG.slice(1).forEach((config) => {
+        const period = config.period as Exclude<Period, "baseline">;
+        const futureLow = getComparisonResponse(period, "p10")?.data.find(
+          (entry) => entry.district_id === districtId,
+        )?.future;
+        const futureMedian = getComparisonResponse(period, "p50")?.data.find(
+          (entry) => entry.district_id === districtId,
+        )?.future;
+        const futureHigh = getComparisonResponse(period, "p90")?.data.find(
+          (entry) => entry.district_id === districtId,
+        )?.future;
+        if (futureLow === undefined && futureMedian === undefined && futureHigh === undefined) {
+          return;
+        }
 
-        if (districtComparison) {
-          const uncertainty = calculateUncertaintyRange(
-            districtComparison.future,
-            districtComparison.change_percent
-          );
+        const futureRange = buildRange(futureLow, futureMedian, futureHigh);
 
-          data.push({
-            period: config.period,
-            year: config.year,
-            value: districtComparison.future,
-            label: config.label,
-            ...uncertainty,
-          });
+        data.push({
+          period,
+          year: config.year,
+          value: futureRange.median,
+          label: config.label,
+          ...futureRange,
+        });
 
-          if (config.period === selectedPeriod) {
-            selectedFutureStats = uncertainty;
-          }
+        if (period === selectedPeriod) {
+          selectedFutureStats = futureRange;
         }
       });
 
-      // Build statistics object
       if (selectedFutureStats) {
         statistics = {
-          baseline: baselineUncertainty,
+          baseline: baselineRange,
           future: selectedFutureStats,
-          // Estimate grid points based on typical district size
-          // Ghana has ~261 districts, ~238,533 km², average ~914 km² per district
-          // At 0.05° resolution (~5.5km), roughly 30-40 grid points per district
           gridPointCount: 35,
         };
       }

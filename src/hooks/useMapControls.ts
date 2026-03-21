@@ -12,7 +12,7 @@ const DEFAULT_STATE: MapState = {
 };
 
 const PERIOD_VALUES: Period[] = ["baseline", "2030", "2050", "2080"];
-const SCENARIO_VALUES: Scenario[] = ["rcp45", "rcp60", "rcp85"];
+const SCENARIO_VALUES: Scenario[] = ["rcp26", "rcp45", "rcp85"];
 
 const getInitialState = (): MapState => {
   if (typeof window === "undefined") {
