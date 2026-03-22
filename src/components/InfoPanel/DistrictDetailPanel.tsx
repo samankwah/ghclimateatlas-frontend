@@ -196,7 +196,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
 
       <div className="panel-footer">
         <div className="data-source">
-          Data source: CORDEX-Africa regional climate projections downscaled for Ghana.
+          Data source: GhKAPy regional climate projections downscaled for Ghana.
         </div>
       </div>
     </div>

@@ -105,7 +105,7 @@ const DistrictInfo: React.FC<DistrictInfoProps> = ({
 
       <div className="info-footer">
         <small>
-          Data: CORDEX-Africa / KAPy Framework
+          Data: GhKAPy
         </small>
       </div>
     </div>

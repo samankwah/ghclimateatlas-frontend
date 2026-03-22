@@ -39,7 +39,7 @@ export const exportToCSV = (options: ExportOptions): void => {
     `# Variable: ${variableName}`,
     `# Scenario: ${getScenarioExportLabel(scenario)}`,
     `# Generated: ${new Date().toISOString()}`,
-    "# Data Source: CORDEX-Africa",
+    "# Data Source: GhKAPy",
     "",
   ];
 
@@ -111,7 +111,7 @@ ${data.map((d) => `${d.label} (${d.year}): ${formatValue(d.median)} [${formatVal
 
 DATA SOURCE
 -----------
-Climate projections derived from CORDEX-Africa regional climate models
+Climate projections derived from GhKAPy regional climate models
 downscaled for Ghana using the KAPy framework.
 
 Generated: ${new Date().toLocaleDateString("en-GB", {
