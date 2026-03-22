@@ -17,7 +17,6 @@ import type {
 import {
   aggregateClimateComparisonResponses,
   aggregateClimateDataResponses,
-  buildRangeFromClimateResponse,
   getDerivedClimateVariable,
 } from "../utils/derivedClimate";
 
@@ -137,21 +136,5 @@ export const useClimateComparison = (
     isLoading: queryResults.some((result) => result.isLoading),
     isFetching: queryResults.some((result) => result.isFetching),
     error: queryResults.find((result) => result.error)?.error ?? null,
-  };
-};
-
-// Fetch min/max range for a variable
-export const useClimateRange = (
-  variable: string,
-  period: Period,
-  scenario: Scenario,
-) => {
-  const climateDataResult = useClimateData(variable, period, scenario);
-
-  return {
-    data: buildRangeFromClimateResponse(climateDataResult.data),
-    isLoading: climateDataResult.isLoading,
-    isFetching: climateDataResult.isFetching,
-    error: climateDataResult.error,
   };
 };

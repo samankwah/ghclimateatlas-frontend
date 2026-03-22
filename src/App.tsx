@@ -1,23 +1,24 @@
 // Ghana Climate Atlas - Main Application (Redesigned UI)
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GhanaMap from "./components/Map/GhanaMap";
 import Header from "./components/Header/Header";
 import MapLayerToggles from "./components/Sidebar/MapLayerToggles";
 import TimelineBar from "./components/Timeline/TimelineBar";
 import CategoryTabs, { type Category } from "./components/Categories/CategoryTabs";
-import DistrictDetailPanel from "./components/InfoPanel/DistrictDetailPanel";
 import DistrictSearch from "./components/Search/DistrictSearch";
-import HelpOverlay from "./components/Help/HelpOverlay";
-import TourOverlay from "./components/Tour/TourOverlay";
+
+const DistrictDetailPanel = lazy(() => import("./components/InfoPanel/DistrictDetailPanel"));
+const HelpOverlay = lazy(() => import("./components/Help/HelpOverlay"));
+const TourOverlay = lazy(() => import("./components/Tour/TourOverlay"));
 import {
   useDistricts,
   useClimateVariables,
   useClimateData,
   useClimateComparison,
-  useClimateRange,
 } from "./hooks/useClimateData";
+import { buildRangeFromClimateResponse } from "./utils/derivedClimate";
 import { useMapControls } from "./hooks/useMapControls";
 import type { ColorScaleType } from "./utils/colorScales";
 import type { Scenario, Period } from "./types/climate";
@@ -49,7 +50,6 @@ function ClimateAtlas() {
   const [mobileChangeToggleOpen, setMobileChangeToggleOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
-  const [shareStatus, setShareStatus] = useState<string | null>(null);
 
   // Category tab state
   const [activeCategory, setActiveCategory] = useState<Category>("temperature");
@@ -87,7 +87,10 @@ function ClimateAtlas() {
   const { data: comparisonData } = useClimateComparison(variable, period, scenario);
   // Always fetch 2080 comparison for panel display (regardless of map period)
   const { data: panelComparisonData } = useClimateComparison(variable, "2080", scenario);
-  const { data: rangeData } = useClimateRange(variable, period, scenario);
+  const rangeData = useMemo(
+    () => buildRangeFromClimateResponse(climateData),
+    [climateData]
+  );
 
   // Get current variable info
   const currentVariable = useMemo(
@@ -204,46 +207,6 @@ function ClimateAtlas() {
     setTourOpen(true);
   }, []);
 
-  const handleShareMap = useCallback(async () => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    setMobileHeaderActionsOpen(false);
-
-    const sharePayload = {
-      title: document.title,
-      text: "Explore this Ghana Climate Atlas view.",
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(sharePayload);
-        setShareStatus("Map link shared.");
-        return;
-      }
-
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(sharePayload.url);
-        setShareStatus("Map link copied.");
-        return;
-      }
-
-      setShareStatus("Sharing is not available on this device.");
-    } catch {
-      setShareStatus("Sharing was cancelled.");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!shareStatus) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => setShareStatus(null), 2500);
-    return () => window.clearTimeout(timer);
-  }, [shareStatus]);
 
   useEffect(() => {
     const variableLabel =
@@ -281,12 +244,11 @@ function ClimateAtlas() {
         colorScaleType={colorScaleType}
         showChange={showChange}
         parameterLabel={selectedParameterLabel}
-        shareStatus={shareStatus}
         mobileActionsOpen={mobileHeaderActionsOpen}
         onToggleMobileActions={() => setMobileHeaderActionsOpen((open) => !open)}
         onOpenHelp={handleOpenHelp}
         onOpenTour={handleOpenTour}
-        onShare={handleShareMap}
+        onCloseMobileActions={() => setMobileHeaderActionsOpen(false)}
       />
 
       {/* Map container - full bleed with all floating overlays inside */}
@@ -310,9 +272,9 @@ function ClimateAtlas() {
             </div>
           )}
 
-          {/* Full blocking overlay only on initial load */}
+          {/* Loading overlay scoped to map area only — header + controls remain visible */}
           {(loadingDistricts || (loadingClimate && !climateData)) && !districtsError && (
-            <div className="loading-overlay">
+            <div className="map-loading-overlay">
               <div className="spinner" />
               <p>Loading climate data...</p>
             </div>
@@ -407,18 +369,20 @@ function ClimateAtlas() {
           )?.value;
 
           return (
-            <DistrictDetailPanel
-              districtId={selectedDistrictId}
-              districtName={districtName}
-              regionName={regionName}
-              variable={variable}
-              variableInfo={effectiveVariable}
-              scenario={scenario as Scenario}
-              period={period as Period}
-              comparisonData={districtComparison}
-              baselineValue={baselineValue}
-              onClose={() => selectDistrict(null)}
-            />
+            <Suspense fallback={<div className="loading-overlay"><div className="spinner" /></div>}>
+              <DistrictDetailPanel
+                districtId={selectedDistrictId}
+                districtName={districtName}
+                regionName={regionName}
+                variable={variable}
+                variableInfo={effectiveVariable}
+                scenario={scenario as Scenario}
+                period={period as Period}
+                comparisonData={districtComparison}
+                baselineValue={baselineValue}
+                onClose={() => selectDistrict(null)}
+              />
+            </Suspense>
           );
         })()}
 
@@ -456,8 +420,16 @@ function ClimateAtlas() {
         </div>
       </div>
 
-      {helpOpen && <HelpOverlay onClose={() => setHelpOpen(false)} onStartTour={handleOpenTour} />}
-      {tourOpen && <TourOverlay onClose={() => setTourOpen(false)} />}
+      {helpOpen && (
+        <Suspense fallback={null}>
+          <HelpOverlay onClose={() => setHelpOpen(false)} onStartTour={handleOpenTour} />
+        </Suspense>
+      )}
+      {tourOpen && (
+        <Suspense fallback={null}>
+          <TourOverlay onClose={() => setTourOpen(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -1,14 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import type { ClimateVariable, Period, Scenario } from "../../types/climate";
 import type { ColorScaleType } from "../../utils/colorScales";
 import { generateLegendStops, normalizeUnit } from "../../utils/colorScales";
-import mobileLogo from "../../assets/smart logo GMet.png";
+import mobileLogo from "../../assets/smart-logo-gmet.webp";
 import {
   getPeriodRangeLabel,
   getScenarioDescription,
   getScenarioLabel,
 } from "../../utils/climateLabels";
 import { isSeaLevelVariable } from "../../utils/coastalExposure";
+import ShareDropdown from "./ShareDropdown";
 
 interface HeaderProps {
   variable: ClimateVariable | undefined;
@@ -19,12 +20,11 @@ interface HeaderProps {
   colorScaleType: ColorScaleType;
   showChange: boolean;
   parameterLabel?: string | null;
-  shareStatus?: string | null;
   mobileActionsOpen: boolean;
   onToggleMobileActions: () => void;
   onOpenHelp: () => void;
   onOpenTour: () => void;
-  onShare: () => void;
+  onCloseMobileActions: () => void;
 }
 
 const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
@@ -43,13 +43,26 @@ const Header: React.FC<HeaderProps> = ({
   colorScaleType,
   showChange,
   parameterLabel,
-  shareStatus,
   mobileActionsOpen,
   onToggleMobileActions,
   onOpenHelp,
   onOpenTour,
-  onShare,
 }) => {
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileShareButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleShareClick = useCallback(() => {
+    setShareOpen((prev) => !prev);
+  }, []);
+
+  const handleShareClose = useCallback(() => {
+    setShareOpen(false);
+  }, []);
+
+  const handleMobileShareClick = useCallback(() => {
+    setShareOpen((prev) => !prev);
+  }, []);
   const gradientStyle = useMemo(() => {
     const stops = generateLegendStops(
       minValue,
@@ -96,7 +109,6 @@ const Header: React.FC<HeaderProps> = ({
                 className="mobile-header-action"
                 title="Help"
                 onClick={onOpenHelp}
-                data-tour="map-information"
               >
                 <span>HELP</span>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -112,22 +124,29 @@ const Header: React.FC<HeaderProps> = ({
                   <polygon points="10 8 16 12 10 16 10 8" />
                 </svg>
               </button>
-              <button
-                type="button"
-                className="mobile-header-action mobile-header-action-share"
-                title="Share"
-                data-tour="share-map"
-                onClick={onShare}
-              >
-                <span>SHARE</span>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="18" cy="5" r="3" />
-                  <circle cx="6" cy="12" r="3" />
-                  <circle cx="18" cy="19" r="3" />
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
-              </button>
+              <div className="share-button-wrapper">
+                <button
+                  type="button"
+                  className="mobile-header-action mobile-header-action-share"
+                  title="Share"
+                  ref={mobileShareButtonRef}
+                  onClick={handleMobileShareClick}
+                >
+                  <span>SHARE</span>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </button>
+                <ShareDropdown
+                  isOpen={shareOpen}
+                  onClose={handleShareClose}
+                  anchorRef={mobileShareButtonRef}
+                />
+              </div>
             </div>
           </div>
 
@@ -145,8 +164,6 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
           </button>
         </div>
-
-        {shareStatus ? <div className="mobile-share-status">{shareStatus}</div> : null}
       </div>
 
       <div className="header-content">
@@ -166,9 +183,9 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        <div className="header-center">
+        <div className="header-center" data-tour="map-information">
           <h1 className="variable-title">{headerTitle}</h1>
-          <div className="scenario-info" data-tour="scenarios">
+          <div className="scenario-info">
             {period !== "baseline" ? (
               <>
                 <span className="scenario-text">
@@ -181,7 +198,6 @@ const Header: React.FC<HeaderProps> = ({
               <span className="period-text">Baseline: {getPeriodRangeLabel("baseline")}</span>
             )}
           </div>
-          {shareStatus ? <div className="share-status">{shareStatus}</div> : null}
         </div>
 
         <div className="header-right">
@@ -200,16 +216,23 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
             <span>TOUR</span>
           </button>
-          <button className="header-btn-labeled" title="Share" data-tour="share-map" onClick={onShare}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-            <span>SHARE</span>
-          </button>
+          <div className="share-button-wrapper">
+            <button className="header-btn-labeled" title="Share" data-tour="share-map" ref={shareButtonRef} onClick={handleShareClick}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              <span>SHARE</span>
+            </button>
+            <ShareDropdown
+              isOpen={shareOpen}
+              onClose={handleShareClose}
+              anchorRef={shareButtonRef}
+            />
+          </div>
         </div>
       </div>
     </header>

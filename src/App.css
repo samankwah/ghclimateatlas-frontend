@@ -73,7 +73,8 @@ body {
   display: flex;
   align-items: center;
   padding: 0 2rem;
-  z-index: 100;
+  z-index: 1100;
+  position: relative;
   height: var(--header-height);
   flex-shrink: 0;
 }
@@ -108,8 +109,8 @@ body {
 
 .desktop-header-logo {
   display: block;
-  width: 4rem;
-  height: 4rem;
+  width: 5.5rem;
+  height: 5.5rem;
   object-fit: contain;
 }
 
@@ -265,6 +266,67 @@ body {
 .header-btn-labeled[title="Share"]:hover svg {
   fill: #ffe07a;
   stroke: #ffe07a;
+}
+
+/* Share button wrapper for dropdown positioning */
+.share-button-wrapper {
+  position: relative;
+}
+
+/* Share dropdown */
+.share-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  min-width: 140px;
+  padding: 6px 0;
+  animation: shareDropdownIn 0.15s ease-out;
+}
+
+@keyframes shareDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.share-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #1e293b;
+  transition: background 0.15s;
+}
+
+.share-dropdown-item:hover {
+  background: #f1f5f9;
+}
+
+.share-dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.share-dropdown-label {
+  white-space: nowrap;
 }
 
 .mobile-header-shell {
@@ -753,7 +815,8 @@ body {
 }
 
 /* Loading overlay */
-.loading-overlay {
+.loading-overlay,
+.map-loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -1902,7 +1965,7 @@ body {
     width: 100%;
     flex-direction: column;
     padding: 0.55rem 0.85rem 0.45rem;
-    border-radius: 0;
+    border-radius: 10px;
     background: linear-gradient(180deg, rgba(40, 40, 40, 0.98) 0%, rgba(45, 45, 45, 0.98) 100%);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
@@ -1917,8 +1980,8 @@ body {
 
   .mobile-header-logo {
     display: block;
-    width: 4.5rem;
-    height: 4.5rem;
+    width: 6rem;
+    height: 6rem;
     object-fit: contain;
     align-self: center;
   }
@@ -2060,13 +2123,6 @@ body {
     stroke: #ffc533;
   }
 
-  .mobile-share-status {
-    min-height: 0.95rem;
-    padding-top: 0.15rem;
-    text-align: center;
-    font-size: 0.78rem;
-    color: #cbd5e1;
-  }
 
   /* --- Timeline --- */
   .timeline-bar {
@@ -2303,7 +2359,7 @@ body {
 
   .mobile-header-shell {
     padding: 0.35rem 0.55rem;
-    border-radius: 0;
+    border-radius: 10px;
   }
 
   .mobile-header-row {
@@ -2311,8 +2367,8 @@ body {
   }
 
   .mobile-header-logo {
-    width: 2.35rem;
-    height: 2.35rem;
+    width: 3rem;
+    height: 3rem;
   }
 
   .mobile-header-title {
@@ -3756,6 +3812,8 @@ body {
 
   .tour-card {
     width: min(calc(100vw - 1rem), 24rem) !important;
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
   }
 
   .tour-card-body {
@@ -3787,7 +3845,7 @@ body {
     height: calc(100dvh - var(--header-height));
     border-left: none;
     border-top: none;
-    border-radius: 0;
+    border-radius: 10px;
     z-index: 1000;
     animation: fadeInPanel 0.25s ease-out;
     padding-bottom: 14rem;  /* extra scroll room so content isn't hidden behind bottom bar */
@@ -3837,6 +3895,10 @@ body {
 
   .help-overlay-footer {
     gap: 0.5rem;
+  }
+
+  .tour-card {
+    width: min(calc(100vw - 1rem), 22rem) !important;
   }
 
   .tour-card h3 {
@@ -4317,7 +4379,7 @@ body {
   }
 
   .district-search-input {
-    font-size: 0.94rem;
+    font-size: 16px;
   }
 
   .district-search-results,
@@ -4417,7 +4479,7 @@ body {
   .category-panel {
     width: 100%;
     max-height: min(72vh, 40rem);
-    border-radius: 0;
+    border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.22);
     background: rgba(45, 45, 45, 0.97);
     box-shadow: 0 14px 38px rgba(15, 23, 42, 0.34);
@@ -4425,7 +4487,7 @@ body {
   }
 
   .category-panel-layout.has-secondary-panel .category-panel {
-    border-radius: 0;
+    border-radius: 10px;
   }
 
   .category-panel-body.with-flyout {
@@ -4671,12 +4733,12 @@ body {
   .category-panel {
     width: 100%;
     max-height: min(78vh, 42rem);
-    border-radius: 0;
+    border-radius: 10px;
     overflow: hidden;
   }
 
   .category-panel-layout.has-secondary-panel .category-panel {
-    border-radius: 0;
+    border-radius: 10px;
   }
 
   .category-panel-body.with-flyout {
@@ -4706,7 +4768,7 @@ body {
   }
 
   .category-subpanel {
-    border-radius: 0;
+    border-radius: 10px;
   }
 
   .sidebar-search-panel {

@@ -31,21 +31,21 @@ const TOUR_STEPS: TourStep[] = [
     ],
   },
   {
-    id: "map-information",
-    selector: '[data-tour="map-information"]',
-    title: "Map information",
+    id: "map-tools",
+    selector: '[data-tour="map-tools"]',
+    title: "Map Tools",
     paragraphs: [
-      "As you change the various map options, the title bar at the top keeps track of what you've chosen, so you always know what you're looking at.",
-      "You can also get more information about what the map is showing. Click on the large info icon to get detailed explanations about the map you're exploring.",
+      "Use the Search tool to find any district by name.",
+      "Toggle the Water, Cities, and Stories layers on or off to customise what you see on the map. Stories open place-based examples showing how climate change is affecting communities.",
     ],
   },
   {
-    id: "stories",
-    selector: '[data-tour="stories"]',
-    title: "STORIES",
+    id: "map-information",
+    selector: '[data-tour="map-information"]',
+    title: "Map Information",
     paragraphs: [
-      "Use the Stories control to turn local climate stories on or off across the map.",
-      "These story markers open place-based examples, local impacts, and videos that help explain how climate change is affecting communities.",
+      "As you change the various map options, the title bar at the top keeps track of what you've chosen, so you always know what you're looking at.",
+      "You can also get more information about what the map is showing. Click on the large info icon to get detailed explanations about the map you're exploring.",
     ],
   },
   {
@@ -127,34 +127,73 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ onClose }) => {
     const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 1280;
     const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 720;
     const cardWidth = Math.min(430, viewportWidth - 32);
-    const cardHeightGuess = step.id === "scenarios" ? 250 : step.id === "share-map" ? 220 : 190;
+    const cardHeightGuess = step.id === "scenarios" ? 250 : step.id === "share-map" ? 220 : step.id === "map-tools" ? 200 : 190;
+
+    const isMobile = viewportWidth <= 768;
+    const effectiveCardWidth = isMobile ? Math.min(viewportWidth - 16, 384) : cardWidth;
+
+    const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
+    const clampLeft = (l: number) => clamp(l, 8, viewportWidth - effectiveCardWidth - 8);
+    const clampTop = (t: number) => clamp(t, 8, viewportHeight - cardHeightGuess - 8);
 
     if (!targetRect) {
       return {
-        top: Math.max(96, viewportHeight - cardHeightGuess - 32),
-        left: Math.max(16, (viewportWidth - cardWidth) / 2),
+        top: clampTop(Math.max(96, viewportHeight - cardHeightGuess - 32)),
+        left: clampLeft((viewportWidth - effectiveCardWidth) / 2),
         width: cardWidth,
       };
     }
 
     if (step.id === "map-variable") {
       return {
-        top: Math.max(16, targetRect.top - 64),
-        left: Math.min(
-          Math.max(16, targetRect.left + targetRect.width / 2 - cardWidth / 2),
-          viewportWidth - cardWidth - 16
-        ),
+        top: clampTop(targetRect.top - 64),
+        left: clampLeft(targetRect.left + targetRect.width / 2 - effectiveCardWidth / 2),
         width: cardWidth,
       };
     }
 
     if (step.id === "scenarios") {
       return {
-        top: Math.max(16, targetRect.top - cardHeightGuess - 12),
-        left: Math.min(
-          Math.max(16, targetRect.left + targetRect.width / 2 - cardWidth / 2),
-          viewportWidth - cardWidth - 16
-        ),
+        top: clampTop(targetRect.top - cardHeightGuess - 12),
+        left: clampLeft(targetRect.left + targetRect.width / 2 - effectiveCardWidth / 2),
+        width: cardWidth,
+      };
+    }
+
+    if (step.id === "map-tools") {
+      if (isMobile) {
+        return {
+          top: clampTop(targetRect.top + targetRect.height + 12),
+          left: clampLeft((viewportWidth - effectiveCardWidth) / 2),
+          width: cardWidth,
+        };
+      }
+      return {
+        top: clampTop(targetRect.top + targetRect.height / 2 - cardHeightGuess / 2),
+        left: clampLeft(targetRect.left + targetRect.width + 8),
+        width: cardWidth,
+      };
+    }
+
+    if (step.id === "map-information") {
+      return {
+        top: clampTop(targetRect.top + targetRect.height + 12),
+        left: clampLeft(targetRect.left + targetRect.width / 2 - effectiveCardWidth / 2),
+        width: cardWidth,
+      };
+    }
+
+    if (step.id === "share-map") {
+      if (isMobile) {
+        return {
+          top: clampTop(targetRect.top + targetRect.height + 12),
+          left: clampLeft((viewportWidth - effectiveCardWidth) / 2),
+          width: cardWidth,
+        };
+      }
+      return {
+        top: clampTop(targetRect.top + targetRect.height + 12),
+        left: clampLeft(targetRect.left + targetRect.width - cardWidth),
         width: cardWidth,
       };
     }
@@ -164,22 +203,14 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ onClose }) => {
     const placeAbove = spaceAbove > cardHeightGuess + 24 || spaceAbove > spaceBelow;
 
     const top = placeAbove
-      ? Math.max(16, targetRect.top - cardHeightGuess - 18)
-      : Math.min(viewportHeight - cardHeightGuess - 16, targetRect.top + targetRect.height + 18);
+      ? targetRect.top - cardHeightGuess - 18
+      : targetRect.top + targetRect.height + 18;
 
-    let left = targetRect.left + targetRect.width / 2 - cardWidth / 2;
-
-    if (step.id === "map-information") {
-      left = targetRect.left + targetRect.width + 22;
-    }
-
-    if (step.id === "share-map") {
-      left = targetRect.left + targetRect.width - cardWidth;
-    }
+    const left = targetRect.left + targetRect.width / 2 - effectiveCardWidth / 2;
 
     return {
-      top,
-      left: Math.min(Math.max(16, left), viewportWidth - cardWidth - 16),
+      top: clampTop(top),
+      left: clampLeft(left),
       width: cardWidth,
     };
   }, [step.id, targetRect]);

@@ -28,7 +28,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           leaflet: ['leaflet', 'react-leaflet'],
-          charts: ['highcharts', 'highcharts-react-official'],
           vendor: ['react', 'react-dom', '@tanstack/react-query', 'axios'],
         },
       },

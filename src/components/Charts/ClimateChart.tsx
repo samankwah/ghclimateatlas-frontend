@@ -2,28 +2,43 @@
 // Matching the climate projection visualization style with historical (gray) and projected (red) regions
 
 import React, { useEffect, useState } from "react";
-import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
 import type { TimeSeriesPoint } from "../../hooks/useDistrictTimeSeries";
 import { normalizeUnit } from "../../utils/colorScales";
 import type { Period } from "../../types/climate";
 
-// Track if highcharts-more has been initialized
+// Lazily loaded Highcharts modules
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let HighchartsModule: any = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let HighchartsReactModule: any = null;
+let highchartsLoaded = false;
 let highchartsMoreInitialized = false;
 
-const initHighchartsMore = async () => {
-  if (highchartsMoreInitialized) return true;
+const loadHighcharts = async (): Promise<boolean> => {
+  if (highchartsLoaded) return true;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const HighchartsMore: any = await import("highcharts/highcharts-more");
-    const initFn = HighchartsMore.default || HighchartsMore;
-    if (typeof initFn === "function") {
-      initFn(Highcharts);
+    const [hc, hcReact] = await Promise.all([
+      import("highcharts"),
+      import("highcharts-react-official"),
+    ]);
+    HighchartsModule = hc.default || hc;
+    HighchartsReactModule = hcReact.default || hcReact;
+    highchartsLoaded = true;
+
+    // Also load highcharts-more
+    if (!highchartsMoreInitialized) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const HighchartsMore: any = await import("highcharts/highcharts-more");
+      const initFn = HighchartsMore.default || HighchartsMore;
+      if (typeof initFn === "function") {
+        initFn(HighchartsModule);
+      }
+      highchartsMoreInitialized = true;
     }
-    highchartsMoreInitialized = true;
+
     return true;
   } catch (e) {
-    console.error("Failed to load highcharts-more:", e);
+    console.error("Failed to load Highcharts:", e);
     return false;
   }
 };
@@ -101,7 +116,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   selectedPeriod,
 
 }) => {
-  const [chartReady, setChartReady] = useState(highchartsMoreInitialized);
+  const [chartReady, setChartReady] = useState(highchartsLoaded && highchartsMoreInitialized);
   const displayUnit = normalizeUnit(unit);
   const lowerName = variableName.toLowerCase();
   const lowerVariableId = variableId.toLowerCase();
@@ -134,7 +149,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
   useEffect(() => {
     if (!chartReady) {
-      initHighchartsMore().then((success) => {
+      loadHighcharts().then((success) => {
         if (success) setChartReady(true);
       });
     }
@@ -267,6 +282,9 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       </div>
     );
   }
+
+  const Highcharts = HighchartsModule;
+  const HighchartsReact = HighchartsReactModule;
 
   const options: Highcharts.Options = {
     chart: {

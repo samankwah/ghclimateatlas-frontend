@@ -51,7 +51,7 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
   }, [searchOpen]);
 
   return (
-    <aside ref={asideRef} className="slim-sidebar">
+    <aside ref={asideRef} className="slim-sidebar" data-tour="map-tools">
       <div className="layer-toggles">
         {/* Search toggle */}
         <button
@@ -101,7 +101,6 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
             className={`layer-toggle ${showStories ? "active" : ""}`}
             onClick={onToggleStories}
             title="Toggle Climate Stories"
-            data-tour="stories"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
