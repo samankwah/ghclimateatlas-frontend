@@ -4,7 +4,7 @@ export const PERIOD_RANGE_LABELS: Record<Period, string> = {
   baseline: "1991-2020",
   "2030": "2021-2040",
   "2050": "2041-2060",
-  "2080": "2080-2100",
+  "2080": "2081-2100",
 };
 
 export const PERIOD_SHORT_LABELS: Record<Period, string> = {

@@ -1,5 +1,5 @@
-import { useQueries } from "@tanstack/react-query";
-import { fetchClimateComparison, fetchClimateData } from "../api/climate";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { fetchClimateComparison, fetchClimateData, fetchDistrictClimate } from "../api/climate";
 import type {
   ClimateComparisonResponse,
   ClimateResponse,
@@ -25,7 +25,8 @@ export interface TimeSeriesPoint {
 export interface DistrictStatistics {
   baseline: { low: number; median: number; high: number };
   future: { low: number; median: number; high: number };
-  gridPointCount: number;
+  gridPointCount: number | null;
+  gridResolutionKm: number | null;
 }
 
 interface UseDistrictTimeSeriesResult {
@@ -62,6 +63,14 @@ export const useDistrictTimeSeries = (
 ): UseDistrictTimeSeriesResult => {
   const definition = getDerivedClimateVariable(variable);
   const sourceVariableIds = definition?.sourceVariableIds ?? [variable];
+  const countVariableId = sourceVariableIds[0] ?? variable;
+
+  const districtDetailQuery = useQuery({
+    queryKey: ["district-detail", districtId, countVariableId, selectedPeriod, scenario],
+    queryFn: () => fetchDistrictClimate(districtId!, countVariableId, selectedPeriod, scenario, "p50"),
+    enabled: !!districtId && !!countVariableId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const baselineQueries = useQueries({
     queries: PERCENTILES.flatMap((percentile) =>
@@ -99,11 +108,13 @@ export const useDistrictTimeSeries = (
 
   const isLoading =
     baselineQueries.some((query) => query.isLoading) ||
-    comparisonQueries.some((query) => query.isLoading);
+    comparisonQueries.some((query) => query.isLoading) ||
+    districtDetailQuery.isLoading;
 
   const error =
     baselineQueries.find((query) => query.error)?.error ||
     comparisonQueries.find((query) => query.error)?.error ||
+    districtDetailQuery.error ||
     null;
 
   const isClimateResponse = (response: ClimateResponse | undefined): response is ClimateResponse =>
@@ -207,7 +218,8 @@ export const useDistrictTimeSeries = (
         statistics = {
           baseline: baselineRange,
           future: selectedFutureStats,
-          gridPointCount: 35,
+          gridPointCount: districtDetailQuery.data?.grid_point_count ?? null,
+          gridResolutionKm: districtDetailQuery.data?.grid_resolution_km ?? null,
         };
       }
     }

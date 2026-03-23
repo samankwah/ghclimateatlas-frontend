@@ -1,9 +1,8 @@
 // Color scales for climate data visualization
 
 import { scaleSequential } from "d3-scale";
+import { interpolateRgbBasis } from "d3-interpolate";
 import {
-  interpolateYlOrRd,
-  interpolateGnBu,
   interpolateBrBG,
   interpolateRdBu,
   interpolatePuBuGn,
@@ -30,17 +29,48 @@ export const normalizeUnit = (unit: string): string => {
 };
 
 export const temperatureScale = (value: number, min: number, max: number): string => {
-  const scale = scaleSequential(interpolateYlOrRd).domain([min, max]);
+  const scale = scaleSequential(
+    interpolateRgbBasis([
+      "#fff8d9",
+      "#fee9a6",
+      "#fdc86a",
+      "#fb923c",
+      "#ef4444",
+      "#b91c1c",
+      "#7f1d1d",
+    ])
+  ).domain([min, max]);
   return scale(value);
 };
 
 export const precipitationScale = (value: number, min: number, max: number): string => {
-  const scale = scaleSequential(interpolateGnBu).domain([min, max]);
+  const scale = scaleSequential(
+    interpolateRgbBasis([
+      "#fff9d6",
+      "#eef6b8",
+      "#cfe8b8",
+      "#9dd7c0",
+      "#63bdd0",
+      "#3193c2",
+      "#2c6aa8",
+      "#1f2d6b",
+    ])
+  ).domain([min, max]);
   return scale(value);
 };
 
 export const hotDaysScale = (value: number, min: number, max: number): string => {
-  const scale = scaleSequential(interpolateYlOrRd).domain([min, max]);
+  const scale = scaleSequential(
+    interpolateRgbBasis([
+      "#fff8d9",
+      "#fee9a6",
+      "#fdc86a",
+      "#fb923c",
+      "#ef4444",
+      "#b91c1c",
+      "#7f1d1d",
+    ])
+  ).domain([min, max]);
   return scale(value);
 };
 

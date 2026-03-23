@@ -14,6 +14,8 @@ const StatisticsTable: React.FC<StatisticsTableProps> = ({
   unit,
   futurePeriodLabel,
 }) => {
+  const hasGridPointCount = statistics.gridPointCount !== null && statistics.gridPointCount !== undefined;
+
   return (
     <div className="statistics-section">
       <div className="statistics-table-scroll">
@@ -43,10 +45,14 @@ const StatisticsTable: React.FC<StatisticsTableProps> = ({
         </table>
       </div>
 
-      <div className="grid-point-info">
-        This district contains approximately {statistics.gridPointCount} climate
-        modeled grid points.
-      </div>
+      {hasGridPointCount && (
+        <div className="grid-point-info">
+          This district used {statistics.gridPointCount} climate model grid
+          cells
+          {statistics.gridResolutionKm ? ` at ${statistics.gridResolutionKm} km resolution` : ""}
+          .
+        </div>
+      )}
     </div>
   );
 };

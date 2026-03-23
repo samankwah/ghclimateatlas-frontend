@@ -1,13 +1,8 @@
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { ClimateVariable, Period, Scenario } from "../../types/climate";
 import type { ColorScaleType } from "../../utils/colorScales";
-import { generateLegendStops, normalizeUnit } from "../../utils/colorScales";
+import Legend from "../Map/Legend";
 import mobileLogo from "../../assets/smart-logo-gmet.webp";
-import {
-  getPeriodRangeLabel,
-  getScenarioDescription,
-  getScenarioLabel,
-} from "../../utils/climateLabels";
 import { isSeaLevelVariable } from "../../utils/coastalExposure";
 import ShareDropdown from "./ShareDropdown";
 
@@ -32,6 +27,19 @@ const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
   storm_surge_flood_risk: "Storm Surge Flood Risk",
   coastal_erosion_risk: "Coastal Erosion Risk",
   saltwater_intrusion_risk: "Saltwater Intrusion Risk",
+};
+
+const SCENARIO_CODES: Record<Scenario, string> = {
+  rcp26: "RCP2.6",
+  rcp45: "RCP4.5",
+  rcp85: "RCP8.5",
+};
+
+const PERIOD_SUMMARY_LABELS: Record<Period, string> = {
+  baseline: "Reference (1991-2020)",
+  "2030": "Near Term (2021-2040)",
+  "2050": "Mid-Century (2041-2060)",
+  "2080": "End-Century (2081-2100)",
 };
 
 const Header: React.FC<HeaderProps> = ({
@@ -63,20 +71,6 @@ const Header: React.FC<HeaderProps> = ({
   const handleMobileShareClick = useCallback(() => {
     setShareOpen((prev) => !prev);
   }, []);
-  const gradientStyle = useMemo(() => {
-    const stops = generateLegendStops(
-      minValue,
-      maxValue,
-      showChange ? "diverging" : colorScaleType,
-      5
-    );
-    const colors = stops.map((stop) => stop.color).join(", ");
-    return {
-      background: `linear-gradient(to right, ${colors})`,
-    };
-  }, [minValue, maxValue, colorScaleType, showChange]);
-
-  const displayUnit = normalizeUnit(variable?.unit || "\u00B0C");
   const rawHeaderTitle = parameterLabel || variable?.name || "Climate Variable";
   const conciseHeaderTitle =
     variable?.id && isSeaLevelVariable(variable.id)
@@ -86,8 +80,12 @@ const Header: React.FC<HeaderProps> = ({
   const mobileHeaderTitle = conciseHeaderTitle;
   const scenarioSummary =
     period !== "baseline"
-      ? `${getScenarioLabel(scenario)} -> ${getScenarioDescription(scenario)} | ${getPeriodRangeLabel(period)}`
-      : `Baseline: ${getPeriodRangeLabel("baseline")}`;
+      ? `${SCENARIO_CODES[scenario]} | ${PERIOD_SUMMARY_LABELS[period]}`
+      : PERIOD_SUMMARY_LABELS.baseline;
+  const desktopScenarioLabel =
+    period !== "baseline"
+      ? `${SCENARIO_CODES[scenario]} | ${PERIOD_SUMMARY_LABELS[period]}`
+      : PERIOD_SUMMARY_LABELS.baseline;
 
   return (
     <header className="new-header">
@@ -171,32 +169,20 @@ const Header: React.FC<HeaderProps> = ({
           <div className="map-label">
             <img className="desktop-header-logo" src={mobileLogo} alt="GMet" />
           </div>
-          <div className="header-legend">
-            <span className="legend-label">
-              {showChange ? "Change" : "Average value"} ({displayUnit})
-            </span>
-            <div className="legend-bar-container">
-              <span className="legend-value">{minValue.toFixed(0)}</span>
-              <div className="legend-gradient" style={gradientStyle} />
-              <span className="legend-value">{maxValue.toFixed(0)}</span>
-            </div>
-          </div>
+          <Legend
+            variable={variable}
+            minValue={minValue}
+            maxValue={maxValue}
+            colorScaleType={colorScaleType}
+            showChange={showChange}
+            className="header-legend"
+          />
         </div>
 
         <div className="header-center" data-tour="map-information">
           <h1 className="variable-title">{headerTitle}</h1>
           <div className="scenario-info">
-            {period !== "baseline" ? (
-              <>
-                <span className="scenario-text">
-                  {getScenarioLabel(scenario)} {"->"} {getScenarioDescription(scenario)}
-                </span>
-                <span className="period-separator">|</span>
-                <span className="period-text">{getPeriodRangeLabel(period)}</span>
-              </>
-            ) : (
-              <span className="period-text">Baseline: {getPeriodRangeLabel("baseline")}</span>
-            )}
+            <span className="period-text">{desktopScenarioLabel}</span>
           </div>
         </div>
 

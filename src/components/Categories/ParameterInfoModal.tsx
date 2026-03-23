@@ -41,7 +41,7 @@ const PERIOD_INFO: Record<Period, { label: string; description: string }> = {
       "A period of significant transition where the effects of climate change become clearly established across Ghana's regions.",
   },
   "2080": {
-    label: "Late Century (2080-2100)",
+    label: "Late Century (2081-2100)",
     description:
       "The long-term outlook where the full extent of climate change impacts will be felt, varying significantly depending on the emission pathway followed.",
   },

@@ -189,7 +189,7 @@ export const CATEGORY_DEFAULT_VARIABLE: Record<Category, string> = {
 
 export const getCategoryLabel = (category: Category): string => {
   const labels: Record<Category, string> = {
-    precipitation: "PRECIPITATION",
+    precipitation: "RAINFALL",
     temperature: "TEMPERATURE",
     sea_level: "SEA LEVEL",
   };

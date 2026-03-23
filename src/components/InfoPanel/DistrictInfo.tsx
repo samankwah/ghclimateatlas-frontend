@@ -74,7 +74,7 @@ const DistrictInfo: React.FC<DistrictInfoProps> = ({
                   <span className="label">
                     {period === "2030" && "2030s"}
                     {period === "2050" && "2050s"}
-                    {period === "2080" && "2080s"}
+                    {period === "2080" && "2081-2100"}
                     {" "}({scenario.toUpperCase()})
                   </span>
                   <span className="value">{formatValue(comparison.future, unit)}</span>

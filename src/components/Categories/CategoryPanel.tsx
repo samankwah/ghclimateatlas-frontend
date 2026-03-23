@@ -287,7 +287,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
         <div
           key={activeParent.id}
           ref={submenuRef}
-          className={`category-subpanel category-subpanel-floating ${categoryLabel === 'PRECIPITATION' ? 'category-subpanel-precipitation' : ''}`}
+          className={`category-subpanel category-subpanel-floating ${categoryLabel === 'RAINFALL' ? 'category-subpanel-precipitation' : ''}`}
           aria-label={`${activeParent.label} options`}
           style={{
             bottom: `${submenuPosition.bottom}px`,
@@ -383,7 +383,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
             <div
               key={activeParent.id}
               ref={submenuRef}
-              className={`category-subpanel ${categoryLabel === 'PRECIPITATION' ? 'category-subpanel-precipitation' : ''}`}
+              className={`category-subpanel ${categoryLabel === 'RAINFALL' ? 'category-subpanel-precipitation' : ''}`}
               aria-label={`${activeParent.label} options`}
             >
               <button

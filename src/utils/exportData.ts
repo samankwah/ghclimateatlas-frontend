@@ -102,7 +102,7 @@ Scenario: ${scenarioLabel}
 SUMMARY
 -------
 Baseline (1991-2020): ${baseline ? formatValue(baseline.median) : "N/A"}
-Projected (2080-2100): ${future2080 ? formatValue(future2080.median) : "N/A"}
+Projected (2081-2100): ${future2080 ? formatValue(future2080.median) : "N/A"}
 Expected Change: ${change >= 0 ? "+" : ""}${formatValue(change)} (${changePercent}%)
 
 TIME SERIES DATA

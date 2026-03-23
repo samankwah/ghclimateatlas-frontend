@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GhanaMap from "./components/Map/GhanaMap";
+import Legend from "./components/Map/Legend";
 import Header from "./components/Header/Header";
 import MapLayerToggles from "./components/Sidebar/MapLayerToggles";
 import TimelineBar from "./components/Timeline/TimelineBar";
@@ -26,6 +27,7 @@ import {
   getPeriodRangeLabel,
   getScenarioLabel,
 } from "./utils/climateLabels";
+import { getFixedDisplayRange } from "./utils/displayRanges";
 import "./App.css";
 
 const queryClient = new QueryClient({
@@ -176,6 +178,18 @@ function ClimateAtlas() {
     };
   }, [rangeData, selectedParameterId]);
 
+  const fixedDisplayRange = useMemo(() => {
+    if (showChange || !effectiveVariable) {
+      return undefined;
+    }
+
+    if (selectedParameterId === "wet_days") {
+      return { min: 0, max: 365 };
+    }
+
+    return getFixedDisplayRange(effectiveVariable.id, effectiveVariable.color_scale);
+  }, [effectiveVariable, selectedParameterId, showChange]);
+
   // Calculate min/max for color scale
   const { minValue, maxValue } = useMemo(() => {
     if (showChange && displayedComparisonData) {
@@ -183,11 +197,14 @@ function ClimateAtlas() {
       const absMax = Math.max(...changes.map(Math.abs));
       return { minValue: -absMax, maxValue: absMax };
     }
+    if (fixedDisplayRange) {
+      return { minValue: fixedDisplayRange.min, maxValue: fixedDisplayRange.max };
+    }
     if (displayedRangeData) {
       return { minValue: displayedRangeData.min, maxValue: displayedRangeData.max };
     }
     return { minValue: 0, maxValue: 100 };
-  }, [displayedRangeData, displayedComparisonData, showChange]);
+  }, [displayedRangeData, displayedComparisonData, fixedDisplayRange, showChange]);
 
   // Get color scale type
   const colorScaleType: ColorScaleType = useMemo(() => {
@@ -255,6 +272,16 @@ function ClimateAtlas() {
       <div className="map-container">
         {/* Map area */}
         <div className="map-area">
+          <Legend
+            variable={effectiveVariable}
+            minValue={minValue}
+            maxValue={maxValue}
+            colorScaleType={colorScaleType}
+            showChange={showChange}
+            className="floating-map-legend"
+            floating
+          />
+
           {districtsError && (
             <div className="error-overlay">
               <div className="error-content">

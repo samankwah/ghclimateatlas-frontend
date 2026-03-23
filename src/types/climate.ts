@@ -74,6 +74,15 @@ export interface RegionInfo {
   district_count: number;
 }
 
+export interface DistrictClimate {
+  district_id: string;
+  district_name: string;
+  region: string;
+  climate: Record<string, Record<string, number>>;
+  grid_point_count?: number | null;
+  grid_resolution_km?: number | null;
+}
+
 export type Period = "baseline" | "2030" | "2050" | "2080";
 export type Scenario = "rcp26" | "rcp45" | "rcp85";
 

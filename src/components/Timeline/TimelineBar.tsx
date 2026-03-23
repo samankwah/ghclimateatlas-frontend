@@ -13,7 +13,7 @@ const PERIODS: { id: Period; label: string }[] = [
   { id: "baseline", label: "REFERENCE" },
   { id: "2030", label: "2021-2040" },
   { id: "2050", label: "2041-2060" },
-  { id: "2080", label: "2080-2100" },
+  { id: "2080", label: "2081-2100" },
 ];
 
 const TimelineBar: React.FC<TimelineBarProps> = ({

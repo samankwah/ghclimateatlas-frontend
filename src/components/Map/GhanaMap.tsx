@@ -64,6 +64,17 @@ const DESKTOP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [14, 4],   // Northeast
 ];
 
+type DisplayMode = "choropleth" | "interpolated";
+
+const getDisplayMode = (): DisplayMode => {
+  if (typeof window === "undefined") {
+    return "choropleth";
+  }
+
+  const display = new URLSearchParams(window.location.search).get("display");
+  return display === "interpolated" ? "interpolated" : "choropleth";
+};
+
 // Component to fit map to Ghana bounds
 const FitBounds = () => {
   const map = useMap();
@@ -117,6 +128,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   showStories = false,
   unit = "",
 }) => {
+  const displayMode = getDisplayMode();
+
   // Create a lookup map for climate values
   const valueMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -130,7 +143,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
   // Create data points from districts + climate values for IDW interpolation
   const dataPoints: DataPoint[] = useMemo(() => {
-    if (!districts) return [];
+    if (!districts || displayMode !== "interpolated") return [];
 
     return districts.features
       .map((district) => {
@@ -146,7 +159,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
         };
       })
       .filter((point): point is DataPoint => point !== null);
-  }, [districts, valueMap]);
+  }, [displayMode, districts, valueMap]);
 
   // Get stable color scale function (only changes when scale type changes)
   const colorFn = useMemo(
@@ -157,29 +170,41 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   // Ref to track all GeoJSON layers by district ID for imperative style updates
   const layersRef = useRef<Map<string, L.Path>>(new Map());
 
-  // Style function for GeoJSON features - borders only, no fill (interpolated layer handles colors)
-  const getStyle = useCallback((districtName: string, regionName: string, isSelected: boolean): PathOptions => {
+  const getStyle = useCallback((
+    districtId: string,
+    districtName: string,
+    regionName: string,
+    isSelected: boolean,
+  ): PathOptions => {
     const isIndirectSeaRisk =
       isSeaLevelRiskVariable(activeVariableId) &&
       getCoastalExposure(districtName, regionName).kind === "indirect";
+    const value = valueMap.get(districtId);
+    const hasValue = value !== undefined;
+    const fillColor = hasValue
+      ? colorFn(value, minValue, maxValue)
+      : (isIndirectSeaRisk ? "rgba(8, 47, 73, 0.55)" : "#e5e7eb");
+    const fillOpacity = displayMode === "interpolated"
+      ? (isIndirectSeaRisk ? 0.22 : 0)
+      : (hasValue ? 0.86 : 0.5);
 
     return {
-      fillColor: isIndirectSeaRisk ? "rgba(8, 47, 73, 0.65)" : undefined,
-      fillOpacity: isIndirectSeaRisk ? 0.22 : 0,
+      fillColor,
+      fillOpacity,
       weight: isSelected ? 2.2 : 0.8,
       color: isSelected ? "#0f172a" : "#475569",
       opacity: isSelected ? 0.95 : 0.6,
     };
-  }, [activeVariableId]);
+  }, [activeVariableId, colorFn, displayMode, maxValue, minValue, valueMap]);
 
   const style = useCallback((feature: Feature | undefined): PathOptions => {
     if (!feature?.properties) {
-      return { fillOpacity: 0, weight: 0.8, color: "#475569", opacity: 0.6 };
+      return { fillColor: "#e5e7eb", fillOpacity: 0.5, weight: 0.8, color: "#475569", opacity: 0.6 };
     }
     const districtId = feature.properties.id as string;
     const districtName = feature.properties.name as string;
     const regionName = feature.properties.region as string;
-    return getStyle(districtName, regionName, districtId === selectedDistrictId);
+    return getStyle(districtId, districtName, regionName, districtId === selectedDistrictId);
   }, [selectedDistrictId, getStyle]);
 
   // Imperatively update styles when selectedDistrictId changes (no GeoJSON re-mount)
@@ -195,6 +220,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       const feature = layer.feature;
       if (feature?.properties) {
         layer.setStyle(getStyle(
+          feature.properties.id as string,
           feature.properties.name as string,
           feature.properties.region as string,
           false
@@ -207,6 +233,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       const feature = layer.feature;
       if (feature?.properties) {
         layer.setStyle(getStyle(
+          feature.properties.id as string,
           feature.properties.name as string,
           feature.properties.region as string,
           true
@@ -296,8 +323,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
 
-      {/* IDW Interpolated climate layer */}
-      {dataPoints.length > 0 && (
+      {/* Fallback display mode: centroid-based interpolation */}
+      {displayMode === "interpolated" && dataPoints.length > 0 && (
         <InterpolatedLayer
           dataPoints={dataPoints}
           colorScale={colorFn}
@@ -312,7 +339,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       {/* Water bodies layer */}
       <WaterBodiesLayer visible={showWater} />
 
-      {/* District polygons (borders only) */}
+      {/* District polygons colored by district-level climate values */}
       <GeoJSON
         key={dataVersion}
         data={districts as GeoJsonObject}

@@ -55,7 +55,7 @@ interface CategoryConfig {
 
 const CATEGORIES: CategoryConfig[] = [
   { id: "temperature", label: "Temperature", icon: ThermometerIcon },
-  { id: "precipitation", label: "Precipitation", icon: DropletIcon },
+  { id: "precipitation", label: "Rainfall", icon: DropletIcon },
   { id: "sea_level", label: "Sea Level", icon: WavesIcon },
 ];
 
@@ -207,8 +207,6 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   } | null>(null);
 
   const availableVariableIds = new Set((availableVariables ?? []).map((variable) => variable.id));
-  availableVariableIds.add('dry_days');
-  availableVariableIds.add('wet_days');
 
   const handleCategoryClick = (categoryId: Category) => {
     if (openPanel === categoryId) {

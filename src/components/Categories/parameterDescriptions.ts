@@ -17,7 +17,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   sea_level_rise: {
     shortDescription: "Projected relative sea-level rise affecting Ghana's coast and, indirectly, low-lying connected systems inland.",
     aboutDescription: "Sea level rise is one of the clearest long-term coastal climate pressures facing Ghana. Along the Gulf of Guinea it raises the baseline for flooding, accelerates shoreline retreat, and worsens saline intrusion into lagoons, estuaries, and coastal aquifers. Inland districts are still shown on the national map for continuity, but their values should be read as contextual and indirect rather than direct coastal exposure.",
-    technicalDescription: "Mock indicator representing projected relative sea-level rise signal by district, with stronger values assigned to coastal districts and reduced contextual values inland.",
+    technicalDescription: "Illustrative proxy indicator representing projected relative sea-level rise signal by district, with stronger values assigned to coastal districts and reduced contextual values inland.",
     formula: "Relative sea-level rise proxy",
     unit: "cm",
     legendMin: 0,
@@ -27,7 +27,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   storm_surge_flood_risk: {
     shortDescription: "An index of storm-surge flooding pressure, strongest in coastal districts and reduced inland to maintain nationwide continuity.",
     aboutDescription: "Storm surge flood risk combines sea-level pressure with exposure to episodic coastal flooding. In Ghana, districts along the coast face the most direct impacts from surge-driven inundation, while inland districts are shown with low-magnitude proxy values only to preserve map continuity and provide contextual awareness of indirect relevance.",
-    technicalDescription: "Normalized mock risk index based on coastal exposure class and future climate amplification, with distance-decayed inland proxy values.",
+    technicalDescription: "Illustrative proxy risk index based on coastal exposure class and future climate amplification, with distance-decayed inland proxy values.",
     formula: "Storm surge proxy risk index",
     unit: "index",
     legendMin: 0,
@@ -37,7 +37,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   coastal_erosion_risk: {
     shortDescription: "An index of shoreline erosion pressure concentrated along the coast, with only contextual proxy values inland.",
     aboutDescription: "Coastal erosion is already reshaping parts of Ghana's shoreline, especially where sea-level rise, storm activity, and sediment changes combine. Coastal districts are the direct concern. Inland districts remain visible with low proxy values so the national map stays continuous, but those inland values should not be interpreted as direct erosion hazard.",
-    technicalDescription: "Normalized mock risk index representing potential coastal erosion pressure with direct coastal and indirect inland tiers.",
+    technicalDescription: "Illustrative proxy risk index representing potential coastal erosion pressure with direct coastal and indirect inland tiers.",
     formula: "Coastal erosion proxy risk index",
     unit: "index",
     legendMin: 0,
@@ -47,7 +47,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   saltwater_intrusion_risk: {
     shortDescription: "An index of saline intrusion pressure in coastal and connected water systems, with reduced inland proxy values for indirect relevance.",
     aboutDescription: "Saltwater intrusion threatens lagoons, estuaries, shallow aquifers, and other coastal-adjacent water systems in Ghana. This indicator is highest in coastal districts and reduced inland, where values represent only a low-magnitude proxy for indirect or connected-system relevance rather than direct coastal saline intrusion.",
-    technicalDescription: "Normalized mock risk index for saline intrusion pressure using coastal exposure and scenario-driven amplification with inland decay.",
+    technicalDescription: "Illustrative proxy risk index for saline intrusion pressure using coastal exposure and scenario-driven amplification with inland decay.",
     formula: "Saltwater intrusion proxy risk index",
     unit: "index",
     legendMin: 0,

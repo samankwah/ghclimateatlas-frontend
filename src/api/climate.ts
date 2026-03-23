@@ -7,6 +7,7 @@ import type {
   ClimateResponse,
   ClimateComparisonResponse,
   RegionInfo,
+  DistrictClimate,
   Period,
   Scenario,
 } from "../types/climate";
@@ -58,6 +59,10 @@ const api = axios.create({
   timeout: 30000,
 });
 
+if (import.meta.env.DEV) {
+  console.info(`[climate-api] Using backend: ${API_BASE}`);
+}
+
 // Districts API
 export const fetchDistricts = async (): Promise<DistrictFeatureCollection> => {
   const response = await api.get<DistrictFeatureCollection>("/districts");
@@ -66,6 +71,19 @@ export const fetchDistricts = async (): Promise<DistrictFeatureCollection> => {
 
 export const fetchRegions = async (): Promise<RegionInfo[]> => {
   const response = await api.get<RegionInfo[]>("/districts/regions");
+  return response.data;
+};
+
+export const fetchDistrictClimate = async (
+  districtId: string,
+  variable: string,
+  period: Period,
+  scenario: Scenario,
+  percentile: "p10" | "p50" | "p90" = "p50",
+): Promise<DistrictClimate> => {
+  const response = await api.get<DistrictClimate>(`/districts/${districtId}/climate`, {
+    params: { variable, period, scenario, percentile },
+  });
   return response.data;
 };
 

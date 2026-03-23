@@ -13,6 +13,7 @@ const DEFAULT_STATE: MapState = {
 
 const PERIOD_VALUES: Period[] = ["baseline", "2030", "2050", "2080"];
 const SCENARIO_VALUES: Scenario[] = ["rcp26", "rcp45", "rcp85"];
+const DISPLAY_VALUES = new Set(["choropleth", "interpolated"]);
 
 const getInitialState = (): MapState => {
   if (typeof window === "undefined") {
@@ -75,6 +76,7 @@ export const useMapControls = () => {
       return;
     }
 
+    const currentParams = new URLSearchParams(window.location.search);
     const params = new URLSearchParams();
     params.set("variable", state.variable);
     params.set("period", state.period);
@@ -86,6 +88,11 @@ export const useMapControls = () => {
 
     if (state.showChange && state.period !== "baseline") {
       params.set("change", "1");
+    }
+
+    const display = currentParams.get("display");
+    if (display && DISPLAY_VALUES.has(display)) {
+      params.set("display", display);
     }
 
     const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
