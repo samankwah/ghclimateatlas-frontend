@@ -15,13 +15,15 @@ import {
   getCoastalContextLabel,
   getCoastalExposure,
   isSeaLevelRiskVariable,
+  isSeaLevelVariable,
 } from "../../utils/coastalExposure";
-import CityMarkers from "./CityMarkers";
+
 import ClimateStoryMarkers from "./ClimateStoryMarkers";
 import InterpolatedLayer from "./InterpolatedLayer";
 import RegionalBoundaries from "./RegionalBoundaries";
 import WaterBodiesLayer from "./WaterBodiesLayer";
 import MapZoomControls from "./MapZoomControls";
+import CoastlineLayer from "./CoastlineLayer";
 import GraticuleLayer from "./GraticuleLayer";
 import type { DataPoint } from "../../utils/idwInterpolation";
 import "leaflet/dist/leaflet.css";
@@ -38,7 +40,7 @@ interface GhanaMapProps {
   selectedDistrictId: string | null;
   onDistrictClick: (districtId: string) => void;
   onDistrictHover: (districtId: string | null) => void;
-  showCities?: boolean;
+
   dataVersion?: string;
   showGrid?: boolean;
   showWater?: boolean;
@@ -121,7 +123,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   selectedDistrictId,
   onDistrictClick,
   onDistrictHover,
-  showCities = false,
+
   dataVersion,
   showGrid = false,
   showWater = true,
@@ -170,12 +172,25 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   // Ref to track all GeoJSON layers by district ID for imperative style updates
   const layersRef = useRef<Map<string, L.Path>>(new Map());
 
+  const isSeaLevel = isSeaLevelVariable(activeVariableId);
+
   const getStyle = useCallback((
     districtId: string,
     districtName: string,
     regionName: string,
     isSelected: boolean,
   ): PathOptions => {
+    // Sea level coastline mode: all districts are plain gray, data shown on coastline overlay
+    if (isSeaLevel) {
+      return {
+        fillColor: "#e5e7eb",
+        fillOpacity: 0.5,
+        weight: isSelected ? 2.2 : 0.8,
+        color: isSelected ? "#0f172a" : "#94a3b8",
+        opacity: isSelected ? 0.9 : 0.4,
+      };
+    }
+
     const isIndirectSeaRisk =
       isSeaLevelRiskVariable(activeVariableId) &&
       getCoastalExposure(districtName, regionName).kind === "indirect";
@@ -195,7 +210,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       color: isSelected ? "#0f172a" : "#475569",
       opacity: isSelected ? 0.95 : 0.6,
     };
-  }, [activeVariableId, colorFn, displayMode, maxValue, minValue, valueMap]);
+  }, [activeVariableId, isSeaLevel, colorFn, displayMode, maxValue, minValue, valueMap]);
 
   const style = useCallback((feature: Feature | undefined): PathOptions => {
     if (!feature?.properties) {
@@ -344,6 +359,23 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
         onEachFeature={onEachFeature}
       />
 
+      {/* Coastline overlay for sea level rise visualization */}
+      {isSeaLevel && (
+        <CoastlineLayer
+          visible={true}
+          valueMap={valueMap}
+          colorFn={colorFn}
+          minValue={minValue}
+          maxValue={maxValue}
+          onDistrictClick={onDistrictClick}
+          onDistrictHover={onDistrictHover}
+          selectedDistrictId={selectedDistrictId}
+          showChange={showChange}
+          unit={unit}
+          dataVersion={dataVersion}
+        />
+      )}
+
       {/* Water bodies layer */}
       <WaterBodiesLayer visible={showWater} />
 
@@ -357,9 +389,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
       {/* Lat/Lon grid overlay */}
       <GraticuleLayer visible={showGrid} />
-
-      {/* City markers layer */}
-      <CityMarkers visible={showCities} />
 
       {/* Climate story markers */}
       <ClimateStoryMarkers visible={showStories} />

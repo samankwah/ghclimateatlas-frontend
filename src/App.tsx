@@ -45,7 +45,7 @@ function ClimateAtlas() {
 
   // Map layer toggles state
   const [showGrid] = useState(true);
-  const [showCities] = useState(true);
+
   const [showWater, setShowWater] = useState(true);
   const [showStories, setShowStories] = useState(true);
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
@@ -330,7 +330,7 @@ function ClimateAtlas() {
             selectedDistrictId={selectedDistrictId}
             onDistrictClick={selectDistrict}
             onDistrictHover={setHoveredDistrict}
-            showCities={showCities}
+
             unit={effectiveVariable?.unit || ""}
             dataVersion={`${variable}-${period}-${scenario}`}
             showGrid={showGrid}
