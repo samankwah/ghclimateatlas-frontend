@@ -84,7 +84,7 @@ export interface DistrictClimate {
 }
 
 export type Period = "baseline" | "2030" | "2050" | "2080";
-export type Scenario = "rcp26" | "rcp45" | "rcp85";
+export type Scenario = "rcp26" | "rcp45" | "rcp85" | "ssp126" | "ssp245" | "ssp585";
 
 export interface MapState {
   variable: string;

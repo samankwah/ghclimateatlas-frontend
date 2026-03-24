@@ -114,21 +114,6 @@ export const CATEGORY_PARAMETERS: Record<Category, Parameter[]> = {
       label: "Sea Level Rise",
       description: "Projected relative sea-level rise affecting coastal systems and low-lying districts",
     },
-    {
-      id: "storm_surge_flood_risk",
-      label: "Storm Surge Flood Risk",
-      description: "Coastal flood-risk index with low-magnitude inland proxy values for indirect relevance",
-    },
-    {
-      id: "coastal_erosion_risk",
-      label: "Coastal Erosion Risk",
-      description: "Shoreline erosion risk with inland proxy values shown only for contextual continuity",
-    },
-    {
-      id: "saltwater_intrusion_risk",
-      label: "Saltwater Intrusion Risk",
-      description: "Risk of saline intrusion into coastal and connected inland water systems",
-    },
   ],
 };
 
@@ -169,9 +154,6 @@ export const PARAMETER_TO_VARIABLE: Record<string, string> = {
 
   // Sea Level
   sea_level_rise: "sea_level_rise",
-  storm_surge_flood_risk: "storm_surge_flood_risk",
-  coastal_erosion_risk: "coastal_erosion_risk",
-  saltwater_intrusion_risk: "saltwater_intrusion_risk",
 
   // Agriculture
   maize_heat_units: "maize_heat_units",

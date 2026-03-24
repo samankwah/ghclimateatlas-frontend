@@ -1,9 +1,10 @@
 // Water bodies overlay for Ghana (lakes, rivers, lagoons)
 
 import { GeoJSON } from "react-leaflet";
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import type { PathOptions } from "leaflet";
 import type { FeatureCollection, Feature } from "geojson";
+import waterAreas from "../../assets/ghana_water_areas.geojson";
 
 interface WaterBodiesLayerProps {
   visible?: boolean;
@@ -14,18 +15,10 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
   visible = true,
   opacity = 0.55,
 }) => {
-  const [waterData, setWaterData] = useState<FeatureCollection | null>(null);
-
-  // Lazy-load the GeoJSON
-  useEffect(() => {
-    import("../../assets/ghana_water_areas.geojson").then((mod) => {
-      const raw = (mod.default ?? mod) as unknown as { features: Feature[] };
-      setWaterData({
-        type: "FeatureCollection",
-        features: raw.features,
-      });
-    });
-  }, []);
+  const waterData: FeatureCollection = {
+    type: "FeatureCollection",
+    features: (waterAreas as unknown as { features: Feature[] }).features,
+  };
 
   const stylePerFeature = useCallback(
     (feature: Feature | undefined): PathOptions => {
@@ -42,7 +35,7 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
     [opacity]
   );
 
-  if (!visible || !waterData) return null;
+  if (!visible) return null;
 
   return (
     <GeoJSON

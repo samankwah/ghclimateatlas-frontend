@@ -26,10 +26,25 @@ const Legend: React.FC<LegendProps> = ({
   className = "",
   floating = false,
 }) => {
+  const legendRange = useMemo(() => {
+    if (!showChange && variable) {
+      if (variable.id === "wet_days") {
+        return { min: 0, max: 365 };
+      }
+
+      const fixedRange = getFixedDisplayRange(variable.id, variable.color_scale);
+      if (fixedRange) {
+        return fixedRange;
+      }
+    }
+
+    return { min: minValue, max: maxValue };
+  }, [maxValue, minValue, showChange, variable]);
+
   const gradientStyle = useMemo(() => {
     const stops = generateLegendStops(
-      minValue,
-      maxValue,
+      legendRange.min,
+      legendRange.max,
       showChange ? "diverging" : colorScaleType,
       5
     );
@@ -37,11 +52,11 @@ const Legend: React.FC<LegendProps> = ({
     return {
       background: `linear-gradient(to right, ${colors})`,
     };
-  }, [minValue, maxValue, colorScaleType, showChange]);
+  }, [colorScaleType, legendRange.max, legendRange.min, showChange]);
 
   const legendTicks = useMemo(() => {
     if (showChange) {
-      return [minValue, 0, maxValue].filter((value, index, values) => values.indexOf(value) === index);
+      return [legendRange.min, 0, legendRange.max].filter((value, index, values) => values.indexOf(value) === index);
     }
 
     if (variable) {
@@ -61,22 +76,22 @@ const Legend: React.FC<LegendProps> = ({
       }
     }
 
-    return getLegendTickValues({ min: minValue, max: maxValue }, { steps: 5, integer: true });
-  }, [maxValue, minValue, showChange, variable]);
+    return getLegendTickValues(legendRange, { steps: 5, integer: true });
+  }, [legendRange, showChange, variable]);
 
   const legendTickPositions = useMemo(() => {
-    const range = maxValue - minValue || 1;
-    return legendTicks.map((tick) => ({
+    const lastIndex = Math.max(legendTicks.length - 1, 1);
+    return legendTicks.map((tick, index) => ({
       value: tick,
-      leftPercent: ((tick - minValue) / range) * 100,
+      leftPercent: (index / lastIndex) * 100,
     }));
-  }, [legendTicks, maxValue, minValue]);
+  }, [legendTicks]);
 
   const legendScaleStyle = useMemo<CSSProperties>(() => {
     const width = variable?.color_scale === "precipitation"
       ? (floating ? "360px" : "420px")
       : variable?.color_scale === "temperature"
-        ? (floating ? "320px" : "320px")
+        ? (floating ? "320px" : "380px")
         : (floating ? "280px" : "280px");
 
     return (
@@ -107,22 +122,12 @@ const Legend: React.FC<LegendProps> = ({
             />
           ))}
         </div>
-        <div className="legend-tick-row">
+        <div className="legend-tick-row legend-tick-row-inline">
           {legendTickPositions.map((tick, index) => {
-            let labelStyle: CSSProperties = { left: `${tick.leftPercent}%` };
-
-            if (variable?.color_scale === "precipitation" && tick.value === 2300) {
-              labelStyle = {
-                left: "100%",
-                transform: "translateX(-100%)",
-              };
-            }
-
             return (
               <span
                 key={tick.value}
-                className={`legend-value${index === 0 ? " is-start" : ""}${index === legendTickPositions.length - 1 ? " is-end" : ""}`}
-                style={labelStyle}
+                className={`legend-grid-value${index === 0 ? " is-start" : ""}${index === legendTickPositions.length - 1 ? " is-end" : ""}`}
               >
                 {tick.value > 0 && showChange ? "+" : ""}
                 {tick.value.toFixed(0)}

@@ -16,10 +16,10 @@ const VARIABLE_RANGES: Record<string, DisplayRange> = {
   mean_temp_dec_jan_feb: { min: 26, max: 35 },
   annual_precipitation: { min: 500, max: 2500 },
   wet_season_precipitation: { min: 500, max: 2500 },
-  precipitation_apr_may_jun: { min: 500, max: 2500 },
-  precipitation_jul_aug_sep: { min: 500, max: 2500 },
-  precipitation_sep_oct_nov: { min: 500, max: 2500 },
-  precipitation_dec_jan_feb: { min: 500, max: 2500 },
+  precipitation_apr_may_jun: { min: 200, max: 850 },
+  precipitation_jul_aug_sep: { min: 100, max: 750 },
+  precipitation_sep_oct_nov: { min: 100, max: 700 },
+  precipitation_dec_jan_feb: { min: 0, max: 200 },
 };
 
 const COLOR_SCALE_DEFAULTS: Partial<Record<ClimateVariable["color_scale"], DisplayRange>> = {
@@ -64,6 +64,18 @@ export const getFixedLegendTicks = (
   colorScale?: string,
 ): number[] | undefined => {
   if (colorScale === "precipitation" || variableId === "annual_precipitation") {
+    if (variableId === "precipitation_apr_may_jun") {
+      return [200, 330, 460, 590, 720, 850];
+    }
+    if (variableId === "precipitation_jul_aug_sep") {
+      return [100, 230, 360, 490, 620, 750];
+    }
+    if (variableId === "precipitation_sep_oct_nov") {
+      return [100, 220, 340, 460, 580, 700];
+    }
+    if (variableId === "precipitation_dec_jan_feb") {
+      return [0, 40, 80, 120, 160, 200];
+    }
     return [500, 900, 1300, 1700, 2100, 2500];
   }
 

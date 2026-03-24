@@ -2,8 +2,10 @@
 
 import type { TimeSeriesPoint } from "../hooks/useDistrictTimeSeries";
 import { normalizeUnit } from "./colorScales";
+import { isSspScenario } from "./climateLabels";
 
 const getScenarioExportLabel = (scenario: string): string => {
+  if (isSspScenario(scenario)) return scenario.toUpperCase();
   if (scenario === "rcp26") return "Low Carbon (RCP 2.6)";
   if (scenario === "rcp45") return "Medium Carbon (RCP 4.5)";
   return "High Carbon (RCP 8.5)";

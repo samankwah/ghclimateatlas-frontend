@@ -9,6 +9,7 @@ import {
   getPeriodRangeLabel,
   getScenarioDescription,
   getScenarioLabel,
+  isSeaLevelVariableId,
 } from "../../utils/climateLabels";
 
 interface DistrictDetailPanelProps {
@@ -46,7 +47,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
 
   const unit = variableInfo?.unit || "";
   const variableName = variableInfo?.name || "Climate Variable";
-  const scenarioLabel = getScenarioLabel(scenario);
+  const scenarioLabel = isSeaLevelVariableId(variable) ? scenario.toUpperCase() : getScenarioLabel(scenario);
   const selectedPeriodLabel = getPeriodRangeLabel(period);
   const baselineDisplayValue = period === "baseline" ? baselineValue : comparisonData?.baseline;
   const futureValue = comparisonData?.future;

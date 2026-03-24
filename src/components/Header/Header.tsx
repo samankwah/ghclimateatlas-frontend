@@ -4,6 +4,7 @@ import type { ColorScaleType } from "../../utils/colorScales";
 import Legend from "../Map/Legend";
 import mobileLogo from "../../assets/smart-logo-gmet.webp";
 import { isSeaLevelVariable } from "../../utils/coastalExposure";
+import { isSeaLevelVariableId } from "../../utils/climateLabels";
 import ShareDropdown from "./ShareDropdown";
 
 interface HeaderProps {
@@ -24,15 +25,6 @@ interface HeaderProps {
 
 const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
   sea_level_rise: "Sea Level Rise",
-  storm_surge_flood_risk: "Storm Surge Flood Risk",
-  coastal_erosion_risk: "Coastal Erosion Risk",
-  saltwater_intrusion_risk: "Saltwater Intrusion Risk",
-};
-
-const SCENARIO_CODES: Record<Scenario, string> = {
-  rcp26: "RCP2.6",
-  rcp45: "RCP4.5",
-  rcp85: "RCP8.5",
 };
 
 const PERIOD_SUMMARY_LABELS: Record<Period, string> = {
@@ -40,6 +32,12 @@ const PERIOD_SUMMARY_LABELS: Record<Period, string> = {
   "2030": "Near Term (2021-2040)",
   "2050": "Mid-Century (2041-2060)",
   "2080": "End-Century (2081-2100)",
+};
+
+const RCP_CODES: Record<"rcp26" | "rcp45" | "rcp85", string> = {
+  rcp26: "RCP2.6",
+  rcp45: "RCP4.5",
+  rcp85: "RCP8.5",
 };
 
 const Header: React.FC<HeaderProps> = ({
@@ -78,13 +76,16 @@ const Header: React.FC<HeaderProps> = ({
       : rawHeaderTitle;
   const headerTitle = conciseHeaderTitle;
   const mobileHeaderTitle = conciseHeaderTitle;
+  const scenarioCode = isSeaLevelVariableId(variable?.id)
+    ? scenario.toUpperCase()
+    : RCP_CODES[scenario as "rcp26" | "rcp45" | "rcp85"];
   const scenarioSummary =
     period !== "baseline"
-      ? `${SCENARIO_CODES[scenario]} | ${PERIOD_SUMMARY_LABELS[period]}`
+      ? `${scenarioCode} | ${PERIOD_SUMMARY_LABELS[period]}`
       : PERIOD_SUMMARY_LABELS.baseline;
   const desktopScenarioLabel =
     period !== "baseline"
-      ? `${SCENARIO_CODES[scenario]} | ${PERIOD_SUMMARY_LABELS[period]}`
+      ? `${scenarioCode} | ${PERIOD_SUMMARY_LABELS[period]}`
       : PERIOD_SUMMARY_LABELS.baseline;
 
   return (

@@ -59,9 +59,6 @@ export interface CoastalExposure {
 
 export const SEA_LEVEL_VARIABLE_IDS = [
   "sea_level_rise",
-  "storm_surge_flood_risk",
-  "coastal_erosion_risk",
-  "saltwater_intrusion_risk",
 ] as const;
 
 const SEA_LEVEL_RISK_VARIABLE_IDS = new Set([

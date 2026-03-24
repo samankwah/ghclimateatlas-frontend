@@ -215,7 +215,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
     const yAxisStep =
       isSeaLevelRiseChart
-        ? 5
+        ? 10
         : isStormSurgeRiskChart || isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
           ? 4
           : isTemperatureChart
@@ -233,7 +233,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       projectedRange: projectedData.rangeData,
       yAxisStep,
       yMin: isSeaLevelRiseChart
-        ? 5
+        ? 0
         : isStormSurgeRiskChart
           ? 5
         : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
@@ -248,7 +248,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
               ? computedYMin
             : computedYMin,
       yMax: isSeaLevelRiseChart
-        ? 35
+        ? Math.max(20, computedYMax)
         : isStormSurgeRiskChart
           ? 16
         : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart

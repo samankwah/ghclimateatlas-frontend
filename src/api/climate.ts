@@ -69,6 +69,11 @@ export const fetchDistricts = async (): Promise<DistrictFeatureCollection> => {
   return response.data;
 };
 
+export const fetchMapDistricts = async (): Promise<DistrictFeatureCollection> => {
+  const response = await api.get<DistrictFeatureCollection>("/districts/map");
+  return response.data;
+};
+
 export const fetchRegions = async (): Promise<RegionInfo[]> => {
   const response = await api.get<RegionInfo[]>("/districts/regions");
   return response.data;

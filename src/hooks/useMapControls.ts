@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { Period, Scenario, MapState } from "../types/climate";
+import { normalizeScenarioForVariable } from "../utils/climateLabels";
 
 const DEFAULT_STATE: MapState = {
   variable: "annual_mean_temp",
@@ -12,7 +13,7 @@ const DEFAULT_STATE: MapState = {
 };
 
 const PERIOD_VALUES: Period[] = ["baseline", "2030", "2050", "2080"];
-const SCENARIO_VALUES: Scenario[] = ["rcp26", "rcp45", "rcp85"];
+const SCENARIO_VALUES: Scenario[] = ["rcp26", "rcp45", "rcp85", "ssp126", "ssp245", "ssp585"];
 const DISPLAY_VALUES = new Set(["choropleth", "interpolated"]);
 
 const getInitialState = (): MapState => {
@@ -30,11 +31,12 @@ const getInitialState = (): MapState => {
   const scenario = SCENARIO_VALUES.includes(scenarioParam as Scenario)
     ? (scenarioParam as Scenario)
     : DEFAULT_STATE.scenario;
+  const variable = params.get("variable") || DEFAULT_STATE.variable;
 
   return {
-    variable: params.get("variable") || DEFAULT_STATE.variable,
+    variable,
     period,
-    scenario,
+    scenario: normalizeScenarioForVariable(variable, scenario),
     selectedDistrictId: params.get("district") || null,
     showChange: period !== "baseline" && params.get("change") === "1",
   };
@@ -44,7 +46,11 @@ export const useMapControls = () => {
   const [state, setState] = useState<MapState>(getInitialState);
 
   const setVariable = useCallback((variable: string) => {
-    setState((prev) => ({ ...prev, variable }));
+    setState((prev) => ({
+      ...prev,
+      variable,
+      scenario: normalizeScenarioForVariable(variable, prev.scenario),
+    }));
   }, []);
 
   const setPeriod = useCallback((period: Period) => {
@@ -57,7 +63,10 @@ export const useMapControls = () => {
   }, []);
 
   const setScenario = useCallback((scenario: Scenario) => {
-    setState((prev) => ({ ...prev, scenario }));
+    setState((prev) => ({
+      ...prev,
+      scenario: normalizeScenarioForVariable(prev.variable, scenario),
+    }));
   }, []);
 
   const selectDistrict = useCallback((districtId: string | null) => {

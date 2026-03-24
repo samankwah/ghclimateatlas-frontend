@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { getParameterDescription } from "./parameterDescriptions";
 import { generateLegendStops } from "../../utils/colorScales";
 import type { Period, Scenario } from "../../types/climate";
+import { isSspScenario } from "../../utils/climateLabels";
 
-const SCENARIO_INFO: Record<Scenario, { label: string; description: string }> =
+const SCENARIO_INFO: Partial<Record<Scenario, { label: string; description: string }>> =
   {
     rcp26: {
       label: "Lower Carbon (RCP 2.6)",
@@ -21,6 +22,21 @@ const SCENARIO_INFO: Record<Scenario, { label: string; description: string }> =
       label: "High Carbon (RCP 8.5)",
       description:
         "Emissions continue at current rates. This is the 'business as usual' scenario where greenhouse gas emissions continue to increase through the end of the century, resulting in more severe climate impacts.",
+    },
+    ssp126: {
+      label: "SSP126",
+      description:
+        "A low-emissions shared socioeconomic pathway aligned with strong mitigation and comparatively lower sea-level rise outcomes.",
+    },
+    ssp245: {
+      label: "SSP245",
+      description:
+        "A middle-of-the-road shared socioeconomic pathway representing moderate emissions and intermediate sea-level rise outcomes.",
+    },
+    ssp585: {
+      label: "SSP585",
+      description:
+        "A very high-emissions shared socioeconomic pathway associated with the strongest long-term sea-level rise outcomes in this atlas.",
     },
   };
 
@@ -114,7 +130,7 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
   const description = getParameterDescription(parameterId);
 
   const scenarioInfo = SCENARIO_INFO[scenario] ?? {
-    label: scenario,
+    label: isSspScenario(scenario) ? scenario.toUpperCase() : scenario,
     description: "",
   };
   const periodInfo = PERIOD_INFO[period] ?? { label: period, description: "" };

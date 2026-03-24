@@ -336,9 +336,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
         />
       )}
 
-      {/* Water bodies layer */}
-      <WaterBodiesLayer visible={showWater} />
-
       {/* District polygons colored by district-level climate values */}
       <GeoJSON
         key={dataVersion}
@@ -346,6 +343,9 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
         style={style}
         onEachFeature={onEachFeature}
       />
+
+      {/* Water bodies layer */}
+      <WaterBodiesLayer visible={showWater} />
 
       {/* Regional boundaries overlay */}
       <RegionalBoundaries

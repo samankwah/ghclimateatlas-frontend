@@ -26,6 +26,7 @@ import type { Scenario, Period } from "./types/climate";
 import {
   getPeriodRangeLabel,
   getScenarioLabel,
+  isSeaLevelVariableId,
 } from "./utils/climateLabels";
 import { getFixedDisplayRange } from "./utils/displayRanges";
 import "./App.css";
@@ -235,7 +236,12 @@ function ClimateAtlas() {
       selectedDistrictId
         ? districts?.features.find((f) => f.properties.id === selectedDistrictId)?.properties.name
         : null;
-    const scenarioTitle = period === "baseline" ? "Historical" : getScenarioLabel(scenario);
+    const scenarioTitle =
+      period === "baseline"
+        ? "Historical"
+        : isSeaLevelVariableId(effectiveVariable?.id)
+          ? scenario.toUpperCase()
+          : getScenarioLabel(scenario);
 
     document.title = districtName
       ? `${districtName} | ${variableLabel} | ${scenarioTitle} ${getPeriodRangeLabel(period)} | Ghana Climate Atlas`
@@ -431,6 +437,7 @@ function ClimateAtlas() {
           <TimelineBar
             selectedPeriod={period}
             onPeriodChange={setPeriod}
+            variableId={variable}
             scenario={scenario}
             onScenarioChange={setScenario}
           />

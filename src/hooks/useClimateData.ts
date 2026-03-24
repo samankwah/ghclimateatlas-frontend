@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import {
-  fetchDistricts,
+  fetchMapDistricts,
   fetchClimateVariables,
   fetchClimateData,
   fetchClimateComparison,
@@ -39,7 +39,7 @@ const allQueriesSucceeded = (
 export const useDistricts = () => {
   return useQuery({
     queryKey: ["districts"],
-    queryFn: fetchDistricts,
+    queryFn: fetchMapDistricts,
     staleTime: Infinity,
   });
 };

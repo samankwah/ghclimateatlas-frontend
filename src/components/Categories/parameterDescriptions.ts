@@ -17,11 +17,11 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   sea_level_rise: {
     shortDescription: "Projected relative sea-level rise affecting Ghana's coast and, indirectly, low-lying connected systems inland.",
     aboutDescription: "Sea level rise is one of the clearest long-term coastal climate pressures facing Ghana. Along the Gulf of Guinea it raises the baseline for flooding, accelerates shoreline retreat, and worsens saline intrusion into lagoons, estuaries, and coastal aquifers. Inland districts are still shown on the national map for continuity, but their values should be read as contextual and indirect rather than direct coastal exposure.",
-    technicalDescription: "Illustrative proxy indicator representing projected relative sea-level rise signal by district, with stronger values assigned to coastal districts and reduced contextual values inland.",
-    formula: "Relative sea-level rise proxy",
+    technicalDescription: "District-level aggregation of the imported sea-level projection dataset. Values are displayed as projected relative sea-level rise above the reference period, using the SSP scenarios included in the source data.",
+    formula: "Projected relative sea-level rise",
     unit: "cm",
     legendMin: 0,
-    legendMax: 35,
+    legendMax: 110,
     colorScaleType: "sea_level",
   },
   storm_surge_flood_risk: {
