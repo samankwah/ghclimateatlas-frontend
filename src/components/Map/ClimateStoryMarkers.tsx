@@ -24,6 +24,51 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Seasonal Migration": "#8b5cf6",
 };
 
+function getEmbeddedVideoUrl(videoUrl: string) {
+  try {
+    const url = new URL(videoUrl);
+    const host = url.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const videoId = url.pathname.slice(1);
+      return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (url.pathname === "/watch") {
+        const videoId = url.searchParams.get("v");
+        if (videoId) {
+          return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+        }
+      }
+      if (url.pathname.startsWith("/embed/")) {
+        const videoId = url.pathname.split("/embed/")[1];
+        if (videoId) {
+          return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+        }
+      }
+    }
+
+    if (host === "dailymotion.com") {
+      const videoMatch = url.pathname.match(/\/video\/([^/?]+)/);
+      if (videoMatch?.[1]) {
+        return `https://www.dailymotion.com/embed/video/${videoMatch[1]}`;
+      }
+    }
+
+    if (host === "dai.ly") {
+      const videoId = url.pathname.slice(1);
+      if (videoId) {
+        return `https://www.dailymotion.com/embed/video/${videoId}`;
+      }
+    }
+  } catch {
+    return videoUrl;
+  }
+
+  return videoUrl;
+}
+
 function createPlayIcon(category: string) {
   const iconColor = CATEGORY_COLORS[category] || "#444";
   return L.divIcon({
@@ -91,6 +136,17 @@ const ClimateStoryMarkers: React.FC<ClimateStoryMarkersProps> = ({
                     playsInline
                     preload="metadata"
                     style={{ width: "100%", borderRadius: "10px" }}
+                  />
+                </div>
+              )}
+              {!activeStory.videoSrc && activeStory.videoUrl && (
+                <div className="story-popup-video">
+                  <iframe
+                    src={getEmbeddedVideoUrl(activeStory.videoUrl)}
+                    title={activeStory.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
                   />
                 </div>
               )}
