@@ -169,7 +169,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
       const infoTargetId = item.infoId ?? item.id;
       const handleInfoOpen = (event: React.MouseEvent | React.KeyboardEvent) => {
         event.stopPropagation();
-        onOpenParameterInfo(infoTargetId);
+        onOpenParameterInfo(item.id);
       };
 
       if (isMobileViewport && depth === 0 && item.children?.length) {
@@ -227,7 +227,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
                     aria-label={`Open information for ${child.label}`}
                     onClick={(event) => {
                       event.stopPropagation();
-                      onOpenParameterInfo(childInfoTargetId);
+                      onOpenParameterInfo(child.id);
                     }}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -365,7 +365,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
                   aria-label={`Open information for ${param.label}`}
                   onClick={(event) => {
                     event.stopPropagation();
-                    onOpenParameterInfo(infoTargetId);
+                    onOpenParameterInfo(param.id);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {

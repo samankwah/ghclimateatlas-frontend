@@ -130,7 +130,7 @@ const Legend: React.FC<LegendProps> = ({
                 className={`legend-grid-value${index === 0 ? " is-start" : ""}${index === legendTickPositions.length - 1 ? " is-end" : ""}`}
               >
                 {tick.value > 0 && showChange ? "+" : ""}
-                {tick.value.toFixed(0)}
+                {tick.value.toFixed(colorScaleType === "sea_level" && !showChange ? 1 : 0)}
               </span>
             );
           })}

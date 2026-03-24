@@ -9,17 +9,17 @@ import { isSspScenario } from "../../utils/climateLabels";
 const SCENARIO_INFO: Partial<Record<Scenario, { label: string; description: string }>> =
   {
     rcp26: {
-      label: "Lower Carbon (RCP 2.6)",
+      label: "Low Emission (RCP 2.6)",
       description:
         "A strong mitigation pathway where emissions fall quickly. This produces the least warming and the mildest long-term climate impacts among the scenarios shown in the atlas.",
     },
     rcp45: {
-      label: "Moderate Carbon (RCP 4.5)",
+      label: "Moderate Emission (RCP 4.5)",
       description:
         "A moderate pathway where emissions peak around 2040 and then decline. This scenario assumes significant global efforts to reduce greenhouse gas emissions, resulting in less severe climate impacts.",
     },
     rcp85: {
-      label: "High Carbon (RCP 8.5)",
+      label: "High Emission (RCP 8.5)",
       description:
         "Emissions continue at current rates. This is the 'business as usual' scenario where greenhouse gas emissions continue to increase through the end of the century, resulting in more severe climate impacts.",
     },

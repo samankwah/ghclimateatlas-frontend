@@ -20,11 +20,13 @@ const VARIABLE_RANGES: Record<string, DisplayRange> = {
   precipitation_jul_aug_sep: { min: 100, max: 750 },
   precipitation_sep_oct_nov: { min: 100, max: 700 },
   precipitation_dec_jan_feb: { min: 0, max: 200 },
+  sea_level_rise: { min: 0, max: 0.8 },
 };
 
 const COLOR_SCALE_DEFAULTS: Partial<Record<ClimateVariable["color_scale"], DisplayRange>> = {
   temperature: { min: 26, max: 35 },
   precipitation: { min: 500, max: 2500 },
+  sea_level: { min: 0, max: 0.8 },
 };
 
 export const getFixedDisplayRange = (
@@ -36,7 +38,7 @@ export const getFixedDisplayRange = (
     return direct;
   }
 
-  if (colorScale === "temperature" || colorScale === "precipitation") {
+  if (colorScale === "temperature" || colorScale === "precipitation" || colorScale === "sea_level") {
     return COLOR_SCALE_DEFAULTS[colorScale];
   }
 
@@ -81,6 +83,10 @@ export const getFixedLegendTicks = (
 
   if (colorScale === "temperature" || variableId === "annual_mean_temp") {
     return [26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
+  }
+
+  if (colorScale === "sea_level" || variableId === "sea_level_rise") {
+    return [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
   }
 
   return undefined;

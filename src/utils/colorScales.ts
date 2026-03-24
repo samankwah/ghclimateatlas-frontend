@@ -5,7 +5,6 @@ import { interpolateRgbBasis } from "d3-interpolate";
 import {
   interpolateBrBG,
   interpolateRdBu,
-  interpolatePuBuGn,
 } from "d3-scale-chromatic";
 
 export type ColorScaleType =
@@ -86,7 +85,19 @@ export const divergingScale = (value: number, min: number, max: number): string 
 };
 
 export const seaLevelScale = (value: number, min: number, max: number): string => {
-  const scale = scaleSequential(interpolatePuBuGn).domain([min, max]);
+  const scale = scaleSequential(
+    interpolateRgbBasis([
+      "#ffffcc",  // pale yellow
+      "#ffeda0",
+      "#fed976",
+      "#feb24c",
+      "#fd8d3c",  // orange
+      "#fc4e2a",
+      "#e31a1c",  // red
+      "#b10026",
+      "#800026",  // dark red
+    ])
+  ).domain([min, max]);
   return scale(value);
 };
 
@@ -143,6 +154,9 @@ export const formatValue = (value: number, unit: string): string => {
   if (normalizedUnit === "days" || normalizedUnit === "events") {
     return `${Math.round(value)} ${normalizedUnit}`;
   }
+  if (normalizedUnit === "m") {
+    return `${value.toFixed(2)} ${normalizedUnit}`;
+  }
   if (normalizedUnit === "cm") {
     return `${value.toFixed(1)} ${normalizedUnit}`;
   }
@@ -167,6 +181,9 @@ export const formatChange = (change: number, unit: string): string => {
   }
   if (normalizedUnit === "days" || normalizedUnit === "events") {
     return `${sign}${Math.round(change)} ${normalizedUnit}`;
+  }
+  if (normalizedUnit === "m") {
+    return `${sign}${change.toFixed(2)} ${normalizedUnit}`;
   }
   if (normalizedUnit === "cm" || normalizedUnit === "index") {
     return `${sign}${change.toFixed(1)} ${normalizedUnit}`;

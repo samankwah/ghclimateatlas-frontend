@@ -6,9 +6,9 @@ import { isSspScenario } from "./climateLabels";
 
 const getScenarioExportLabel = (scenario: string): string => {
   if (isSspScenario(scenario)) return scenario.toUpperCase();
-  if (scenario === "rcp26") return "Low Carbon (RCP 2.6)";
-  if (scenario === "rcp45") return "Medium Carbon (RCP 4.5)";
-  return "High Carbon (RCP 8.5)";
+  if (scenario === "rcp26") return "Low Emission (RCP 2.6)";
+  if (scenario === "rcp45") return "Medium Emission (RCP 4.5)";
+  return "High Emission (RCP 8.5)";
 };
 
 interface ExportOptions {

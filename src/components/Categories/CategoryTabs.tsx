@@ -109,17 +109,6 @@ const findParameterWithAncestors = (
 const findParameterById = (categoryId: Category, parameterId: string): Parameter | undefined =>
   findParameterWithAncestors(CATEGORY_PARAMETERS[categoryId], parameterId)?.parameter;
 
-const findParameterByInfoId = (parameters: Parameter[], infoId: string): Parameter | undefined => {
-  for (const param of parameters) {
-    if (param.infoId === infoId) return param;
-    if (param.children?.length) {
-      const found = findParameterByInfoId(param.children, infoId);
-      if (found) return found;
-    }
-  }
-  return undefined;
-};
-
 const getSupportedVariableId = (
   categoryId: Category,
   parameterId: string,
@@ -241,11 +230,10 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   };
 
   const handleOpenParameterInfo = (categoryId: Category, parameterId: string) => {
-    const param = findParameterById(categoryId, parameterId)
-      ?? findParameterByInfoId(CATEGORY_PARAMETERS[categoryId], parameterId);
+    const param = findParameterById(categoryId, parameterId);
 
     setModalParam({
-      id: param?.infoId ?? parameterId,
+      id: parameterId,
       label: param?.description ?? param?.label ?? parameterId,
       categoryColor: CATEGORY_COLORS[categoryId],
     });

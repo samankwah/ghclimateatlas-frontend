@@ -20,9 +20,9 @@ export const SEA_LEVEL_VARIABLE_ID = "sea_level_rise";
 export const SEA_LEVEL_DISPLAY_NAME = "Average Annual Sea Level";
 
 export const SCENARIO_LABELS: Record<Scenario, string> = {
-  rcp26: "Low Carbon",
-  rcp45: "Medium Carbon",
-  rcp85: "High Carbon",
+  rcp26: "Low Emission",
+  rcp45: "Medium Emission",
+  rcp85: "High Emission",
   ssp126: "SSP126",
   ssp245: "SSP245",
   ssp585: "SSP585",

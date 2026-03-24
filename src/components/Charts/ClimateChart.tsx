@@ -240,30 +240,14 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
           ? 5
           : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
             ? 1
-            : isMeanTemperatureChart
-              ? (districtMeanTemperatureCenter >= 29 ? 26 : 24)
-              : isMinimumTemperatureChart
-                ? 15
-                : isMaximumTemperatureChart
-                  ? 25
-                  : computedYMin,
+            : computedYMin,
       yMax: isSeaLevelRiseChart
         ? Math.max(20, computedYMax)
         : isStormSurgeRiskChart
           ? 16
           : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
             ? 16
-            : isTemperatureChart
-              ? (
-                  isMinimumTemperatureChart
-                    ? 30
-                    : isMaximumTemperatureChart
-                      ? 40
-                      : isMeanTemperatureChart
-                        ? (districtMeanTemperatureCenter >= 29 ? 32 : 30)
-                        : computedYMax
-                )
-              : computedYMax,
+            : computedYMax,
     };
   }
 
