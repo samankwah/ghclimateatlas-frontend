@@ -166,7 +166,6 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
     items.map((item) => {
       const isSelected = selectedParameters.includes(item.id);
       const isSelectable = item.isSelectable === true && item.disabled !== true;
-      const infoTargetId = item.infoId ?? item.id;
       const handleInfoOpen = (event: React.MouseEvent | React.KeyboardEvent) => {
         event.stopPropagation();
         onOpenParameterInfo(item.id);
@@ -203,8 +202,6 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
               {item.children.map((child) => {
                 const isChildSelected = selectedParameters.includes(child.id);
                 const isChildSelectable = child.isSelectable === true && child.disabled !== true;
-                const childInfoTargetId = child.infoId ?? child.id;
-
                 return (
                 <div
                   key={child.id}
@@ -319,7 +316,6 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
             const isSelected = isParameterSelected(param);
             const isActiveParent = hasNestedParameters && activeParent?.id === param.id;
             const isDisabled = param.disabled === true;
-            const infoTargetId = param.infoId ?? param.id;
             const handleActivate = () => {
               if (isDisabled) {
                 return;

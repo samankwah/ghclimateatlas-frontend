@@ -185,8 +185,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     const endMedian = lastProjected?.median || baselineValue;
     const endLow = lastProjected?.low || baselineLow;
     const endHigh = lastProjected?.high || baselineHigh;
-    const districtMeanTemperatureCenter = (baselineValue + endMedian) / 2;
-
     const seed = Math.round(baselineValue * 100);
 
     const historicalData = generateVariabilityData(
