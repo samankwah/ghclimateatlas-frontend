@@ -1,5 +1,15 @@
 // Ghana Climate Atlas - Main Application (Redesigned UI)
 
+// Fire a health-check immediately on script load to wake the backend (Render cold start).
+// This runs before React mounts, giving the backend time to spin up.
+const _warmupApiBase =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
+  (typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1", "0.0.0.0"].includes(window.location.hostname)
+    ? "http://127.0.0.1:8000/api"
+    : "https://ghclimateatlas-backend.onrender.com/api");
+fetch(`${_warmupApiBase}/health`).catch(() => {});
+
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GhanaMap from "./components/Map/GhanaMap";
@@ -267,6 +277,8 @@ function ClimateAtlas() {
         colorScaleType={colorScaleType}
         showChange={showChange}
         parameterLabel={selectedParameterLabel}
+        nationalAverage={displayedRangeData?.mean}
+        unit={effectiveVariable?.unit}
         mobileActionsOpen={mobileHeaderActionsOpen}
         onToggleMobileActions={() => setMobileHeaderActionsOpen((open) => !open)}
         onOpenHelp={handleOpenHelp}
@@ -420,7 +432,7 @@ function ClimateAtlas() {
       </div>
 
       {/* Bottom control bar */}
-      <div className={`bottom-control-bar ${mobileControlsOpen ? "mobile-expanded" : "mobile-collapsed"}`}>
+      <div className={`bottom-control-bar ${mobileControlsOpen ? "mobile-expanded" : "mobile-collapsed"} ${selectedDistrictId ? "panel-open" : ""}`}>
         <button
           className="mobile-panel-toggle"
           onClick={() => setMobileControlsOpen((o) => !o)}

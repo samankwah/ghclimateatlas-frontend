@@ -16,6 +16,8 @@ interface HeaderProps {
   colorScaleType: ColorScaleType;
   showChange: boolean;
   parameterLabel?: string | null;
+  nationalAverage?: number;
+  unit?: string;
   mobileActionsOpen: boolean;
   onToggleMobileActions: () => void;
   onOpenHelp: () => void;
@@ -49,6 +51,8 @@ const Header: React.FC<HeaderProps> = ({
   colorScaleType,
   showChange,
   parameterLabel,
+  nationalAverage,
+  unit,
   mobileActionsOpen,
   onToggleMobileActions,
   onOpenHelp,
@@ -75,6 +79,13 @@ const Header: React.FC<HeaderProps> = ({
       ? SEA_LEVEL_HEADER_TITLES[variable.id] || rawHeaderTitle
       : rawHeaderTitle;
   const headerTitle = conciseHeaderTitle;
+  const isSeaLevel = variable?.id ? isSeaLevelVariable(variable.id) : false;
+  const formattedAverage =
+    nationalAverage != null
+      ? isSeaLevel
+        ? nationalAverage.toFixed(2)
+        : Math.round(nationalAverage)
+      : null;
   const mobileHeaderTitle = conciseHeaderTitle;
   const scenarioCode = isSeaLevelVariableId(variable?.id)
     ? scenario.toUpperCase()
@@ -96,7 +107,12 @@ const Header: React.FC<HeaderProps> = ({
 
           <div className="mobile-header-center">
             <div className={`mobile-header-title-group ${mobileActionsOpen ? "is-hidden" : ""}`}>
-              <h1 className="mobile-header-title">{mobileHeaderTitle}</h1>
+              <h1 className="mobile-header-title">
+                {mobileHeaderTitle}
+                {formattedAverage != null && (
+                  <span className="national-avg"> ({formattedAverage} {unit})</span>
+                )}
+              </h1>
               <span className="mobile-header-scenario">{scenarioSummary}</span>
             </div>
             <div
@@ -181,7 +197,12 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="header-center" data-tour="map-information">
-          <h1 className="variable-title">{headerTitle}</h1>
+          <h1 className="variable-title">
+            {headerTitle}
+            {formattedAverage != null && (
+              <span className="national-avg"> ({formattedAverage} {unit})</span>
+            )}
+          </h1>
           <div className="scenario-info">
             <span className="period-text">{desktopScenarioLabel}</span>
           </div>

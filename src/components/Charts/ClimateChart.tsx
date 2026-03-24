@@ -377,7 +377,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       formatter: function () {
         const year = Number(this.x);
         const percentileSet = year <= 2020 ? historicalPercentiles[year] : projectedPercentiles[year];
-        const periodLabel = year <= 2020 ? "Historical values" : "Projected ensemble";
 
         if (!percentileSet) {
           return `<div><strong>${year}</strong></div>`;
@@ -386,11 +385,9 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         return `
           <div>
             <div><strong>${year}</strong></div>
-            <div>${periodLabel}</div>
             <div>P10: ${percentileSet.p10.toFixed(1)} ${displayUnit}</div>
             <div>P50: ${percentileSet.p50.toFixed(1)} ${displayUnit}</div>
             <div>P90: ${percentileSet.p90.toFixed(1)} ${displayUnit}</div>
-            <div>10th-90th percentile range</div>
           </div>
         `;
       },

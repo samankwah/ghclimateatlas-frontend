@@ -56,7 +56,7 @@ const API_BASE =
 
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000,
+  timeout: 60000,
 });
 
 if (import.meta.env.DEV) {

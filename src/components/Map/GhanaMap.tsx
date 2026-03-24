@@ -60,10 +60,10 @@ const GHANA_BOUNDS: [[number, number], [number, number]] = [
   [12, 1.5],  // Northeast
 ];
 
-// Desktop-only max bounds (wider than fit bounds to allow some breathing room)
+// Desktop-only max bounds (generous padding so the map can be panned freely)
 const DESKTOP_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [2, -6],   // Southwest
-  [14, 4],   // Northeast
+  [-2, -12],   // Southwest
+  [18, 10],    // Northeast
 ];
 
 type DisplayMode = "choropleth" | "interpolated";
@@ -326,7 +326,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       className="ghana-map"
       zoomControl={false}
       scrollWheelZoom={true}
-      maxBoundsViscosity={1.0}
+      maxBoundsViscosity={0.5}
       minZoom={6}
       zoomSnap={0.5}
     >
@@ -377,7 +377,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       )}
 
       {/* Water bodies layer */}
-      <WaterBodiesLayer visible={showWater} />
+      <WaterBodiesLayer visible={showWater} activeVariableId={activeVariableId} />
 
       {/* Regional boundaries overlay */}
       <RegionalBoundaries
