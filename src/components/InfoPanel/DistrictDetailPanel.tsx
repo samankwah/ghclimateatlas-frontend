@@ -6,10 +6,9 @@ import { useDistrictTimeSeries } from "../../hooks/useDistrictTimeSeries";
 import type { ClimateVariable, ClimateComparison, Scenario, Period } from "../../types/climate";
 import { formatValue } from "../../utils/colorScales";
 import {
+  getScenarioPanelLabel,
   getPeriodRangeLabel,
-  getScenarioDescription,
-  getScenarioLabel,
-  isSeaLevelVariableId,
+  getVariableDisplayName,
 } from "../../utils/climateLabels";
 
 interface DistrictDetailPanelProps {
@@ -46,13 +45,17 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   );
 
   const unit = variableInfo?.unit || "";
-  const variableName = variableInfo?.name || "Climate Variable";
-  const scenarioLabel = isSeaLevelVariableId(variable) ? scenario.toUpperCase() : getScenarioLabel(scenario);
+  const variableName = getVariableDisplayName(variable, variableInfo?.name);
+  const scenarioLabel = getScenarioPanelLabel(scenario);
   const selectedPeriodLabel = getPeriodRangeLabel(period);
   const baselineDisplayValue = period === "baseline" ? baselineValue : comparisonData?.baseline;
   const futureValue = comparisonData?.future;
   const change = comparisonData?.change;
   const hasComparison = period !== "baseline" && futureValue !== undefined;
+  const isPrecipitationVariable = variableInfo?.category === "precipitation";
+  const hasPositiveSemanticChange =
+    change !== undefined && (isPrecipitationVariable ? change >= 0 : change < 0);
+  const changeSemanticClass = hasPositiveSemanticChange ? "is-positive" : "is-negative";
 
   return (
     <div className="district-detail-panel">
@@ -68,9 +71,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         <h2 className="header-district-name">{districtName}</h2>
         <div className="header-subtitle">Projected change in mean</div>
         <h3 className="header-variable-name">{variableName}</h3>
-        <div className="header-scenario">
-          {scenarioLabel} {"->"} {getScenarioDescription(scenario)}
-        </div>
+        <div className="header-scenario">{scenarioLabel}</div>
 
         <div className="header-period-comparison">
           {hasComparison ? (
@@ -96,12 +97,12 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
               </div>
 
               {change !== undefined && (
-                <div className={`change-indicator ${change < 0 ? "decrease" : ""}`}>
+                <div className={`change-indicator ${changeSemanticClass}`}>
                   <span className="change-direction">{change >= 0 ? "Up" : "Down"}</span>
                   <span className="change-triangle" aria-hidden="true">
                     {change >= 0 ? "▲" : "▼"}
                   </span>
-                  <span className={`change-value ${change >= 0 ? "increase" : "decrease"}`}>
+                  <span className="change-value">
                     {change >= 0 ? "+" : ""}
                     {change.toFixed(1)}
                     {unit}

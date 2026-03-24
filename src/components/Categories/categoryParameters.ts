@@ -6,6 +6,7 @@ import {
   DERIVED_CLIMATE_VARIABLES,
   isDerivedClimateVariable,
 } from "../../utils/derivedClimate";
+import { SEA_LEVEL_DISPLAY_NAME } from "../../utils/climateLabels";
 
 export interface Parameter {
   id: string;
@@ -111,7 +112,7 @@ export const CATEGORY_PARAMETERS: Record<Category, Parameter[]> = {
   sea_level: [
     {
       id: "sea_level_rise",
-      label: "Sea Level Rise",
+      label: SEA_LEVEL_DISPLAY_NAME,
       description: "Projected relative sea-level rise affecting coastal systems and low-lying districts",
     },
   ],

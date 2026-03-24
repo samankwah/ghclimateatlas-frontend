@@ -4,7 +4,7 @@ import type { ColorScaleType } from "../../utils/colorScales";
 import Legend from "../Map/Legend";
 import mobileLogo from "../../assets/smart-logo-gmet.webp";
 import { isSeaLevelVariable } from "../../utils/coastalExposure";
-import { isSeaLevelVariableId } from "../../utils/climateLabels";
+import { isSeaLevelVariableId, SEA_LEVEL_DISPLAY_NAME } from "../../utils/climateLabels";
 import ShareDropdown from "./ShareDropdown";
 
 interface HeaderProps {
@@ -24,7 +24,7 @@ interface HeaderProps {
 }
 
 const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
-  sea_level_rise: "Sea Level Rise",
+  sea_level_rise: SEA_LEVEL_DISPLAY_NAME,
 };
 
 const PERIOD_SUMMARY_LABELS: Record<Period, string> = {

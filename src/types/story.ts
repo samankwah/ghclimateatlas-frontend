@@ -5,7 +5,8 @@ export interface ClimateStory {
   lng: number;
   title: string;
   category: string;
-  videoUrl: string;
+  videoSrc?: string;
+  videoUrl?: string;
   description: string;
   body: string;
   externalUrl?: string;

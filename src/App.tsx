@@ -341,10 +341,8 @@ function ClimateAtlas() {
 
         {/* Floating sidebar with layer toggles + search */}
         <MapLayerToggles
-          showCities={showCities}
           showStories={showStories}
           showWater={showWater}
-          onToggleCities={() => setShowCities(!showCities)}
           onToggleWater={() => setShowWater(!showWater)}
           onToggleStories={() => setShowStories(!showStories)}
           searchContent={

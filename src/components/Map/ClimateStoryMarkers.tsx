@@ -19,53 +19,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Sea Level Rise": "#0ea5e9",
   "Industrial Heat": "#f97316",
   Fisheries: "#14b8a6",
+  "Mangrove Depletion": "#15803d",
+  Irrigation: "#a16207",
+  "Seasonal Migration": "#8b5cf6",
 };
-
-function getEmbeddedVideoUrl(videoUrl: string) {
-  try {
-    const url = new URL(videoUrl);
-    const host = url.hostname.replace(/^www\./, "");
-
-    if (host === "youtu.be") {
-      const videoId = url.pathname.slice(1);
-      return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
-    }
-
-    if (host === "youtube.com" || host === "m.youtube.com") {
-      if (url.pathname === "/watch") {
-        const videoId = url.searchParams.get("v");
-        if (videoId) {
-          return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
-        }
-      }
-
-      if (url.pathname.startsWith("/embed/")) {
-        const videoId = url.pathname.split("/embed/")[1];
-        if (videoId) {
-          return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
-        }
-      }
-    }
-
-    if (host === "dailymotion.com") {
-      const videoMatch = url.pathname.match(/\/video\/([^/?]+)/);
-      if (videoMatch?.[1]) {
-        return `https://www.dailymotion.com/embed/video/${videoMatch[1]}`;
-      }
-    }
-
-    if (host === "dai.ly") {
-      const videoId = url.pathname.slice(1);
-      if (videoId) {
-        return `https://www.dailymotion.com/embed/video/${videoId}`;
-      }
-    }
-  } catch {
-    return videoUrl;
-  }
-
-  return videoUrl;
-}
 
 function createPlayIcon(category: string) {
   const iconColor = CATEGORY_COLORS[category] || "#444";
@@ -123,19 +80,20 @@ const ClimateStoryMarkers: React.FC<ClimateStoryMarkersProps> = ({
               </h2>
               <h3 className="story-popup-title">{activeStory.title}</h3>
               <p className="story-popup-description">{activeStory.description}</p>
-              <div className="story-popup-video">
-                <iframe
-                  src={getEmbeddedVideoUrl(activeStory.videoUrl)}
-                  title={activeStory.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
-                />
-              </div>
-              <p className="story-popup-caption-hint">
-                Use the captions button at the bottom of the video player to
-                turn captions on or off.
-              </p>
+              {activeStory.videoSrc && (
+                <div className="story-popup-video">
+                  <video
+                    src={activeStory.videoSrc}
+                    controls
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="metadata"
+                    style={{ width: "100%", borderRadius: "10px" }}
+                  />
+                </div>
+              )}
               {activeStory.externalUrl && (
                 <a
                   href={activeStory.externalUrl}
@@ -143,7 +101,8 @@ const ClimateStoryMarkers: React.FC<ClimateStoryMarkersProps> = ({
                   rel="noopener noreferrer"
                   className="story-popup-link"
                 >
-                  Learn More &rarr;
+                  View Full Story
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
                 </a>
               )}
             </div>
