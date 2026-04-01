@@ -57,10 +57,10 @@ The frontend expects the FastAPI backend to serve climate and district data. By 
 For hosted deployments such as Netlify, set:
 
 ```bash
-VITE_API_URL=https://ghclimateatlas-backend.onrender.com/api
+VITE_API_URL=https://ghclimateatlas-backend.vercel.app/api
 ```
 
-Do not set `VITE_API_URL` in normal local development unless you intentionally want to test against a remote backend. When it is unset, the frontend falls back to `http://127.0.0.1:8000/api` on localhost and to the Render backend on non-local hosts.
+Do not set `VITE_API_URL` in normal local development unless you intentionally want to test against a remote backend. When it is unset, the frontend falls back to `http://127.0.0.1:8000/api` on localhost and to the Vercel backend on non-local hosts.
 
 If an older deployment still points to `https://ghana-climate-atlas-api.onrender.com`, update it to the URL above. The frontend normalizes that stale hostname back to the active Render service, but the deployment environment should still be corrected.
 

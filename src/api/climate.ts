@@ -12,7 +12,7 @@ import type {
   Scenario,
 } from "../types/climate";
 
-const PRODUCTION_API_BASE = "https://ghclimateatlas-backend.onrender.com/api";
+const PRODUCTION_API_BASE = "https://ghclimateatlas-backend.vercel.app/api";
 const LEGACY_API_HOSTS = new Set([
   "ghana-climate-atlas-api.onrender.com",
 ]);

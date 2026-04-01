@@ -1,13 +1,13 @@
 // Ghana Climate Atlas - Main Application (Redesigned UI)
 
-// Fire a health-check immediately on script load to wake the backend (Render cold start).
+// Fire a health-check immediately on script load to wake the backend.
 // This runs before React mounts, giving the backend time to spin up.
 const _warmupApiBase =
   import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
   (typeof window !== "undefined" &&
   ["localhost", "127.0.0.1", "0.0.0.0"].includes(window.location.hostname)
     ? "http://127.0.0.1:8000/api"
-    : "https://ghclimateatlas-backend.onrender.com/api");
+    : "https://ghclimateatlas-backend.vercel.app/api");
 fetch(`${_warmupApiBase}/health`).catch(() => {});
 
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
