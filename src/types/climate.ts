@@ -69,6 +69,30 @@ export interface ClimateComparisonResponse {
   data: ClimateComparison[];
 }
 
+export interface ClimateTimeSeriesPoint {
+  year: number;
+  p10: number;
+  p50: number;
+  p90: number;
+}
+
+export interface ClimateTimeSeriesReferencePeriod {
+  start: number;
+  end: number;
+}
+
+export interface ClimateTimeSeriesResponse {
+  variable: string;
+  variable_name: string;
+  scenario: string;
+  unit: string;
+  district_id: string;
+  district_name: string;
+  reference_period: ClimateTimeSeriesReferencePeriod;
+  reference_mean: number;
+  data: ClimateTimeSeriesPoint[];
+}
+
 export interface RegionInfo {
   name: string;
   district_count: number;

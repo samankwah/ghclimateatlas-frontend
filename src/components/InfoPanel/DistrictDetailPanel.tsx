@@ -3,8 +3,9 @@ import ClimateChart from "../Charts/ClimateChart";
 import StatisticsTable from "./StatisticsTable";
 import DownloadsSection from "./DownloadsSection";
 import { useDistrictTimeSeries } from "../../hooks/useDistrictTimeSeries";
+import { useDistrictChartSeries } from "../../hooks/useDistrictChartSeries";
 import type { ClimateVariable, ClimateComparison, Scenario, Period } from "../../types/climate";
-import { formatValue } from "../../utils/colorScales";
+import { formatValue, normalizeUnit } from "../../utils/colorScales";
 import {
   getScenarioPanelLabel,
   getPeriodRangeLabel,
@@ -43,8 +44,13 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
     scenario,
     period
   );
+  const {
+    series: chartSeries,
+    isLoading: isChartLoading,
+  } = useDistrictChartSeries(districtId, variable, scenario);
 
   const unit = variableInfo?.unit || "";
+  const normalizedUnit = normalizeUnit(unit);
   const variableName = getVariableDisplayName(variable, variableInfo?.name);
   const scenarioLabel = getScenarioPanelLabel(scenario);
   const selectedPeriodLabel = getPeriodRangeLabel(period);
@@ -56,6 +62,23 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   const hasPositiveSemanticChange =
     change !== undefined && (isPrecipitationVariable ? change >= 0 : change < 0);
   const changeSemanticClass = hasPositiveSemanticChange ? "is-positive" : "is-negative";
+
+  const renderValueBlock = (value: number | undefined, tone: "baseline" | "future") => {
+    if (value === undefined) {
+      return <span className={`value-${tone}`}>-</span>;
+    }
+
+    if (normalizedUnit === "mm") {
+      return (
+        <span className={`value-${tone} value-with-unit`}>
+          <span className="value-number">{Math.round(value).toLocaleString()}</span>
+          <span className="value-unit">mm</span>
+        </span>
+      );
+    }
+
+    return <span className={`value-${tone}`}>{formatValue(value, unit)}</span>;
+  };
 
   return (
     <div className="district-detail-panel">
@@ -82,18 +105,14 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
               </div>
 
               <div className="value-display">
-                <span className="value-baseline">
-                  {baselineDisplayValue !== undefined ? formatValue(baselineDisplayValue, unit) : "-"}
-                </span>
+                {renderValueBlock(baselineDisplayValue, "baseline")}
                 <span className="value-arrow" aria-hidden="true">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14" />
                     <path d="m13 6 6 6-6 6" />
                   </svg>
                 </span>
-                <span className="value-future">
-                  {futureValue !== undefined ? formatValue(futureValue, unit) : "-"}
-                </span>
+                {renderValueBlock(futureValue, "future")}
               </div>
 
               {change !== undefined && (
@@ -113,25 +132,22 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
           ) : (
             <div className="baseline-only-display">
               <span className="period-baseline">{getPeriodRangeLabel("baseline")}</span>
-              <span className="value-baseline">
-                {baselineDisplayValue !== undefined ? formatValue(baselineDisplayValue, unit) : "-"}
-              </span>
+              {renderValueBlock(baselineDisplayValue, "baseline")}
             </div>
           )}
         </div>
       </div>
 
-      {isLoading ? (
+      {isLoading || isChartLoading ? (
         <div className="chart-loading">
           <div className="spinner-small" />
           <span>Loading chart data...</span>
         </div>
       ) : (
         <ClimateChart
-          data={timeSeriesData}
-          unit={unit}
-          variableId={variable}
+          series={chartSeries}
           variableName={variableName}
+          scenario={scenario}
           selectedPeriod={period}
         />
       )}

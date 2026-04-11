@@ -114,9 +114,9 @@ const Legend: React.FC<LegendProps> = ({
       <div className="legend-scale">
         <div className="legend-bar-container">
           <div className="legend-gradient" style={gradientStyle} />
-          {legendTickPositions.map((tick) => (
+          {legendTickPositions.map((tick, index) => (
             <span
-              key={`line-${tick.value}`}
+              key={`line-${index}`}
               className="legend-tick-mark"
               style={{ left: `${tick.leftPercent}%` }}
             />
@@ -126,7 +126,7 @@ const Legend: React.FC<LegendProps> = ({
           {legendTickPositions.map((tick, index) => {
             return (
               <span
-                key={tick.value}
+                key={index}
                 className={`legend-grid-value${index === 0 ? " is-start" : ""}${index === legendTickPositions.length - 1 ? " is-end" : ""}`}
               >
                 {tick.value > 0 && showChange ? "+" : ""}
