@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-import type { TimeSeriesPoint } from "../../hooks/useDistrictTimeSeries";
+import React, { useEffect, useMemo, useState } from "react";
+import type { ClimateTimeSeriesResponse, Period, Scenario } from "../../types/climate";
 import { normalizeUnit } from "../../utils/colorScales";
-import type { Period } from "../../types/climate";
 
 let HighchartsModule: any = null;
 let HighchartsReactModule: any = null;
@@ -29,126 +28,81 @@ const loadHighcharts = async (): Promise<boolean> => {
     }
 
     return true;
-  } catch (e) {
-    console.error("Failed to load Highcharts:", e);
+  } catch (error) {
+    console.error("Failed to load Highcharts:", error);
     return false;
   }
 };
 
 interface ClimateChartProps {
-  data: TimeSeriesPoint[];
-  unit: string;
-  variableId: string;
+  series: ClimateTimeSeriesResponse | null;
   variableName: string;
+  scenario: Scenario;
   selectedPeriod: Period;
 }
 
-const seededRandom = (seed: number) => {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
+const PERIOD_BANDS: Record<Period, { from: number; to: number }> = {
+  baseline: { from: 1991, to: 2020 },
+  "2030": { from: 2021, to: 2040 },
+  "2050": { from: 2041, to: 2060 },
+  "2080": { from: 2081, to: 2100 },
 };
 
-const generateVariabilityData = (
-  startYear: number,
-  endYear: number,
-  baseMedian: number,
-  baseLow: number,
-  baseHigh: number,
-  endMedian: number,
-  endLow: number,
-  endHigh: number,
-  seed: number
-) => {
-  const lineData: [number, number][] = [];
-  const rangeData: [number, number, number][] = [];
-  const years = endYear - startYear;
-  let previousMedian = baseMedian;
+const SCENARIO_CHART_META: Record<Scenario, { label: string; color: string }> = {
+  rcp26: { label: "RCP2.6", color: "#2f9e44" },
+  rcp45: { label: "RCP4.5", color: "#f08c00" },
+  rcp85: { label: "RCP8.5", color: "#e03131" },
+  ssp126: { label: "SSP1-2.6", color: "#2f9e44" },
+  ssp245: { label: "SSP2-4.5", color: "#f08c00" },
+  ssp585: { label: "SSP5-8.5", color: "#e03131" },
+};
 
-  for (let i = 0; i <= years; i++) {
-    const year = startYear + i;
-    const t = i / years;
-
-    const median = baseMedian + (endMedian - baseMedian) * t;
-    const low = baseLow + (endLow - baseLow) * t;
-    const high = baseHigh + (endHigh - baseHigh) * t;
-    const range = high - low;
-    const effectiveRange = Math.max(range, 2.0);
-
-    const primaryNoise = (seededRandom(seed + i * 3) - 0.5) * effectiveRange * 1.4;
-    const secondaryNoise = (seededRandom(seed + i * 7) - 0.5) * effectiveRange * 0.6;
-    const bandNoise = (seededRandom(seed + i * 11) - 0.5) * range * 0.35;
-    const alternatingPulse = (i % 2 === 0 ? -1 : 1) * effectiveRange * 0.18;
-    const driftCorrection = (median - previousMedian) * 0.25;
-
-    const rawMedian = median + primaryNoise + secondaryNoise + alternatingPulse + driftCorrection;
-    const rawLow = low + Math.min(secondaryNoise, 0) - Math.abs(bandNoise) * 0.9;
-    const rawHigh = high + Math.max(secondaryNoise, 0) + Math.abs(bandNoise) * 0.9;
-    const orderedLow = Math.min(rawLow, rawHigh);
-    const orderedHigh = Math.max(rawLow, rawHigh);
-    const minimumGap = Math.max(range * 0.03, effectiveRange * 0.015, 0.05);
-    const lowerBound = orderedLow + minimumGap;
-    const upperBound = Math.max(lowerBound, orderedHigh - minimumGap);
-    const clampedMedian = Math.max(lowerBound, Math.min(upperBound, rawMedian));
-    const percentileLow = Math.min(orderedLow, clampedMedian);
-    const percentileHigh = Math.max(orderedHigh, clampedMedian);
-
-    previousMedian = clampedMedian;
-
-    lineData.push([year, clampedMedian]);
-    rangeData.push([year, percentileLow, percentileHigh]);
+const getAxisLabel = (variableName: string, displayUnit: string): string => {
+  const lowerName = variableName.toLowerCase();
+  if (lowerName.includes("precipitation") || displayUnit.includes("mm")) {
+    return `Precipitation (${displayUnit})`;
   }
-
-  return { lineData, rangeData };
+  if (lowerName.includes("temperature") || displayUnit.includes("C")) {
+    return `Temperature (${displayUnit})`;
+  }
+  if (lowerName.includes("sea level")) {
+    return `Sea level rise (${displayUnit})`;
+  }
+  return `${variableName} (${displayUnit})`;
 };
 
-const buildPercentileLookup = (
-  lineData: [number, number][],
-  rangeData: [number, number, number][],
-): Record<number, { p10: number; p50: number; p90: number }> =>
-  Object.fromEntries(
-    lineData.map(([year, median], index) => {
-      const [, low, high] = rangeData[index];
-      return [year, { p10: low, p50: median, p90: high }];
-    }),
-  );
+const getValueDecimals = (displayUnit: string): number => {
+  if (displayUnit === "m") return 2;
+  return displayUnit.includes("C") ? 1 : 0;
+};
+
+const formatTooltipValue = (value: number, displayUnit: string, valueDecimals: number): string => {
+  if (displayUnit.includes("mm")) {
+    return `${Math.round(value).toLocaleString()} mm/year`;
+  }
+  return `${value.toFixed(valueDecimals)} ${displayUnit}`;
+};
+
+const getYAxisBounds = (values: number[], options?: { minFloor?: number }) => {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const padding = span * 0.12;
+  const computedMin = min - padding;
+
+  return {
+    min: options?.minFloor !== undefined ? Math.max(options.minFloor, Math.min(options.minFloor, computedMin)) : computedMin,
+    max: max + padding,
+  };
+};
 
 const ClimateChart: React.FC<ClimateChartProps> = ({
-  data,
-  unit,
-  variableId,
+  series,
   variableName,
+  scenario,
   selectedPeriod,
 }) => {
   const [chartReady, setChartReady] = useState(highchartsLoaded && highchartsMoreInitialized);
-  const displayUnit = normalizeUnit(unit);
-  const lowerName = variableName.toLowerCase();
-  const lowerVariableId = variableId.toLowerCase();
-  const axisMetricLabel =
-    lowerName.includes("precipitation") || displayUnit === "mm"
-      ? `Precipitation (${displayUnit})`
-      : lowerName.includes("temperature") || displayUnit.includes("C")
-        ? `Temperature (${displayUnit})`
-        : `${variableName} (${displayUnit})`;
-  const isMeanTemperatureChart = lowerVariableId.includes("mean_temp") || lowerVariableId.includes("annual_mean_temp");
-  const isMinimumTemperatureChart = lowerVariableId.includes("min_temp") || lowerVariableId.includes("annual_min_temp");
-  const isMaximumTemperatureChart = lowerVariableId.includes("max_temp") || lowerVariableId.includes("annual_max_temp");
-  const isSeaLevelRiseChart = lowerVariableId === "sea_level_rise";
-  const isStormSurgeRiskChart = lowerVariableId === "storm_surge_flood_risk";
-  const isCoastalErosionRiskChart = lowerVariableId === "coastal_erosion_risk";
-  const isSaltwaterIntrusionRiskChart = lowerVariableId === "saltwater_intrusion_risk";
-  const isTemperatureChart =
-    (isMeanTemperatureChart || isMinimumTemperatureChart || isMaximumTemperatureChart || lowerName.includes("temperature")) &&
-    !displayUnit.includes("days");
-  const selectedPeriodBand =
-    selectedPeriod === "baseline"
-      ? { from: 1991, to: 2020 }
-      : selectedPeriod === "2030"
-        ? { from: 2021, to: 2040 }
-        : selectedPeriod === "2050"
-          ? { from: 2041, to: 2060 }
-          : selectedPeriod === "2080"
-            ? { from: 2080, to: 2100 }
-            : null;
 
   useEffect(() => {
     if (!chartReady) {
@@ -158,108 +112,39 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     }
   }, [chartReady]);
 
-  let chartData: {
-    historicalLine: [number, number][];
-    historicalRange: [number, number, number][];
-    historicalP10: [number, number][];
-    historicalP90: [number, number][];
-    projectedLine: [number, number][];
-    projectedRange: [number, number, number][];
-    projectedP10: [number, number][];
-    projectedP90: [number, number][];
-    yAxisStep: number;
-    yMin: number;
-    yMax: number;
-  } | null = null;
+  const displayUnit = normalizeUnit(series?.unit || "");
+  const valueDecimals = getValueDecimals(displayUnit);
+  const axisMetricLabel = getAxisLabel(variableName, displayUnit);
+  const scenarioMeta = SCENARIO_CHART_META[scenario];
+  const selectedPeriodBand = PERIOD_BANDS[selectedPeriod];
+  const isAnnualRainfallChart =
+    variableName.toLowerCase() === "annual precipitation" &&
+    displayUnit.includes("mm");
 
-  if (data && data.length > 0) {
-    const historicalPoints = data.filter((d) => d.period === "baseline");
-    const projectedPoints = data.filter((d) => d.period !== "baseline");
-    const sortedProjectedPoints = [...projectedPoints].sort((a, b) => a.year - b.year);
+  const chartData = useMemo(() => {
+    if (!series?.data.length) {
+      return null;
+    }
 
-    const baselineValue = historicalPoints[0]?.median || 0;
-    const baselineLow = historicalPoints[0]?.low || 0;
-    const baselineHigh = historicalPoints[0]?.high || 0;
+    const lineData = series.data.map((point) => [point.year, point.p50] as [number, number]);
+    const rangeData = series.data.map((point) => [point.year, point.p10, point.p90] as [number, number, number]);
+    const allValues = series.data.flatMap((point) => [point.p10, point.p50, point.p90]);
+    const yAxis = getYAxisBounds(allValues, isAnnualRainfallChart ? { minFloor: 500 } : undefined);
 
-    const lastProjected = sortedProjectedPoints[sortedProjectedPoints.length - 1];
-    const endMedian = lastProjected?.median || baselineValue;
-    const endLow = lastProjected?.low || baselineLow;
-    const endHigh = lastProjected?.high || baselineHigh;
-    const seed = Math.round(baselineValue * 100);
+    return { lineData, rangeData, yAxis };
+  }, [isAnnualRainfallChart, series]);
 
-    const historicalData = generateVariabilityData(
-      1950, 2020,
-      baselineValue, baselineLow, baselineHigh,
-      baselineValue, baselineLow, baselineHigh,
-      seed
-    );
-
-    const projectedData = generateVariabilityData(
-      2021, 2100,
-      baselineValue, baselineLow, baselineHigh,
-      endMedian, endLow, endHigh,
-      seed + 1000
-    );
-
-    const allValues = [
-      ...historicalData.rangeData.flatMap(([, low, high]) => [low, high]),
-      ...projectedData.rangeData.flatMap(([, low, high]) => [low, high]),
-    ];
-    const minValue = Math.min(...allValues);
-    const maxValue = Math.max(...allValues);
-    const padding = (maxValue - minValue) * 0.15;
-
-    const yAxisStep =
-      isSeaLevelRiseChart
-        ? 10
-        : isStormSurgeRiskChart || isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
-          ? 4
-          : isTemperatureChart
-            ? 2
-            : 5;
-    const yMinPadding = isTemperatureChart ? padding * 0.2 : padding * 0.35;
-    const yMaxPadding = isTemperatureChart ? padding * 0.22 : padding * 0.45;
-
-    const computedYMin = Math.floor((minValue - yMinPadding) / yAxisStep) * yAxisStep;
-    const computedYMax = Math.ceil((maxValue + yMaxPadding) / yAxisStep) * yAxisStep;
-    chartData = {
-      historicalLine: historicalData.lineData,
-      historicalRange: historicalData.rangeData,
-      historicalP10: historicalData.rangeData.map(([year, low]) => [year, low]),
-      historicalP90: historicalData.rangeData.map(([year, , high]) => [year, high]),
-      projectedLine: projectedData.lineData,
-      projectedRange: projectedData.rangeData,
-      projectedP10: projectedData.rangeData.map(([year, low]) => [year, low]),
-      projectedP90: projectedData.rangeData.map(([year, , high]) => [year, high]),
-      yAxisStep,
-      yMin: isSeaLevelRiseChart
-        ? 0
-        : isStormSurgeRiskChart
-          ? 5
-          : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
-            ? 1
-            : computedYMin,
-      yMax: isSeaLevelRiseChart
-        ? Math.max(20, computedYMax)
-        : isStormSurgeRiskChart
-          ? 16
-          : isCoastalErosionRiskChart || isSaltwaterIntrusionRiskChart
-            ? 16
-            : computedYMax,
-    };
-  }
-
-  if (!data || data.length === 0 || !chartData) {
+  if (!series || !chartData) {
     return (
-      <div className="chart-section-target">
-        <div className="chart-empty">No data available</div>
+      <div className="climate-chart-container">
+        <div className="chart-empty">No yearly data available</div>
       </div>
     );
   }
 
   if (!chartReady) {
     return (
-      <div className="chart-section-target">
+      <div className="climate-chart-container">
         <div className="chart-empty">Loading chart...</div>
       </div>
     );
@@ -267,24 +152,28 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
   const Highcharts = HighchartsModule;
   const HighchartsReact = HighchartsReactModule;
-  const historicalPercentiles = buildPercentileLookup(chartData.historicalLine, chartData.historicalRange);
-  const projectedPercentiles = buildPercentileLookup(chartData.projectedLine, chartData.projectedRange);
+  const legendValue = displayUnit.includes("mm")
+    ? `${Math.round(series.reference_mean).toLocaleString()} mm/year`
+    : `${series.reference_mean.toFixed(valueDecimals)} ${displayUnit}`;
+  const legendLabel = `${scenarioMeta.label} • Ref ${legendValue}`;
 
   const options: Highcharts.Options = {
     chart: {
       backgroundColor: "transparent",
-      height: 300,
+      plotBackgroundColor: "transparent",
+      borderWidth: 0,
+      height: 450,
+      spacingTop: 6,
+      spacingRight: 8,
+      spacingBottom: 20,
+      spacingLeft: 6,
       style: {
         fontFamily: 'Lato, "Helvetica Neue", Helvetica, Arial, sans-serif',
       },
-      spacingTop: 4,
-      spacingRight: 8,
-      spacingBottom: 8,
-      spacingLeft: 4,
-      reflow: true,
     },
     title: {
       text: undefined,
+      margin: 0,
     },
     credits: {
       enabled: false,
@@ -293,7 +182,24 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       enabled: false,
     },
     legend: {
-      enabled: false,
+      enabled: true,
+      align: "center",
+      verticalAlign: "bottom",
+      layout: "horizontal",
+      floating: false,
+      itemStyle: {
+        color: "rgba(226, 232, 240, 0.9)",
+        fontSize: "10px",
+        fontWeight: "400",
+      },
+      itemDistance: 10,
+      itemMarginTop: 2,
+      itemMarginBottom: 2,
+      symbolRadius: 0,
+      symbolWidth: 22,
+      symbolHeight: 10,
+      padding: 0,
+      margin: 4,
     },
     xAxis: {
       type: "linear",
@@ -303,91 +209,96 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       title: {
         text: "Year",
         style: {
-          color: "rgba(226, 232, 240, 0.8)",
+          color: "rgba(226, 232, 240, 0.85)",
           fontSize: "10px",
-          fontWeight: "500",
         },
-        margin: 10,
       },
       labels: {
+        rotation: 0,
         style: {
           color: "rgba(226, 232, 240, 0.78)",
-          fontSize: "10px",
+          fontSize: "9px",
         },
       },
-      lineColor: "#64748b",
-      tickColor: "#64748b",
-      gridLineWidth: 0,
-      plotBands: selectedPeriodBand ? [{
-        from: selectedPeriodBand.from,
-        to: selectedPeriodBand.to,
-        color: "rgba(100, 116, 139, 0.25)",
-        label: {
-          text: `${selectedPeriodBand.from}-${selectedPeriodBand.to}`,
-          align: "center",
-          verticalAlign: "top",
-          y: 8,
-          style: {
-            color: "rgba(226, 232, 240, 0.8)",
-            fontSize: "11px",
-            fontWeight: "600",
+      lineColor: "rgba(148, 163, 184, 0.55)",
+      tickColor: "rgba(148, 163, 184, 0.55)",
+      gridLineColor: "rgba(148, 163, 184, 0.12)",
+      gridLineWidth: 1,
+      plotBands: [
+        {
+          from: selectedPeriodBand.from,
+          to: selectedPeriodBand.to,
+          color: "rgba(148, 163, 184, 0.16)",
+          label: {
+            text: `${selectedPeriodBand.from}-${selectedPeriodBand.to}`,
+            align: "center",
+            verticalAlign: "top",
+            y: 8,
+            style: {
+              color: "rgba(226, 232, 240, 0.82)",
+              fontSize: "10px",
+              fontWeight: "600",
+            },
           },
         },
-      }] : [],
+      ],
     },
     yAxis: {
-      min: chartData.yMin,
-      max: chartData.yMax,
+      min: chartData.yAxis.min,
+      max: chartData.yAxis.max,
       startOnTick: false,
       endOnTick: false,
-      tickInterval: chartData.yAxisStep,
+      minPadding: 0,
+      maxPadding: 0.02,
       title: {
         text: axisMetricLabel,
         style: {
-          color: "rgba(226, 232, 240, 0.8)",
+          color: "rgba(226, 232, 240, 0.85)",
           fontSize: "10px",
-          fontWeight: "500",
         },
-        margin: 6,
       },
       labels: {
         style: {
           color: "rgba(226, 232, 240, 0.78)",
           fontSize: "10px",
         },
-        format: "{value:.0f}",
+        formatter: function () {
+          return Highcharts.numberFormat(Number(this.value), valueDecimals);
+        },
       },
       gridLineColor: "rgba(148, 163, 184, 0.12)",
       gridLineWidth: 1,
-      gridLineDashStyle: "ShortDot",
-      lineColor: "#64748b",
-      lineWidth: 0,
+      lineColor: "rgba(148, 163, 184, 0.55)",
+      lineWidth: 1,
     },
     tooltip: {
       shared: true,
-      valueSuffix: ` ${displayUnit}`,
-      valueDecimals: 0,
-      backgroundColor: "rgba(15, 23, 42, 0.95)",
-      borderColor: "#475569",
-      borderRadius: 8,
+      backgroundColor: "rgba(30, 41, 59, 0.96)",
+      borderColor: "rgba(148, 163, 184, 0.35)",
+      borderRadius: 10,
+      padding: 0,
+      shadow: false,
       style: {
-        color: "#f1f5f9",
+        color: "#f8fafc",
         fontSize: "12px",
       },
       formatter: function () {
-        const year = Number(this.x);
-        const percentileSet = year <= 2020 ? historicalPercentiles[year] : projectedPercentiles[year];
-
-        if (!percentileSet) {
-          return `<div><strong>${year}</strong></div>`;
+        const point = series.data.find((entry) => entry.year === Number(this.x));
+        if (!point) {
+          return `<div class="chart-tooltip-card"><div class="chart-tooltip-year">${this.x}</div></div>`;
         }
 
         return `
-          <div>
-            <div><strong>${year}</strong></div>
-            <div>P10: ${percentileSet.p10.toFixed(1)} ${displayUnit}</div>
-            <div>P50: ${percentileSet.p50.toFixed(1)} ${displayUnit}</div>
-            <div>P90: ${percentileSet.p90.toFixed(1)} ${displayUnit}</div>
+          <div class="chart-tooltip-card">
+            <div class="chart-tooltip-year">${point.year}</div>
+            <div class="chart-tooltip-row">
+              <span class="chart-tooltip-label">Median</span>
+              <span class="chart-tooltip-value">${formatTooltipValue(point.p50, displayUnit, valueDecimals)}</span>
+            </div>
+            <div class="chart-tooltip-row">
+              <span class="chart-tooltip-label">Range</span>
+              <span class="chart-tooltip-value">${formatTooltipValue(point.p10, displayUnit, valueDecimals)} - ${formatTooltipValue(point.p90, displayUnit, valueDecimals)}</span>
+            </div>
           </div>
         `;
       },
@@ -407,6 +318,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         },
       },
       arearange: {
+        lineWidth: 0,
         marker: {
           enabled: false,
         },
@@ -415,25 +327,19 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     responsive: {
       rules: [{
         condition: {
-          maxWidth: 350,
+          maxWidth: 360,
         },
         chartOptions: {
           chart: {
-            height: 240,
+            height: 380,
           },
-          yAxis: {
-            title: {
-              text: axisMetricLabel,
-              style: {
-                fontSize: "9px",
-              },
+          legend: {
+            align: "center",
+            verticalAlign: "bottom",
+            layout: "horizontal",
+            itemStyle: {
+              fontSize: "9px",
             },
-            labels: {
-              style: {
-                fontSize: "9px",
-              },
-            },
-            tickInterval: chartData.yAxisStep,
           },
           xAxis: {
             labels: {
@@ -441,7 +347,9 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
                 fontSize: "9px",
               },
             },
-            title: {
+          },
+          yAxis: {
+            labels: {
               style: {
                 fontSize: "9px",
               },
@@ -452,90 +360,21 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     },
     series: [
       {
-        name: "Historical 10th-90th percentile range",
+        name: "10th-90th percentile range",
         type: "arearange",
-        data: chartData.historicalRange,
-        lineWidth: 0,
-        color: "rgba(241, 245, 249, 0.24)",
-        fillOpacity: 1,
+        data: chartData.rangeData,
+        color: scenarioMeta.color,
+        fillOpacity: 0.22,
+        showInLegend: false,
         zIndex: 0,
-        marker: { enabled: false },
-        showInLegend: false,
       },
       {
-        name: "Projected 10th-90th percentile range",
-        type: "arearange",
-        data: chartData.projectedRange,
-        lineWidth: 0,
-        color: "rgba(239, 68, 68, 0.44)",
-        fillOpacity: 1,
-        zIndex: 0,
-        marker: { enabled: false },
-        showInLegend: false,
-      },
-      {
-        name: "Historical P10",
+        name: legendLabel,
         type: "line",
-        data: chartData.historicalP10,
-        zIndex: 2,
-        color: "rgba(241, 245, 249, 0.9)",
-        lineWidth: 1.4,
-        dashStyle: "ShortDot",
-        marker: { enabled: false },
-        showInLegend: false,
-      },
-      {
-        name: "Historical P90",
-        type: "line",
-        data: chartData.historicalP90,
-        zIndex: 2,
-        color: "rgba(241, 245, 249, 0.9)",
-        lineWidth: 1.4,
-        dashStyle: "ShortDot",
-        marker: { enabled: false },
-        showInLegend: false,
-      },
-      {
-        name: "Historical P50",
-        type: "line",
-        data: chartData.historicalLine,
-        zIndex: 3,
-        color: "rgba(248, 250, 252, 0.92)",
+        data: chartData.lineData,
+        color: scenarioMeta.color,
         lineWidth: 2,
-        marker: { enabled: false },
-        showInLegend: false,
-      },
-      {
-        name: "Projected P10",
-        type: "line",
-        data: chartData.projectedP10,
-        zIndex: 2,
-        color: "rgba(127, 29, 29, 0.92)",
-        lineWidth: 1.45,
-        dashStyle: "ShortDot",
-        marker: { enabled: false },
-        showInLegend: false,
-      },
-      {
-        name: "Projected P90",
-        type: "line",
-        data: chartData.projectedP90,
-        zIndex: 2,
-        color: "rgba(127, 29, 29, 0.92)",
-        lineWidth: 1.45,
-        dashStyle: "ShortDot",
-        marker: { enabled: false },
-        showInLegend: false,
-      },
-      {
-        name: "Projected P50",
-        type: "line",
-        data: chartData.projectedLine,
-        zIndex: 3,
-        color: "#111827",
-        lineWidth: 2.4,
-        marker: { enabled: false },
-        showInLegend: false,
+        zIndex: 1,
       },
     ] as any,
   };
@@ -548,34 +387,6 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
           options={options}
           containerProps={{ style: { width: "100%", height: "100%" } }}
         />
-      </div>
-      <div className="climate-chart-legend">
-        <div className="legend-row">
-          <div className="legend-item">
-            <span className="legend-line legend-p50-historical"></span>
-            <span className="legend-label">Historical P50</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-line legend-p50-projected"></span>
-            <span className="legend-label">Projected P50</span>
-          </div>
-        </div>
-        <div className="legend-row">
-          <div className="legend-item">
-            <span className="legend-line legend-percentile-boundary"></span>
-            <span className="legend-label">P10 / P90 bounds</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-box legend-historical-box"></span>
-            <span className="legend-label">Historical 10th-90th range</span>
-          </div>
-        </div>
-        <div className="legend-row">
-          <div className="legend-item">
-            <span className="legend-box legend-projected-box"></span>
-            <span className="legend-label">Projected 10th-90th range</span>
-          </div>
-        </div>
       </div>
     </div>
   );

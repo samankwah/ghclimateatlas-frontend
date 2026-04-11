@@ -1,14 +1,10 @@
 // Ghana Climate Atlas - Main Application (Redesigned UI)
 
+import { API_BASE } from "./api/climate";
+
 // Fire a health-check immediately on script load to wake the backend.
 // This runs before React mounts, giving the backend time to spin up.
-const _warmupApiBase =
-  import.meta.env.VITE_API_URL?.replace(/\/$/, "") ||
-  (typeof window !== "undefined" &&
-  ["localhost", "127.0.0.1", "0.0.0.0"].includes(window.location.hostname)
-    ? "http://127.0.0.1:8000/api"
-    : "https://ghclimateatlas-backend.vercel.app/api");
-fetch(`${_warmupApiBase}/health`).catch(() => {});
+fetch(`${API_BASE}/health`).catch(() => {});
 
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,6 +16,7 @@ import TimelineBar from "./components/Timeline/TimelineBar";
 import CategoryTabs, { type Category } from "./components/Categories/CategoryTabs";
 import DistrictSearch from "./components/Search/DistrictSearch";
 
+import CookieConsent from "./components/CookieConsent/CookieConsent";
 const DistrictDetailPanel = lazy(() => import("./components/InfoPanel/DistrictDetailPanel"));
 const HelpOverlay = lazy(() => import("./components/Help/HelpOverlay"));
 const TourOverlay = lazy(() => import("./components/Tour/TourOverlay"));
@@ -482,6 +479,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ClimateAtlas />
+      <CookieConsent />
     </QueryClientProvider>
   );
 }

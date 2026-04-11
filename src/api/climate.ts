@@ -6,15 +6,17 @@ import type {
   ClimateVariable,
   ClimateResponse,
   ClimateComparisonResponse,
+  ClimateTimeSeriesResponse,
   RegionInfo,
   DistrictClimate,
   Period,
   Scenario,
 } from "../types/climate";
 
-const PRODUCTION_API_BASE = "https://ghclimateatlas-backend.vercel.app/api";
+const PRODUCTION_API_BASE = "/api";
 const LEGACY_API_HOSTS = new Set([
   "ghana-climate-atlas-api.onrender.com",
+  "ghclimateatlas-backend.vercel.app",
 ]);
 
 const normalizeApiBase = (value?: string) => {
@@ -43,15 +45,15 @@ const getDefaultApiBase = () => {
       hostname === "0.0.0.0";
 
     if (isLocalHost) {
-      return "http://127.0.0.1:8000/api";
+      return "http://127.0.0.1:8001/api";
     }
   }
 
-  // Production fallback inferred from the active Render service.
+  // Same-origin production fallback for reverse-proxy deployments.
   return PRODUCTION_API_BASE;
 };
 
-const API_BASE =
+export const API_BASE =
   normalizeApiBase(import.meta.env.VITE_API_URL) || getDefaultApiBase();
 
 const api = axios.create({
@@ -122,6 +124,17 @@ export const fetchClimateComparison = async (
       params: { period, scenario, percentile },
     }
   );
+  return response.data;
+};
+
+export const fetchDistrictClimateTimeseries = async (
+  districtId: string,
+  variable: string,
+  scenario: Scenario,
+): Promise<ClimateTimeSeriesResponse> => {
+  const response = await api.get<ClimateTimeSeriesResponse>(`/climate/${variable}/timeseries`, {
+    params: { district_id: districtId, scenario },
+  });
   return response.data;
 };
 
