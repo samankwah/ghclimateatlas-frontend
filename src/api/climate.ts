@@ -13,10 +13,10 @@ import type {
   Scenario,
 } from "../types/climate";
 
-const PRODUCTION_API_BASE = "/api";
+const VERCEL_API_BASE = "https://ghclimateatlas-backend.vercel.app/api";
+const SAME_ORIGIN_API_BASE = "/api";
 const LEGACY_API_HOSTS = new Set([
   "ghana-climate-atlas-api.onrender.com",
-  "ghclimateatlas-backend.vercel.app",
 ]);
 
 const normalizeApiBase = (value?: string) => {
@@ -28,7 +28,7 @@ const normalizeApiBase = (value?: string) => {
   try {
     const url = new URL(candidate);
     if (LEGACY_API_HOSTS.has(url.hostname)) {
-      return PRODUCTION_API_BASE;
+      return VERCEL_API_BASE;
     }
     return url.toString().replace(/\/$/, "");
   } catch {
@@ -47,10 +47,15 @@ const getDefaultApiBase = () => {
     if (isLocalHost) {
       return "http://127.0.0.1:8001/api";
     }
+
+    // Netlify deploys: call the Vercel backend directly
+    if (hostname.endsWith(".netlify.app")) {
+      return VERCEL_API_BASE;
+    }
   }
 
-  // Same-origin production fallback for reverse-proxy deployments.
-  return PRODUCTION_API_BASE;
+  // Same-origin fallback for reverse-proxy deployments (e.g. atlas.meteo.gov.gh)
+  return SAME_ORIGIN_API_BASE;
 };
 
 export const API_BASE =
