@@ -165,8 +165,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
   // Get stable color scale function (only changes when scale type changes)
   const colorFn = useMemo(
-    () => getColorScale(showChange ? "diverging" : colorScaleType),
-    [colorScaleType, showChange]
+    () => getColorScale(colorScaleType),
+    [colorScaleType]
   );
 
   // Ref to track all GeoJSON layers by district ID for imperative style updates
@@ -312,11 +312,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   }, [activeVariableId, valueMap, showChange, unit, onDistrictClick, onDistrictHover]);
 
   if (!districts) {
-    return (
-      <div className="map-loading">
-        <p>Loading map data...</p>
-      </div>
-    );
+    return null;
   }
 
   return (

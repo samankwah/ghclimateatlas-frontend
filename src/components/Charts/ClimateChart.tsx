@@ -39,6 +39,7 @@ interface ClimateChartProps {
   variableName: string;
   scenario: Scenario;
   selectedPeriod: Period;
+  showChange?: boolean;
 }
 
 const PERIOD_BANDS: Record<Period, { from: number; to: number }> = {
@@ -101,6 +102,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   variableName,
   scenario,
   selectedPeriod,
+  showChange = false,
 }) => {
   const [chartReady, setChartReady] = useState(highchartsLoaded && highchartsMoreInitialized);
 
@@ -114,25 +116,44 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
 
   const displayUnit = normalizeUnit(series?.unit || "");
   const valueDecimals = getValueDecimals(displayUnit);
-  const axisMetricLabel = getAxisLabel(variableName, displayUnit);
+  const baseAxisLabel = getAxisLabel(variableName, displayUnit);
+  const axisMetricLabel = showChange ? `Change from baseline (${displayUnit})` : baseAxisLabel;
   const scenarioMeta = SCENARIO_CHART_META[scenario];
   const selectedPeriodBand = PERIOD_BANDS[selectedPeriod];
   const isAnnualRainfallChart =
     variableName.toLowerCase() === "annual precipitation" &&
     displayUnit.includes("mm");
+  const baselineRef = useMemo(() => {
+    if (!series?.data.length) return 0;
+    if (series.reference_mean && series.reference_mean !== 0) {
+      return series.reference_mean;
+    }
+    const baselinePoints = series.data.filter(
+      (p) => p.year >= 1991 && p.year <= 2020
+    );
+    if (!baselinePoints.length) return 0;
+    const sum = baselinePoints.reduce((acc, p) => acc + p.p50, 0);
+    return sum / baselinePoints.length;
+  }, [series]);
 
   const chartData = useMemo(() => {
     if (!series?.data.length) {
       return null;
     }
 
-    const lineData = series.data.map((point) => [point.year, point.p50] as [number, number]);
-    const rangeData = series.data.map((point) => [point.year, point.p10, point.p90] as [number, number, number]);
-    const allValues = series.data.flatMap((point) => [point.p10, point.p50, point.p90]);
-    const yAxis = getYAxisBounds(allValues, isAnnualRainfallChart ? { minFloor: 500 } : undefined);
+    const offset = showChange ? baselineRef : 0;
+    const lineData = series.data.map((point) => [point.year, point.p50 - offset] as [number, number]);
+    const rangeData = series.data.map((point) => [point.year, point.p10 - offset, point.p90 - offset] as [number, number, number]);
+    const allValues = series.data.flatMap((point) => [point.p10 - offset, point.p50 - offset, point.p90 - offset]);
+    const yAxis = getYAxisBounds(
+      allValues,
+      isAnnualRainfallChart
+        ? { minFloor: showChange ? -600 : 500 }
+        : undefined
+    );
 
     return { lineData, rangeData, yAxis };
-  }, [isAnnualRainfallChart, series]);
+  }, [baselineRef, isAnnualRainfallChart, series, showChange]);
 
   if (!series || !chartData) {
     return (
@@ -153,9 +174,11 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
   const Highcharts = HighchartsModule;
   const HighchartsReact = HighchartsReactModule;
   const legendValue = displayUnit.includes("mm")
-    ? `${Math.round(series.reference_mean).toLocaleString()} mm/year`
-    : `${series.reference_mean.toFixed(valueDecimals)} ${displayUnit}`;
-  const legendLabel = `${scenarioMeta.label} • Ref ${legendValue}`;
+    ? `${Math.round(baselineRef).toLocaleString()} mm/year`
+    : `${baselineRef.toFixed(valueDecimals)} ${displayUnit}`;
+  const legendLabel = showChange
+    ? `${scenarioMeta.label} • Δ from ref ${legendValue}`
+    : `${scenarioMeta.label} • Ref ${legendValue}`;
 
   const options: Highcharts.Options = {
     chart: {
@@ -270,6 +293,27 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       gridLineWidth: 1,
       lineColor: "rgba(148, 163, 184, 0.55)",
       lineWidth: 1,
+      plotLines: showChange
+        ? [
+            {
+              value: 0,
+              color: "rgba(226, 232, 240, 0.55)",
+              width: 1,
+              dashStyle: "Dash",
+              zIndex: 3,
+              label: {
+                text: "Baseline",
+                align: "right",
+                x: -6,
+                y: -4,
+                style: {
+                  color: "rgba(226, 232, 240, 0.8)",
+                  fontSize: "9px",
+                },
+              },
+            },
+          ]
+        : undefined,
     },
     tooltip: {
       shared: true,
@@ -288,16 +332,22 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
           return `<div class="chart-tooltip-card"><div class="chart-tooltip-year">${this.x}</div></div>`;
         }
 
+        const offset = showChange ? baselineRef : 0;
+        const sign = (v: number) => (showChange && v >= 0 ? "+" : "");
+        const p50 = point.p50 - offset;
+        const p10 = point.p10 - offset;
+        const p90 = point.p90 - offset;
+
         return `
           <div class="chart-tooltip-card">
             <div class="chart-tooltip-year">${point.year}</div>
             <div class="chart-tooltip-row">
-              <span class="chart-tooltip-label">Median</span>
-              <span class="chart-tooltip-value">${formatTooltipValue(point.p50, displayUnit, valueDecimals)}</span>
+              <span class="chart-tooltip-label">${showChange ? "Δ Median" : "Median"}</span>
+              <span class="chart-tooltip-value">${sign(p50)}${formatTooltipValue(p50, displayUnit, valueDecimals)}</span>
             </div>
             <div class="chart-tooltip-row">
               <span class="chart-tooltip-label">Range</span>
-              <span class="chart-tooltip-value">${formatTooltipValue(point.p10, displayUnit, valueDecimals)} - ${formatTooltipValue(point.p90, displayUnit, valueDecimals)}</span>
+              <span class="chart-tooltip-value">${sign(p10)}${formatTooltipValue(p10, displayUnit, valueDecimals)} - ${sign(p90)}${formatTooltipValue(p90, displayUnit, valueDecimals)}</span>
             </div>
           </div>
         `;
@@ -326,6 +376,37 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     },
     responsive: {
       rules: [{
+        condition: {
+          maxWidth: 520,
+        },
+        chartOptions: {
+          chart: {
+            height: 320,
+          },
+          legend: {
+            align: "center",
+            verticalAlign: "bottom",
+            layout: "horizontal",
+            itemStyle: {
+              fontSize: "10px",
+            },
+          },
+          xAxis: {
+            labels: {
+              style: {
+                fontSize: "10px",
+              },
+            },
+          },
+          yAxis: {
+            labels: {
+              style: {
+                fontSize: "10px",
+              },
+            },
+          },
+        },
+      }, {
         condition: {
           maxWidth: 360,
         },
@@ -383,6 +464,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
     <div className="climate-chart-container">
       <div className="climate-chart-wrapper">
         <HighchartsReact
+          key={showChange ? "anomaly" : "absolute"}
           highcharts={Highcharts}
           options={options}
           containerProps={{ style: { width: "100%", height: "100%" } }}

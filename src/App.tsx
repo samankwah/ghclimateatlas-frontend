@@ -15,6 +15,7 @@ import MapLayerToggles from "./components/Sidebar/MapLayerToggles";
 import TimelineBar from "./components/Timeline/TimelineBar";
 import CategoryTabs, { type Category } from "./components/Categories/CategoryTabs";
 import DistrictSearch from "./components/Search/DistrictSearch";
+import WeatherLoader from "./components/WeatherLoader";
 
 import CookieConsent from "./components/CookieConsent/CookieConsent";
 const DistrictDetailPanel = lazy(() => import("./components/InfoPanel/DistrictDetailPanel"));
@@ -57,7 +58,6 @@ function ClimateAtlas() {
   const [showStories, setShowStories] = useState(true);
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
   const [mobileHeaderActionsOpen, setMobileHeaderActionsOpen] = useState(false);
-  const [mobileChangeToggleOpen, setMobileChangeToggleOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
 
@@ -216,7 +216,11 @@ function ClimateAtlas() {
 
   // Get color scale type
   const colorScaleType: ColorScaleType = useMemo(() => {
-    if (showChange) return "diverging";
+    if (showChange) {
+      return effectiveVariable?.category === "precipitation"
+        ? "diverging_precip"
+        : "diverging";
+    }
     return (effectiveVariable?.color_scale as ColorScaleType) || "temperature";
   }, [effectiveVariable, showChange]);
 
@@ -317,7 +321,7 @@ function ClimateAtlas() {
           {/* Loading overlay scoped to map area only — header + controls remain visible */}
           {(loadingDistricts || (loadingClimate && !climateData)) && !districtsError && (
             <div className="map-loading-overlay">
-              <div className="spinner" />
+              <WeatherLoader />
               <p>Loading climate data...</p>
             </div>
           )}
@@ -354,6 +358,9 @@ function ClimateAtlas() {
           showWater={showWater}
           onToggleWater={() => setShowWater(!showWater)}
           onToggleStories={() => setShowStories(!showStories)}
+          showChange={showChange}
+          onToggleChange={toggleShowChange}
+          changeToggleAvailable={period !== "baseline"}
           searchContent={
             <DistrictSearch
               districts={districts}
@@ -362,32 +369,6 @@ function ClimateAtlas() {
           }
         />
 
-        {/* Show change toggle */}
-        {period !== "baseline" && (
-          <div className={`change-toggle-overlay ${mobileChangeToggleOpen ? "mobile-open" : ""}`}>
-            <button
-              type="button"
-              className={`change-toggle-mobile-trigger ${showChange ? "active" : ""}`}
-              onClick={() => setMobileChangeToggleOpen((current) => !current)}
-              aria-expanded={mobileChangeToggleOpen}
-              aria-controls="change-toggle-panel"
-            >
-            </button>
-            <div
-              id="change-toggle-panel"
-              className="change-toggle-panel"
-            >
-              <label className="change-toggle">
-                <input
-                  type="checkbox"
-                  checked={showChange}
-                  onChange={toggleShowChange}
-                />
-                <span>Show change from baseline</span>
-              </label>
-            </div>
-          </div>
-        )}
 
         {/* District detail panel (sliding side panel) */}
         {selectedDistrictId && (() => {
@@ -409,7 +390,7 @@ function ClimateAtlas() {
           )?.value;
 
           return (
-            <Suspense fallback={<div className="loading-overlay"><div className="spinner" /></div>}>
+            <Suspense fallback={<div className="loading-overlay"><WeatherLoader /></div>}>
               <DistrictDetailPanel
                 districtId={selectedDistrictId}
                 districtName={districtName}
@@ -420,6 +401,7 @@ function ClimateAtlas() {
                 period={period as Period}
                 comparisonData={districtComparison}
                 baselineValue={baselineValue}
+                showChange={showChange}
                 onClose={() => selectDistrict(null)}
               />
             </Suspense>

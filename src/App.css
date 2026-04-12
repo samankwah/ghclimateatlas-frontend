@@ -904,12 +904,15 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(26, 26, 46, 0.9);
+  background: rgba(30, 41, 59, 0.32);
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  color: #e2e8f0;
 }
 
 /* Error overlay */
@@ -961,18 +964,69 @@ body {
   background: var(--accent-hover);
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+.weather-loader {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.75rem;
+  filter: drop-shadow(0 6px 18px rgba(56, 189, 248, 0.2));
+}
+
+.weather-loader.is-small {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 0;
+  filter: none;
+}
+
+.weather-loader svg {
+  overflow: visible;
+}
+
+.weather-loader-sun {
+  transform-origin: 38px 38px;
+  animation: weather-loader-sun-rotate 6s linear infinite;
+}
+
+.weather-loader-cloud {
+  transform-origin: 50px 66px;
+  animation: weather-loader-cloud-float 3s ease-in-out infinite;
+}
+
+.weather-loader-drops line {
+  opacity: 0;
+  animation: weather-loader-drop 1.4s ease-in infinite;
+}
+
+.weather-loader-drops line:nth-child(1) { animation-delay: 0s; }
+.weather-loader-drops line:nth-child(2) { animation-delay: 0.35s; }
+.weather-loader-drops line:nth-child(3) { animation-delay: 0.7s; }
+
+@keyframes weather-loader-sun-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes weather-loader-cloud-float {
+  0%, 100% { transform: translateX(-3px); }
+  50%      { transform: translateX(3px); }
+}
+
+@keyframes weather-loader-drop {
+  0%   { opacity: 0; transform: translateY(-4px); }
+  40%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-loader-sun,
+  .weather-loader-cloud,
+  .weather-loader-drops line {
+    animation: none;
   }
 }
 
@@ -3423,15 +3477,6 @@ body {
   font-size: 0.875rem;
 }
 
-.spinner-small {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #475569;
-  border-top-color: #f59e0b;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
 .chart-empty {
   text-align: center;
   padding: 2rem;
@@ -4152,9 +4197,9 @@ body {
   }
 
   .timeline-bar {
-    width: min(720px, calc(100vw - 2rem));
-    gap: 1.5rem;
-    padding: 0.75rem 1.25rem;
+    width: min(100%, calc(100vw - 1rem));
+    gap: 1rem;
+    padding: 0.75rem 0.9rem;
   }
 
   .section-label {
@@ -4166,8 +4211,29 @@ body {
   }
 
   .district-detail-panel {
-    width: min(420px, 44vw);
-    padding: 1.1rem 1rem calc(11.5rem + env(safe-area-inset-bottom, 0px));
+    width: min(30rem, 50vw);
+    max-width: calc(100vw - 1.5rem);
+    top: var(--header-height);
+    left: auto;
+    right: 0;
+    height: calc(100dvh - var(--header-height));
+    border-left: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 0;
+    z-index: 1000;
+    padding: 1rem 1rem calc(9.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .map-container:has(.district-detail-panel) .floating-map-legend {
+    left: auto;
+    right: calc(min(30rem, 50vw) + 0.75rem);
+    transform: none;
+    --legend-width: min(var(--legend-base-width, 240px), calc(100vw - min(30rem, 50vw) - 7rem));
+  }
+
+  .map-container:has(.district-detail-panel) .map-zoom-controls {
+    left: 0.75rem;
+    right: auto;
+    bottom: 15rem;
   }
 
   .district-header-orange {
@@ -4186,6 +4252,103 @@ body {
 
   .bottom-control-bar {
     padding: 0 0.5rem 0.35rem;
+  }
+
+  .sidebar-search-panel {
+    left: calc(0.75rem + 42px + 0.75rem);
+    right: 1rem;
+    max-width: none;
+  }
+
+  .category-panel-anchor {
+    left: 0.75rem;
+    right: 0.75rem;
+    top: auto;
+    bottom: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    margin-bottom: 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  body:has(.district-detail-panel) .category-panel-anchor {
+    right: calc(min(30rem, 50vw) + 0.75rem);
+  }
+
+  .category-panel-layout {
+    width: min(100%, 36rem);
+  }
+
+  .category-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .category-tab {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .tab-label {
+    font-size: 0.78rem;
+  }
+
+  .change-toggle-overlay {
+    top: calc(var(--header-height) + 4.25rem);
+    right: 0.75rem;
+  }
+
+  .map-zoom-controls {
+    left: auto;
+    right: 0.75rem;
+    bottom: 14.5rem;
+  }
+}
+
+/* Tablet-only compact overrides for the bottom control bar when the
+   district detail panel is docked as a right-rail. Scoped to exclude mobile
+   (≤768px) so these do not squash the full-width mobile bar. */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .bottom-control-bar.panel-open {
+    right: min(30rem, 50vw);
+  }
+
+  .bottom-control-bar.panel-open .timeline-bar {
+    gap: 0.5rem;
+    padding: 0.6rem 0.6rem;
+    width: 100%;
+  }
+
+  .bottom-control-bar.panel-open .timeline-section {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+  }
+
+  .bottom-control-bar.panel-open .time-period-slider input[type="range"],
+  .bottom-control-bar.panel-open .scenario-slider input[type="range"] {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .bottom-control-bar.panel-open .period-labels {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .bottom-control-bar.panel-open .section-label {
+    font-size: 0.7rem;
+  }
+
+  .bottom-control-bar.panel-open .scenario-slider span {
+    font-size: 0.6rem;
+  }
+
+  .bottom-control-bar.panel-open .category-tabs {
+    padding: 0.5rem 0.6rem;
+    gap: 0.4rem;
   }
 }
 
@@ -4239,7 +4402,8 @@ body {
   }
 
   .district-detail-panel {
-    width: 100%;
+    width: 100vw;
+    max-width: none;
     top: var(--header-height);
     bottom: auto;
     left: 0;
@@ -4251,6 +4415,10 @@ body {
     z-index: 1000;
     animation: fadeInPanel 0.25s ease-out;
     padding-bottom: 14rem;  /* extra scroll room so content isn't hidden behind bottom bar */
+  }
+
+  body:has(.district-detail-panel) .category-panel-anchor {
+    right: 0.75rem;
   }
 
   @keyframes fadeInPanel {
@@ -4279,6 +4447,12 @@ body {
   .change-badge {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
+  }
+
+  .map-zoom-controls {
+    left: 0.75rem;
+    right: auto;
+    bottom: 9rem;
   }
 }
 
@@ -5270,27 +5444,104 @@ body {
   }
 
   .district-detail-panel {
-    padding: 1rem 1rem calc(11rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.875rem 0.875rem calc(11rem + env(safe-area-inset-bottom, 0px));
   }
 
+  .district-header-orange {
+    padding: 0.875rem 0.9375rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .district-header-orange .header-region {
+    font-size: 0.75rem;
+    margin-bottom: 0.125rem;
+  }
+
+  .district-header-orange .header-district-name {
+    font-size: 1.5rem;
+    margin: 0 0 0.625rem 0;
+  }
+
+  .district-header-orange .header-subtitle {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .district-header-orange .header-variable-name {
+    font-size: 1.2rem;
+  }
+
+  .district-header-orange .header-scenario {
+    font-size: 0.8125rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .header-period-comparison {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 0.6rem;
+    row-gap: 0.25rem;
+    max-width: 100%;
+  }
+
+  .header-period-comparison .period-range,
   .header-period-comparison .value-display {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
+    display: contents;
+  }
+
+  .header-period-comparison .period-baseline,
+  .header-period-comparison .period-future {
+    font-size: 0.7rem;
+    text-align: left;
+  }
+
+  .header-period-comparison .period-future {
+    text-align: right;
+  }
+
+  .header-period-comparison .value-baseline,
+  .header-period-comparison .value-future {
+    justify-self: stretch;
+    font-size: 1.45rem;
+    min-width: 0;
+  }
+
+  .header-period-comparison .value-baseline {
+    justify-self: start;
+  }
+
+  .header-period-comparison .value-future {
+    justify-self: end;
+    text-align: right;
   }
 
   .header-period-comparison .value-arrow {
-    display: inline-flex;
-    align-self: center;
+    display: none;
   }
 
   .header-period-comparison .change-indicator {
+    grid-column: 1 / -1;
+    margin-top: 0.25rem;
     max-width: 100%;
     flex-wrap: wrap;
   }
 
+  .climate-chart-container {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .more-details-header {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.875rem;
+  }
+
   .statistics-table {
     min-width: 20rem;
+  }
+
+  .panel-close-btn {
+    top: 0.5rem;
+    right: 0.5rem;
   }
 }
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import ClimateChart from "../Charts/ClimateChart";
 import StatisticsTable from "./StatisticsTable";
 import DownloadsSection from "./DownloadsSection";
+import WeatherLoader from "../WeatherLoader";
 import { useDistrictTimeSeries } from "../../hooks/useDistrictTimeSeries";
 import { useDistrictChartSeries } from "../../hooks/useDistrictChartSeries";
 import type { ClimateVariable, ClimateComparison, Scenario, Period } from "../../types/climate";
@@ -22,6 +23,7 @@ interface DistrictDetailPanelProps {
   period: Period;
   comparisonData: ClimateComparison | undefined;
   baselineValue: number | undefined;
+  showChange?: boolean;
   onClose: () => void;
 }
 
@@ -35,6 +37,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
   period,
   comparisonData,
   baselineValue,
+  showChange = false,
   onClose,
 }) => {
   const [showMoreDetails, setShowMoreDetails] = useState(false);
@@ -140,7 +143,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
 
       {isLoading || isChartLoading ? (
         <div className="chart-loading">
-          <div className="spinner-small" />
+          <WeatherLoader size="sm" />
           <span>Loading chart data...</span>
         </div>
       ) : (
@@ -149,6 +152,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
           variableName={variableName}
           scenario={scenario}
           selectedPeriod={period}
+          showChange={showChange}
         />
       )}
 

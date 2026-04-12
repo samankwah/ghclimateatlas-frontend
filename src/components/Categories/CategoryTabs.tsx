@@ -14,6 +14,9 @@ import {
 } from './categoryParameters';
 import type { ClimateVariable, Period, Scenario } from '../../types/climate';
 
+const TABLET_BREAKPOINT = 1100;
+const MOBILE_BREAKPOINT = 768;
+
 export type Category = "temperature" | "precipitation" | "sea_level";
 
 interface CategoryTabsProps {
@@ -187,6 +190,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   controlsExpanded = true,
 }) => {
   const [openPanel, setOpenPanel] = useState<Category | null>(null);
+  const [isTabletOrSmaller, setIsTabletOrSmaller] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [selections, setSelections] = useState<SelectionsState>(EMPTY_SELECTIONS);
   const [modalParam, setModalParam] = useState<{
@@ -248,22 +252,26 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   };
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
-    const updateViewport = (event?: MediaQueryListEvent) => {
-      setIsMobileViewport(event ? event.matches : mediaQuery.matches);
-    };
+    const tabletQuery = window.matchMedia(`(max-width: ${TABLET_BREAKPOINT}px)`);
+    const mobileQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 
-    updateViewport();
-    mediaQuery.addEventListener('change', updateViewport);
+    const updateTablet = () => setIsTabletOrSmaller(tabletQuery.matches);
+    const updateMobile = () => setIsMobileViewport(mobileQuery.matches);
+
+    updateTablet();
+    updateMobile();
+    tabletQuery.addEventListener('change', updateTablet);
+    mobileQuery.addEventListener('change', updateMobile);
 
     return () => {
-      mediaQuery.removeEventListener('change', updateViewport);
+      tabletQuery.removeEventListener('change', updateTablet);
+      mobileQuery.removeEventListener('change', updateMobile);
     };
   }, []);
 
   return (
     <div className="category-tabs-wrapper" data-tour="map-variable">
-      {openPanel && (!isMobileViewport || controlsExpanded) && (
+      {openPanel && (!isTabletOrSmaller || !isMobileViewport || controlsExpanded) && (
         <button
           type="button"
           className="category-panel-backdrop"
@@ -281,7 +289,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
           return (
             <div key={cat.id} className="category-tab-container">
-              {isOpen && !isMobileViewport && (
+              {isOpen && !isTabletOrSmaller && (
                 <div className="category-panel-anchor">
                   <CategoryPanel
                     panelId={`category-panel-${cat.id}`}
@@ -321,7 +329,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
         })}
       </div>
 
-      {openPanel && isMobileViewport && controlsExpanded && createPortal(
+      {openPanel && isTabletOrSmaller && (!isMobileViewport || controlsExpanded) && createPortal(
         <div className="category-panel-anchor">
           <CategoryPanel
             panelId={`category-panel-${openPanel}`}

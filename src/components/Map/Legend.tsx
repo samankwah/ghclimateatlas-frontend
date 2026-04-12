@@ -45,7 +45,7 @@ const Legend: React.FC<LegendProps> = ({
     const stops = generateLegendStops(
       legendRange.min,
       legendRange.max,
-      showChange ? "diverging" : colorScaleType,
+      colorScaleType,
       5
     );
     const colors = stops.map((stop) => stop.color).join(", ");

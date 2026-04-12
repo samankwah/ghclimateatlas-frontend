@@ -4,6 +4,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Parameter } from './categoryParameters';
 
+const TABLET_BREAKPOINT = 1100;
+
 interface CategoryPanelProps {
   panelId?: string;
   categoryLabel: string;
@@ -108,7 +110,7 @@ const CategoryPanel: React.FC<CategoryPanelProps> = ({
   }, [onClose]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const mediaQuery = window.matchMedia(`(max-width: ${TABLET_BREAKPOINT}px)`);
     const updateViewport = (event?: MediaQueryListEvent) => {
       setIsMobileViewport(event ? event.matches : mediaQuery.matches);
     };

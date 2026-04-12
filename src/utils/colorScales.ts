@@ -13,7 +13,8 @@ export type ColorScaleType =
   | "hot_days"
   | "dry_days"
   | "sea_level"
-  | "diverging";
+  | "diverging"
+  | "diverging_precip";
 
 const DEGREE_C = "\u00B0C";
 const DEGREE_C_DAYS = "\u00B0C\u00B7days";
@@ -84,6 +85,12 @@ export const divergingScale = (value: number, min: number, max: number): string 
   return scale(value);
 };
 
+export const divergingPrecipScale = (value: number, min: number, max: number): string => {
+  const absMax = Math.max(Math.abs(min), Math.abs(max));
+  const scale = scaleSequential(interpolateRdBu).domain([-absMax, absMax]);
+  return scale(value);
+};
+
 export const seaLevelScale = (value: number, min: number, max: number): string => {
   const scale = scaleSequential(
     interpolateRgbBasis([
@@ -115,6 +122,8 @@ export const getColorScale = (
       return dryDaysScale;
     case "diverging":
       return divergingScale;
+    case "diverging_precip":
+      return divergingPrecipScale;
     case "sea_level":
       return seaLevelScale;
     default:
