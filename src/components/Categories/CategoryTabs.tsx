@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import CategoryPanel from './CategoryPanel';
 import ParameterInfoModal from './ParameterInfoModal';
+import VersionBadge from '../VersionBadge/VersionBadge';
 import {
   CATEGORY_PARAMETERS,
   CATEGORY_COLORS,
@@ -327,6 +328,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
             </div>
           );
         })}
+        <VersionBadge />
       </div>
 
       {openPanel && isTabletOrSmaller && (!isMobileViewport || controlsExpanded) && createPortal(
