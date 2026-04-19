@@ -18,6 +18,7 @@ import DistrictSearch from "./components/Search/DistrictSearch";
 import WeatherLoader from "./components/WeatherLoader";
 
 import CookieConsent from "./components/CookieConsent/CookieConsent";
+import { CookieConsentProvider } from "./hooks/useCookieConsent";
 const DistrictDetailPanel = lazy(() => import("./components/InfoPanel/DistrictDetailPanel"));
 const HelpOverlay = lazy(() => import("./components/Help/HelpOverlay"));
 const TourOverlay = lazy(() => import("./components/Tour/TourOverlay"));
@@ -352,7 +353,6 @@ function ClimateAtlas() {
           />
         </div>
 
-        {/* Floating sidebar with layer toggles + search */}
         <MapLayerToggles
           showStories={showStories}
           showWater={showWater}
@@ -460,8 +460,10 @@ function ClimateAtlas() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ClimateAtlas />
-      <CookieConsent />
+      <CookieConsentProvider>
+        <ClimateAtlas />
+        <CookieConsent />
+      </CookieConsentProvider>
     </QueryClientProvider>
   );
 }
