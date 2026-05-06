@@ -31,15 +31,15 @@ const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
 
 const PERIOD_SUMMARY_LABELS: Record<Period, string> = {
   baseline: "Reference (1991-2020)",
-  "2030": "Near Term (2021-2040)",
-  "2050": "Mid-Century (2041-2060)",
-  "2080": "End-Century (2081-2100)",
+  "2030": "Near Term",
+  "2050": "Mid-Century",
+  "2080": "End of Century",
 };
 
 const RCP_CODES: Record<"rcp26" | "rcp45" | "rcp85", string> = {
-  rcp26: "RCP2.6",
-  rcp45: "RCP4.5",
-  rcp85: "RCP8.5",
+  rcp26: "RCP 2.6",
+  rcp45: "RCP 4.5",
+  rcp85: "RCP 8.5",
 };
 
 const Header: React.FC<HeaderProps> = ({
@@ -80,24 +80,27 @@ const Header: React.FC<HeaderProps> = ({
       : rawHeaderTitle;
   const headerTitle = conciseHeaderTitle;
   const isSeaLevel = variable?.id ? isSeaLevelVariable(variable.id) : false;
-  const formattedAverage =
+  const averageValue =
     nationalAverage != null
       ? isSeaLevel
         ? nationalAverage.toFixed(2)
-        : Math.round(nationalAverage)
+        : nationalAverage.toFixed(1)
+      : null;
+  const formattedAverage =
+    averageValue != null
+      ? `${averageValue}${unit ? ` ${unit}` : ""}`
       : null;
   const mobileHeaderTitle = conciseHeaderTitle;
   const scenarioCode = isSeaLevelVariableId(variable?.id)
     ? scenario.toUpperCase()
     : RCP_CODES[scenario as "rcp26" | "rcp45" | "rcp85"];
-  const scenarioSummary =
+  const scenarioSummaryParts =
     period !== "baseline"
-      ? `${scenarioCode} | ${PERIOD_SUMMARY_LABELS[period]}`
-      : PERIOD_SUMMARY_LABELS.baseline;
-  const desktopScenarioLabel =
-    period !== "baseline"
-      ? `${scenarioCode} | ${PERIOD_SUMMARY_LABELS[period]}`
-      : PERIOD_SUMMARY_LABELS.baseline;
+      ? [scenarioCode, PERIOD_SUMMARY_LABELS[period]]
+      : [PERIOD_SUMMARY_LABELS.baseline];
+  const scenarioSummary = [...scenarioSummaryParts, formattedAverage]
+    .filter(Boolean)
+    .join(" | ");
 
   return (
     <header className="new-header">
@@ -109,9 +112,6 @@ const Header: React.FC<HeaderProps> = ({
             <div className={`mobile-header-title-group ${mobileActionsOpen ? "is-hidden" : ""}`}>
               <h1 className="mobile-header-title">
                 {mobileHeaderTitle}
-                {formattedAverage != null && (
-                  <span className="national-avg"> ({formattedAverage} {unit})</span>
-                )}
               </h1>
               <span className="mobile-header-scenario">{scenarioSummary}</span>
             </div>
@@ -199,12 +199,9 @@ const Header: React.FC<HeaderProps> = ({
         <div className="header-center" data-tour="map-information">
           <h1 className="variable-title">
             {headerTitle}
-            {formattedAverage != null && (
-              <span className="national-avg"> ({formattedAverage} {unit})</span>
-            )}
           </h1>
           <div className="scenario-info">
-            <span className="period-text">{desktopScenarioLabel}</span>
+            <span className="period-text">{scenarioSummary}</span>
           </div>
         </div>
 
