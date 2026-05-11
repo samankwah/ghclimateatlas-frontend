@@ -7,6 +7,7 @@ interface MapLayerTogglesProps {
   showStories?: boolean;
   onToggleWater?: () => void;
   onToggleStories?: () => void;
+  onOpenDataRequest?: () => void;
   searchContent?: React.ReactNode;
   showChange?: boolean;
   onToggleChange?: () => void;
@@ -18,6 +19,7 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
   showStories = true,
   onToggleWater,
   onToggleStories,
+  onOpenDataRequest,
   searchContent,
   showChange = false,
   onToggleChange,
@@ -52,14 +54,24 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
     };
   }, [searchOpen]);
 
+  const handleSearchToggle = () => {
+    setSearchOpen((open) => !open);
+  };
+
+  const handleOpenDataRequest = () => {
+    setSearchOpen(false);
+    onOpenDataRequest?.();
+  };
+
   return (
     <aside ref={asideRef} className="slim-sidebar" data-tour="map-tools">
       <div className="layer-toggles">
         {/* Search toggle */}
         <button
           className={`layer-toggle ${searchOpen ? "active" : ""}`}
-          onClick={() => setSearchOpen(!searchOpen)}
+          onClick={handleSearchToggle}
           title="Search Districts"
+          aria-expanded={searchOpen}
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
@@ -95,6 +107,21 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
           </button>
         )}
 
+        {onOpenDataRequest && (
+          <button
+            className="layer-toggle"
+            onClick={handleOpenDataRequest}
+            title="Request Climate Data Download"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span className="toggle-label">Data</span>
+          </button>
+        )}
+
         {onToggleChange && changeToggleAvailable && (
           <button
             className={`layer-toggle ${showChange ? "active" : ""}`}
@@ -117,6 +144,7 @@ const MapLayerToggles: React.FC<MapLayerTogglesProps> = ({
           {searchContent}
         </div>
       )}
+
     </aside>
   );
 };

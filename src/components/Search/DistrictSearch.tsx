@@ -69,7 +69,10 @@ const SearchIcon = () => (
   </svg>
 );
 
-const DistrictSearch: React.FC<DistrictSearchProps> = ({ districts, onSelectDistrict }) => {
+const DistrictSearch: React.FC<DistrictSearchProps> = ({
+  districts,
+  onSelectDistrict,
+}) => {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

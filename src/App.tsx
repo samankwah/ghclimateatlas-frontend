@@ -12,6 +12,7 @@ import GhanaMap from "./components/Map/GhanaMap";
 import Legend from "./components/Map/Legend";
 import Header from "./components/Header/Header";
 import MapLayerToggles from "./components/Sidebar/MapLayerToggles";
+import ClimateDataRequestModal from "./components/Downloads/ClimateDataRequestModal";
 import TimelineBar from "./components/Timeline/TimelineBar";
 import CategoryTabs, { type Category } from "./components/Categories/CategoryTabs";
 import DistrictSearch from "./components/Search/DistrictSearch";
@@ -61,6 +62,7 @@ function ClimateAtlas() {
   const [mobileHeaderActionsOpen, setMobileHeaderActionsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
+  const [dataRequestOpen, setDataRequestOpen] = useState(false);
 
   // Category tab state
   const [activeCategory, setActiveCategory] = useState<Category>("temperature");
@@ -108,6 +110,34 @@ function ClimateAtlas() {
     () => variables?.find((v) => v.id === variable),
     [variables, variable]
   );
+
+  const selectedDistrictFeature = useMemo(
+    () =>
+      selectedDistrictId
+        ? districts?.features.find((feature) => feature.properties.id === selectedDistrictId)
+        : undefined,
+    [districts, selectedDistrictId],
+  );
+
+  const geographyOptions = useMemo(() => {
+    const features = districts?.features ?? [];
+    const regionNames = Array.from(
+      new Set(features.map((feature) => feature.properties.region).filter(Boolean)),
+    ).sort((a, b) => a.localeCompare(b));
+
+    const districtItems = features
+      .map((feature) => ({
+        id: feature.properties.id,
+        name: feature.properties.name,
+        region: feature.properties.region,
+      }))
+      .sort((a, b) => a.region.localeCompare(b.region) || a.name.localeCompare(b.name));
+
+    return {
+      regionOptions: regionNames,
+      districtOptions: districtItems,
+    };
+  }, [districts]);
 
   const effectiveVariable = useMemo(() => {
     if (!currentVariable) return currentVariable;
@@ -237,6 +267,7 @@ function ClimateAtlas() {
     setTourOpen(true);
   }, []);
 
+  const requestDefaults = useMemo(() => ({}), []);
 
   useEffect(() => {
     const variableLabel =
@@ -244,10 +275,7 @@ function ClimateAtlas() {
       effectiveVariable?.name ||
       "Climate Atlas";
 
-    const districtName =
-      selectedDistrictId
-        ? districts?.features.find((f) => f.properties.id === selectedDistrictId)?.properties.name
-        : null;
+    const districtName = selectedDistrictFeature?.properties.name || null;
     const scenarioTitle =
       period === "baseline"
         ? "Historical"
@@ -259,11 +287,10 @@ function ClimateAtlas() {
       ? `${districtName} | ${variableLabel} | ${scenarioTitle} ${getPeriodRangeLabel(period)} | Ghana Climate Atlas`
       : `${variableLabel} | ${scenarioTitle} ${getPeriodRangeLabel(period)} | Ghana Climate Atlas`;
   }, [
-    districts,
     effectiveVariable,
     period,
     scenario,
-    selectedDistrictId,
+    selectedDistrictFeature,
     selectedParameterLabel,
   ]);
 
@@ -358,6 +385,7 @@ function ClimateAtlas() {
           showWater={showWater}
           onToggleWater={() => setShowWater(!showWater)}
           onToggleStories={() => setShowStories(!showStories)}
+          onOpenDataRequest={() => setDataRequestOpen(true)}
           showChange={showChange}
           onToggleChange={toggleShowChange}
           changeToggleAvailable={period !== "baseline"}
@@ -373,9 +401,7 @@ function ClimateAtlas() {
         {/* District detail panel (sliding side panel) */}
         {selectedDistrictId && (() => {
           // Find district info from GeoJSON
-          const districtFeature = districts?.features.find(
-            (f) => f.properties.id === selectedDistrictId
-          );
+          const districtFeature = selectedDistrictFeature;
           const districtName = districtFeature?.properties.name || selectedDistrictId;
           const regionName = districtFeature?.properties.region || "Ghana";
 
@@ -448,6 +474,13 @@ function ClimateAtlas() {
           <HelpOverlay onClose={() => setHelpOpen(false)} onStartTour={handleOpenTour} />
         </Suspense>
       )}
+      <ClimateDataRequestModal
+        open={dataRequestOpen}
+        defaultValues={requestDefaults}
+        regionOptions={geographyOptions.regionOptions}
+        districtOptions={geographyOptions.districtOptions}
+        onClose={() => setDataRequestOpen(false)}
+      />
       {tourOpen && (
         <Suspense fallback={null}>
           <TourOverlay onClose={() => setTourOpen(false)} />

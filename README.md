@@ -52,7 +52,7 @@ src/
 - Node.js 18+ recommended
 - backend API running locally from `../backend`
 
-The frontend expects the FastAPI backend to serve climate and district data. By default, development uses the local backend on `http://127.0.0.1:8000/api`.
+The frontend expects the FastAPI backend to serve climate and district data. By default, development uses the local backend on `http://127.0.0.1:8001/api`.
 
 For same-host Linux deployments such as `https://atlas.meteo.gov.gh`, set:
 
@@ -60,7 +60,7 @@ For same-host Linux deployments such as `https://atlas.meteo.gov.gh`, set:
 VITE_API_URL=/api
 ```
 
-Do not set `VITE_API_URL` in normal local development unless you intentionally want to test against a different backend. When it is unset, the frontend falls back to `http://127.0.0.1:8000/api` on localhost and to the same-origin `/api` path on non-local hosts.
+Do not set `VITE_API_URL` in normal local development unless you intentionally want to test against a different backend. When it is unset, the frontend falls back to `http://127.0.0.1:8001/api` on localhost and to the same-origin `/api` path on non-local hosts.
 
 If an older deployment still points to `https://ghana-climate-atlas-api.onrender.com` or `https://ghclimateatlas-backend.vercel.app/api`, update it to the value above. The frontend normalizes those legacy hosted URLs back to the production API base, but the deployment environment should still be corrected.
 
@@ -81,7 +81,7 @@ npm run dev
 Start the backend separately from the sibling `backend` folder:
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8001
 ```
 
 ## Available Scripts
