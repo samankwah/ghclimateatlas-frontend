@@ -1871,7 +1871,7 @@ body {
   align-items: center;
   z-index: 1100;
   pointer-events: none;
-  transition: right 0.3s ease-out;
+  transition: right 0.3s ease-out, transform 0.25s ease-out, opacity 0.2s ease-out;
 }
 
 /* Shrink bottom bar when district detail panel is open (desktop only) */
@@ -1895,6 +1895,15 @@ body {
   align-items: center;
   width: 100%;
   pointer-events: auto;
+}
+
+body:has(.data-request-modal-overlay) .bottom-control-bar {
+  transform: translateY(calc(7.25rem + env(safe-area-inset-bottom, 0px)));
+  opacity: 0.45;
+}
+
+body:has(.data-request-modal-overlay) .bottom-control-content {
+  pointer-events: none;
 }
 
 /* ================================
