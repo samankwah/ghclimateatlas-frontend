@@ -862,7 +862,7 @@ body {
   position: relative;
   width: 100%;
   max-width: 1600px;
-  height: 75vh;
+  height: calc(100dvh - var(--header-height) - 10rem);
   overflow: hidden;
   border: 1px solid #475569;
   border-radius: 8px;
@@ -3728,7 +3728,7 @@ body {
   grid-template-rows: 1fr auto;
   width: 100%;
   max-width: 1600px;
-  height: 75vh;
+  height: calc(100dvh - var(--header-height) - 10rem);
   background: rgba(45, 45, 45, 0.88);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
