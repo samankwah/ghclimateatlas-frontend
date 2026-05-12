@@ -60,6 +60,8 @@ For same-host Linux deployments such as `https://atlas.meteo.gov.gh`, set:
 VITE_API_URL=/api
 ```
 
+Netlify deploys also use `/api`; `netlify.toml` proxies that path to the production backend at `http://atlas.meteo.gov.gh/api`.
+
 Do not set `VITE_API_URL` in normal local development unless you intentionally want to test against a different backend. When it is unset, the frontend falls back to `http://127.0.0.1:8001/api` on localhost and to the same-origin `/api` path on non-local hosts.
 
 If an older deployment still points to `https://ghana-climate-atlas-api.onrender.com` or `https://ghclimateatlas-backend.vercel.app/api`, update it to the value above. The frontend normalizes those legacy hosted URLs back to the production API base, but the deployment environment should still be corrected.
