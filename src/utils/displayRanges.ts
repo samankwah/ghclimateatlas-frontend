@@ -5,12 +5,17 @@ export interface DisplayRange {
   max: number;
 }
 
+const DATA_DRIVEN_VARIABLES = new Set([
+  "mean_temp_mam",
+  "mean_temp_jja",
+  "precipitation_mam",
+  "precipitation_jja",
+]);
+
 const VARIABLE_RANGES: Record<string, DisplayRange> = {
   annual_mean_temp: { min: 26, max: 35 },
   annual_max_temp: { min: 26, max: 35 },
   annual_min_temp: { min: 26, max: 35 },
-  mean_temp_apr_may_jun: { min: 26, max: 35 },
-  mean_temp_jul_aug_sep: { min: 26, max: 35 },
   mean_temp_sep_oct_nov: { min: 26, max: 35 },
   mean_temp_dry_season: { min: 26, max: 35 },
   mean_temp_dec_jan_feb: { min: 26, max: 35 },
@@ -33,6 +38,10 @@ export const getFixedDisplayRange = (
   variableId: string,
   colorScale?: string,
 ): DisplayRange | undefined => {
+  if (DATA_DRIVEN_VARIABLES.has(variableId)) {
+    return undefined;
+  }
+
   const direct = VARIABLE_RANGES[variableId];
   if (direct) {
     return direct;
@@ -65,6 +74,10 @@ export const getFixedLegendTicks = (
   variableId: string,
   colorScale?: string,
 ): number[] | undefined => {
+  if (DATA_DRIVEN_VARIABLES.has(variableId)) {
+    return undefined;
+  }
+
   if (colorScale === "precipitation" || variableId === "annual_precipitation") {
     if (variableId === "precipitation_apr_may_jun") {
       return [200, 330, 460, 590, 720, 850];

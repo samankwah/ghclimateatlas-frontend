@@ -30,20 +30,28 @@ const TEMPERATURE_PARAMETERS: Parameter[] = [
     variableId: "annual_mean_temp",
   },
   {
-    id: "mean_temp_apr_may_jun",
-    label: "Average Apr-May-Jun Temperature",
+    id: "mean_temp_dec_jan_feb",
+    label: "Average Dec-Jan-Feb Temperature",
     isSelectable: true,
     infoId: "mean_temp",
-    description: "Average Apr-May-Jun Temperature",
-    variableId: "mean_temp_apr_may_jun",
+    description: "Average Dec-Jan-Feb Temperature",
+    variableId: "mean_temp_dry_season",
   },
   {
-    id: "mean_temp_jul_aug_sep",
-    label: "Average Jul-Aug-Sep Temperature",
+    id: "mean_temp_mam",
+    label: "Average Mar-Apr-May Temperature",
     isSelectable: true,
     infoId: "mean_temp",
-    description: "Average Jul-Aug-Sep Temperature",
-    variableId: "mean_temp_jul_aug_sep",
+    description: "Average Mar-Apr-May Temperature",
+    variableId: "mean_temp_mam",
+  },
+  {
+    id: "mean_temp_jja",
+    label: "Average Jun-Jul-Aug Temperature",
+    isSelectable: true,
+    infoId: "mean_temp",
+    description: "Average Jun-Jul-Aug Temperature",
+    variableId: "mean_temp_jja",
   },
   {
     id: "mean_temp_sep_oct_nov",
@@ -52,14 +60,6 @@ const TEMPERATURE_PARAMETERS: Parameter[] = [
     infoId: "mean_temp",
     description: "Average Sep-Oct-Nov Temperature",
     variableId: "mean_temp_sep_oct_nov",
-  },
-  {
-    id: "mean_temp_dec_jan_feb",
-    label: "Average Dec-Jan-Feb Temperature",
-    isSelectable: true,
-    infoId: "mean_temp",
-    description: "Average Dec-Jan-Feb Temperature",
-    variableId: "mean_temp_dry_season",
   },
 ];
 
@@ -73,12 +73,36 @@ const PRECIPITATION_PARAMETERS: Parameter[] = [
     variableId: "annual_precipitation",
   },
   {
+    id: "precipitation_dec_jan_feb",
+    label: "Total Dec-Jan-Feb Rainfall",
+    isSelectable: true,
+    infoId: "annual_precipitation",
+    description: "Total Dec-Jan-Feb Rainfall",
+    variableId: "precipitation_dec_jan_feb",
+  },
+  {
+    id: "precipitation_mam",
+    label: "Total Mar-Apr-May Rainfall",
+    isSelectable: true,
+    infoId: "precipitation_mam",
+    description: "Total Mar-Apr-May Rainfall",
+    variableId: "precipitation_mam",
+  },
+  {
     id: "precipitation_apr_may_jun",
     label: "Total Apr-May-Jun Rainfall",
     isSelectable: true,
     infoId: "wet_season_precipitation",
     description: "Total Apr-May-Jun Rainfall",
     variableId: "precipitation_apr_may_jun",
+  },
+  {
+    id: "precipitation_jja",
+    label: "Total Jun-Jul-Aug Rainfall",
+    isSelectable: true,
+    infoId: "precipitation_jja",
+    description: "Total Jun-Jul-Aug Rainfall",
+    variableId: "precipitation_jja",
   },
   {
     id: "precipitation_jul_aug_sep",
@@ -95,14 +119,6 @@ const PRECIPITATION_PARAMETERS: Parameter[] = [
     infoId: "wet_season_precipitation",
     description: "Total Sep-Oct-Nov Rainfall",
     variableId: "precipitation_sep_oct_nov",
-  },
-  {
-    id: "precipitation_dec_jan_feb",
-    label: "Total Dec-Jan-Feb Rainfall",
-    isSelectable: true,
-    infoId: "annual_precipitation",
-    description: "Total Dec-Jan-Feb Rainfall",
-    variableId: "precipitation_dec_jan_feb",
   },
 ];
 
@@ -128,10 +144,10 @@ export const CATEGORY_COLORS: Record<Category, string> = {
 export const PARAMETER_TO_VARIABLE: Record<string, string> = {
   // Temperature
   mean_temp_annual: "annual_mean_temp",
-  mean_temp_apr_may_jun: "mean_temp_apr_may_jun",
-  mean_temp_jul_aug_sep: "mean_temp_jul_aug_sep",
-  mean_temp_sep_oct_nov: "mean_temp_sep_oct_nov",
   mean_temp_dec_jan_feb: "mean_temp_dry_season",
+  mean_temp_mam: "mean_temp_mam",
+  mean_temp_jja: "mean_temp_jja",
+  mean_temp_sep_oct_nov: "mean_temp_sep_oct_nov",
 
   // Hot Weather
   very_hot_days_30: "very_hot_days",
@@ -148,10 +164,12 @@ export const PARAMETER_TO_VARIABLE: Record<string, string> = {
 
   // Precipitation
   precipitation_annual: "annual_precipitation",
+  precipitation_dec_jan_feb: "precipitation_dec_jan_feb",
+  precipitation_mam: "precipitation_mam",
   precipitation_apr_may_jun: "precipitation_apr_may_jun",
+  precipitation_jja: "precipitation_jja",
   precipitation_jul_aug_sep: "precipitation_jul_aug_sep",
   precipitation_sep_oct_nov: "precipitation_sep_oct_nov",
-  precipitation_dec_jan_feb: "precipitation_dec_jan_feb",
 
   // Sea Level
   sea_level_rise: "sea_level_rise",

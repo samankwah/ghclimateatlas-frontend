@@ -214,6 +214,10 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
 
   const handleToggleParameter = (categoryId: Category, parameterId: string) => {
     const param = findParameterById(categoryId, parameterId);
+    if (param?.disabled) {
+      return;
+    }
+
     const variableId = getSupportedVariableId(categoryId, parameterId, availableVariableIds);
 
     if (!variableId) {

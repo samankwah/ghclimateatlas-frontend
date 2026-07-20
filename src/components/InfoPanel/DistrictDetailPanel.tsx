@@ -2,6 +2,7 @@ import { useState } from "react";
 import ClimateChart from "../Charts/ClimateChart";
 import StatisticsTable from "./StatisticsTable";
 import DownloadsSection from "./DownloadsSection";
+import PanelPartners from "./PanelPartners";
 import WeatherLoader from "../WeatherLoader";
 import { useDistrictTimeSeries } from "../../hooks/useDistrictTimeSeries";
 import { useDistrictChartSeries } from "../../hooks/useDistrictChartSeries";
@@ -156,69 +157,73 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
         />
       )}
 
-      <div className="more-details-section">
-        <button
-          className="more-details-header"
-          onClick={() => setShowMoreDetails(!showMoreDetails)}
-        >
-          <span>More Details</span>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-              transform: showMoreDetails ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
-            }}
+      <div className="panel-lower-stack">
+        <div className="more-details-section">
+          <button
+            className="more-details-header"
+            onClick={() => setShowMoreDetails(!showMoreDetails)}
           >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
+            <span>More Details</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                transform: showMoreDetails ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s",
+              }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
 
-        {showMoreDetails && statistics && (
-          <div className="more-details-content">
-            <StatisticsTable
-              statistics={statistics}
-              unit={unit}
-              futurePeriodLabel={selectedPeriodLabel}
-            />
+          {showMoreDetails && statistics && (
+            <div className="more-details-content">
+              <StatisticsTable
+                statistics={statistics}
+                unit={unit}
+                futurePeriodLabel={selectedPeriodLabel}
+              />
 
-            <div className="explore-link">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-              <span>Explore detailed climate data</span>
+              <div className="explore-link">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+                <span>Explore detailed climate data</span>
+              </div>
             </div>
+          )}
+        </div>
+
+        <DownloadsSection
+          districtName={districtName}
+          regionName={regionName}
+          variableName={variableName}
+          unit={unit}
+          scenario={scenario}
+          data={timeSeriesData}
+        />
+
+        <PanelPartners />
+
+        <div className="panel-footer">
+          <div className="data-source">
+            Data source: GhKAPy regional climate projections downscaled for Ghana.
           </div>
-        )}
-      </div>
-
-      <DownloadsSection
-        districtName={districtName}
-        regionName={regionName}
-        variableName={variableName}
-        unit={unit}
-        scenario={scenario}
-        data={timeSeriesData}
-      />
-
-      <div className="panel-footer">
-        <div className="data-source">
-          Data source: GhKAPy regional climate projections downscaled for Ghana.
         </div>
       </div>
     </div>

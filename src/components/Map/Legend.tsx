@@ -1,11 +1,12 @@
 import { useMemo, type CSSProperties } from "react";
 import type { ClimateVariable } from "../../types/climate";
-import { generateLegendStops, normalizeUnit, type ColorScaleType } from "../../utils/colorScales";
+import { getColorScale, normalizeUnit, type ColorScaleType } from "../../utils/colorScales";
 import {
   getFixedDisplayRange,
   getFixedLegendTicks,
   getLegendTickValues,
 } from "../../utils/displayRanges";
+import { getUniqueDisplayedTicks } from "../../utils/legendTicks";
 
 interface LegendProps {
   variable: ClimateVariable | undefined;
@@ -41,22 +42,9 @@ const Legend: React.FC<LegendProps> = ({
     return { min: minValue, max: maxValue };
   }, [maxValue, minValue, showChange, variable]);
 
-  const gradientStyle = useMemo(() => {
-    const stops = generateLegendStops(
-      legendRange.min,
-      legendRange.max,
-      colorScaleType,
-      5
-    );
-    const colors = stops.map((stop) => stop.color).join(", ");
-    return {
-      background: `linear-gradient(to right, ${colors})`,
-    };
-  }, [colorScaleType, legendRange.max, legendRange.min, showChange]);
-
-  const legendTicks = useMemo(() => {
+  const rawLegendTicks = useMemo(() => {
     if (showChange) {
-      return [legendRange.min, 0, legendRange.max].filter((value, index, values) => values.indexOf(value) === index);
+      return getLegendTickValues(legendRange, { steps: 6, integer: true });
     }
 
     if (variable) {
@@ -79,13 +67,49 @@ const Legend: React.FC<LegendProps> = ({
     return getLegendTickValues(legendRange, { steps: 5, integer: true });
   }, [legendRange, showChange, variable]);
 
+  const legendTicks = useMemo(
+    () => getUniqueDisplayedTicks(rawLegendTicks, colorScaleType, showChange),
+    [colorScaleType, rawLegendTicks, showChange],
+  );
+
   const legendTickPositions = useMemo(() => {
-    const lastIndex = Math.max(legendTicks.length - 1, 1);
-    return legendTicks.map((tick, index) => ({
-      value: tick,
-      leftPercent: (index / lastIndex) * 100,
+    const firstValue = legendTicks[0]?.value ?? legendRange.min;
+    const lastValue = legendTicks[legendTicks.length - 1]?.value ?? legendRange.max;
+    const span = lastValue - firstValue;
+
+    return legendTicks.map((tick) => ({
+      ...tick,
+      leftPercent: span === 0 ? 0 : ((tick.value - firstValue) / span) * 100,
     }));
-  }, [legendTicks]);
+  }, [legendRange.max, legendRange.min, legendTicks]);
+
+  const legendSteps = useMemo(() => {
+    const colorScale = getColorScale(colorScaleType);
+
+    if (legendTicks.length <= 1) {
+      const midpoint = legendRange.min + (legendRange.max - legendRange.min) / 2;
+      return [{
+        color: colorScale(midpoint, legendRange.min, legendRange.max),
+        widthPercent: 100,
+      }];
+    }
+
+    const firstValue = legendTicks[0].value;
+    const lastValue = legendTicks[legendTicks.length - 1].value;
+    const span = lastValue - firstValue;
+
+    return legendTicks.slice(0, -1).map((tick, index) => {
+      const nextTick = legendTicks[index + 1];
+      const midpoint = tick.value + (nextTick.value - tick.value) / 2;
+
+      return {
+        color: colorScale(midpoint, legendRange.min, legendRange.max),
+        widthPercent: span === 0
+          ? 100 / (legendTicks.length - 1)
+          : ((nextTick.value - tick.value) / span) * 100,
+      };
+    });
+  }, [colorScaleType, legendRange.max, legendRange.min, legendTicks]);
 
   const legendScaleStyle = useMemo<CSSProperties>(() => {
     const width = variable?.color_scale === "precipitation"
@@ -109,31 +133,40 @@ const Legend: React.FC<LegendProps> = ({
   return (
     <div className={className} style={legendScaleStyle}>
       <span className="legend-label">
-        {showChange ? "Change" : "Average value"} ({displayUnit})
+        {showChange ? "Change from baseline" : "Average value"} ({displayUnit})
       </span>
       <div className="legend-scale">
         <div className="legend-bar-container">
-          <div className="legend-gradient" style={gradientStyle} />
-          {legendTickPositions.map((tick, index) => (
+          <div className="legend-steps" aria-hidden="true">
+            {legendSteps.map((step, index) => (
+              <span
+                key={`step-${index}`}
+                className="legend-step"
+                style={{
+                  backgroundColor: step.color,
+                  width: `${step.widthPercent}%`,
+                }}
+              />
+            ))}
+          </div>
+          {legendTickPositions.map((tick) => (
             <span
-              key={`line-${index}`}
+              key={`line-${tick.label}`}
               className="legend-tick-mark"
               style={{ left: `${tick.leftPercent}%` }}
             />
           ))}
         </div>
-        <div className="legend-tick-row legend-tick-row-inline">
-          {legendTickPositions.map((tick, index) => {
-            return (
-              <span
-                key={index}
-                className={`legend-grid-value${index === 0 ? " is-start" : ""}${index === legendTickPositions.length - 1 ? " is-end" : ""}`}
-              >
-                {tick.value > 0 && showChange ? "+" : ""}
-                {tick.value.toFixed(colorScaleType === "sea_level" && !showChange ? 1 : 0)}
-              </span>
-            );
-          })}
+        <div className="legend-tick-row">
+          {legendTickPositions.map((tick, index) => (
+            <span
+              key={tick.label}
+              className={`legend-value${index === 0 ? " is-start" : ""}${index > 0 && index === legendTickPositions.length - 1 ? " is-end" : ""}`}
+              style={{ left: `${tick.leftPercent}%` }}
+            >
+              {tick.label}
+            </span>
+          ))}
         </div>
       </div>
     </div>
