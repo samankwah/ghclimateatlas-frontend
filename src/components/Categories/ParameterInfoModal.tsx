@@ -1,10 +1,11 @@
 // Full-screen modal for displaying detailed parameter information
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { getParameterDescription } from "./parameterDescriptions";
-import { generateLegendStops } from "../../utils/colorScales";
 import type { Period, Scenario } from "../../types/climate";
 import { isSspScenario } from "../../utils/climateLabels";
+import ScientificFormula from "./ScientificFormula";
+import Legend, { type LegendInputs } from "../Map/Legend";
 
 const SCENARIO_INFO: Partial<Record<Scenario, { label: string; description: string }>> =
   {
@@ -69,6 +70,7 @@ interface ParameterInfoModalProps {
   categoryColor: string;
   scenario: Scenario;
   period: Period;
+  legend: LegendInputs;
   onClose: () => void;
 }
 
@@ -124,6 +126,7 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
   categoryColor,
   scenario,
   period,
+  legend,
   onClose,
 }) => {
   const [techExpanded, setTechExpanded] = useState(false);
@@ -154,22 +157,6 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
       document.body.style.overflow = "";
     };
   }, []);
-
-  // Generate gradient using the same d3 color scale as the spatial map
-  const gradientStyle = useMemo(() => {
-    const stops = generateLegendStops(
-      description.legendMin,
-      description.legendMax,
-      description.colorScaleType,
-      10,
-    );
-    const colors = stops.map((s) => s.color).join(", ");
-    return { background: `linear-gradient(to right, ${colors})` };
-  }, [
-    description.legendMin,
-    description.legendMax,
-    description.colorScaleType,
-  ]);
 
   return (
     <div className="parameter-modal-overlay" onClick={onClose}>
@@ -217,15 +204,24 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
           <button
             className="modal-tech-toggle"
             onClick={() => setTechExpanded(!techExpanded)}
+            aria-expanded={techExpanded}
+            aria-controls="parameter-technical-description"
           >
             <ChevronIcon expanded={techExpanded} />
             <span>TECHNICAL DESCRIPTION</span>
           </button>
 
           {techExpanded && (
-            <div className="modal-tech-content">
-              {description.formula && (
+            <div className="modal-tech-content" id="parameter-technical-description">
+              {typeof description.formula === "string" && description.formula && (
                 <p className="modal-formula">{description.formula}</p>
+              )}
+              {typeof description.formula !== "string" && (
+                <ScientificFormula
+                  formula={description.formula}
+                  scenario={scenario}
+                  period={period}
+                />
               )}
               <p className="modal-tech-text">
                 {description.technicalDescription}
@@ -236,16 +232,7 @@ const ParameterInfoModal: React.FC<ParameterInfoModalProps> = ({
           {/* Legend */}
           <div className="modal-legend">
             <h4>Legend</h4>
-            <p className="modal-legend-unit">{description.unit}</p>
-            <div className="modal-legend-gradient" style={gradientStyle} />
-            <div className="modal-legend-labels">
-              <span>
-                {description.legendMin} {description.unit}
-              </span>
-              <span>
-                {description.legendMax} {description.unit}
-              </span>
-            </div>
+            <Legend {...legend} className="modal-map-legend" responsive />
           </div>
         </div>
 

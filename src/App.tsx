@@ -463,6 +463,13 @@ function ClimateAtlas() {
             onParameterLabelChange={setSelectedParameterLabel}
             scenario={scenario as Scenario}
             period={period as Period}
+            legend={{
+              variable: effectiveVariable,
+              minValue,
+              maxValue,
+              colorScaleType,
+              showChange,
+            }}
             availableVariables={variables}
             controlsExpanded={mobileControlsOpen}
           />

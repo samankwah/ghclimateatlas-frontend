@@ -8,14 +8,19 @@ import {
 } from "../../utils/displayRanges";
 import { getUniqueDisplayedTicks } from "../../utils/legendTicks";
 
-interface LegendProps {
+export interface LegendInputs {
   variable: ClimateVariable | undefined;
   minValue: number;
   maxValue: number;
   colorScaleType: ColorScaleType;
+  showChange: boolean;
+}
+
+interface LegendProps extends Omit<LegendInputs, "showChange"> {
   showChange?: boolean;
   className?: string;
   floating?: boolean;
+  responsive?: boolean;
 }
 
 const Legend: React.FC<LegendProps> = ({
@@ -26,6 +31,7 @@ const Legend: React.FC<LegendProps> = ({
   showChange = false,
   className = "",
   floating = false,
+  responsive = false,
 }) => {
   const legendRange = useMemo(() => {
     if (!showChange && variable) {
@@ -123,10 +129,12 @@ const Legend: React.FC<LegendProps> = ({
         ? { "--legend-base-width": width }
         : {
             "--legend-base-width": width,
-            "--legend-width": width,
+            "--legend-width": responsive
+              ? "min(var(--legend-base-width), 100%)"
+              : width,
           }
     ) as unknown as CSSProperties;
-  }, [floating, variable]);
+  }, [floating, responsive, variable]);
 
   const displayUnit = normalizeUnit(variable?.unit || "°C");
 

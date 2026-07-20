@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import CategoryPanel from './CategoryPanel';
 import ParameterInfoModal from './ParameterInfoModal';
 import VersionBadge from '../VersionBadge/VersionBadge';
+import type { LegendInputs } from '../Map/Legend';
 import {
   CATEGORY_PARAMETERS,
   CATEGORY_COLORS,
@@ -27,6 +28,7 @@ interface CategoryTabsProps {
   onParameterLabelChange?: (label: string) => void;
   scenario: Scenario;
   period: Period;
+  legend: LegendInputs;
   availableVariables?: ClimateVariable[];
   controlsExpanded?: boolean;
 }
@@ -187,6 +189,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
   onParameterLabelChange,
   scenario,
   period,
+  legend,
   availableVariables,
   controlsExpanded = true,
 }) => {
@@ -242,7 +245,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
     const param = findParameterById(categoryId, parameterId);
 
     setModalParam({
-      id: parameterId,
+      id: param?.infoId ?? parameterId,
       label: param?.description ?? param?.label ?? parameterId,
       categoryColor: CATEGORY_COLORS[categoryId],
     });
@@ -358,6 +361,7 @@ const CategoryTabs: React.FC<CategoryTabsProps> = ({
           categoryColor={modalParam.categoryColor}
           scenario={scenario}
           period={period}
+          legend={legend}
           onClose={handleCloseModal}
         />,
         document.body

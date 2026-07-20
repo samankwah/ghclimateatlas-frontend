@@ -1,17 +1,27 @@
 // Parameter descriptions and metadata for the info modal
 
 import type { ColorScaleType } from "../../utils/colorScales";
+import {
+  SCIENTIFIC_FORMULA_SPECS,
+  type ScientificFormulaSpec,
+} from "./scientificFormulas.ts";
 
 export interface ParameterDescription {
   shortDescription: string;
   aboutDescription: string;
   technicalDescription: string;
-  formula: string;
+  formula: string | ScientificFormulaSpec;
   unit: string;
   legendMin: number;
   legendMax: number;
   colorScaleType: ColorScaleType;
 }
+
+const meanTemperatureMethod = (period: string): string =>
+  `The average bias-adjusted near-surface air temperature (tas-qdm) across the district for ${period}.`;
+
+const rainfallTotalMethod = (durationDays: number): string =>
+  `The average accumulated rainfall across the district over ${durationDays} days.`;
 
 export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   sea_level_rise: {
@@ -57,8 +67,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   annual_precipitation: {
     shortDescription: "The total amount of rainfall accumulated over the year across Ghana.",
     aboutDescription: "Annual precipitation is one of the clearest indicators of water availability across Ghana. It shapes river flows, reservoir recharge, rain-fed agriculture, flood risk, and groundwater replenishment from the coast to the northern savanna.",
-    technicalDescription: "Sum of daily precipitation totals across the full annual period.",
-    formula: "Sum(P)",
+    technicalDescription: rainfallTotalMethod(365),
+    formula: SCIENTIFIC_FORMULA_SPECS.annual_precipitation,
     unit: "mm",
     legendMin: 700,
     legendMax: 1800,
@@ -67,8 +77,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   wet_season_precipitation: {
     shortDescription: "The total amount of rainfall accumulated during Ghana's main rainy periods, including the southern major season from February to August and the later southern season from September to November.",
     aboutDescription: "Wet season precipitation is especially important for farming calendars, flood preparedness, and water resource planning in Ghana. In southern Ghana, the longer major season runs from February through August, followed by a later season from September through November. Changes in these rainfall totals can strongly affect crop establishment, road access, and seasonal storage in rivers and reservoirs.",
-    technicalDescription: "Sum of daily precipitation totals during the defined rainy-season periods used in the atlas, including the southern major season (Feb-Aug) and later southern season (Sep-Nov).",
-    formula: "Sum(P, Feb-Nov rainy periods)",
+    technicalDescription: "This legacy description groups several rainy periods. Current atlas cards document each available three-month rainfall window separately so that its exact fixed duration is explicit.",
+    formula: "",
     unit: "mm",
     legendMin: 400,
     legendMax: 1400,
@@ -77,8 +87,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_annual: {
     shortDescription: "The total amount of rainfall accumulated over the year across Ghana.",
     aboutDescription: "Annual precipitation is one of the clearest indicators of water availability across Ghana. It shapes river flows, reservoir recharge, rain-fed agriculture, flood risk, and groundwater replenishment from the coast to the northern savanna.",
-    technicalDescription: "Sum of daily precipitation totals across the full annual period.",
-    formula: "Sum(P)",
+    technicalDescription: rainfallTotalMethod(365),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_annual,
     unit: "mm",
     legendMin: 700,
     legendMax: 1800,
@@ -87,8 +97,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_mam: {
     shortDescription: "The total rainfall during March, April, and May, covering the start of Ghana's main rainy season.",
     aboutDescription: "March through May marks the onset and early development of the main rainy season across much of Ghana. Rainfall during these months supports planting and crop establishment, replenishes soil moisture after the dry season, and can also bring the first significant flood risks of the year in southern cities.",
-    technicalDescription: "Sum of daily precipitation totals during March, April, and May.",
-    formula: "Sum of precipitation for March to May",
+    technicalDescription: rainfallTotalMethod(92),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_mam,
     unit: "mm",
     legendMin: 90,
     legendMax: 600,
@@ -97,8 +107,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_apr_may_jun: {
     shortDescription: "The total rainfall during April, May, and June, covering the onset of Ghana's major rainy season.",
     aboutDescription: "April through June brings the critical early rains that launch the main cropping season across Ghana. In the south, this is the heart of the major rainy season when cocoa regions receive their heaviest rainfall. In the north, these months mark the transition into the single wet season. The total rainfall during this period determines planting success, early crop establishment, and reservoir inflows for the Volta system.",
-    technicalDescription: "Sum of daily precipitation totals during April, May, and June.",
-    formula: "Sum of precipitation for April to June",
+    technicalDescription: rainfallTotalMethod(91),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_apr_may_jun,
     unit: "mm",
     legendMin: 200,
     legendMax: 800,
@@ -107,8 +117,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_jja: {
     shortDescription: "The total rainfall during June, July, and August, spanning Ghana's peak northern wet season and the southern mid-year rains.",
     aboutDescription: "June through August brings sustained rainfall across Ghana, including the peak of the single wet season in many northern districts. In southern Ghana, this period includes the end of the major rainy season and the August dry spell. Its rainfall totals are important for crop development, river flows, reservoir storage, and flood preparedness.",
-    technicalDescription: "Sum of daily precipitation totals during June, July, and August.",
-    formula: "Sum of precipitation for June to August",
+    technicalDescription: rainfallTotalMethod(92),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_jja,
     unit: "mm",
     legendMin: 90,
     legendMax: 950,
@@ -117,8 +127,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_jul_aug_sep: {
     shortDescription: "The total rainfall during July, August, and September, covering the peak wet season in the north and a transitional period in the south.",
     aboutDescription: "July through September delivers the heaviest rainfall to northern Ghana during its single rainy season, sustaining the Guinea savanna's agriculture and filling the White and Black Volta tributaries. In the south, August often brings a brief dry spell between the major and minor rainy seasons. Changes in rainfall totals during this quarter directly affect food production in the north, flood risk along the Volta basin, and hydropower generation at Akosombo.",
-    technicalDescription: "Sum of daily precipitation totals during July, August, and September.",
-    formula: "Sum of precipitation for July to September",
+    technicalDescription: rainfallTotalMethod(92),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_jul_aug_sep,
     unit: "mm",
     legendMin: 200,
     legendMax: 800,
@@ -127,8 +137,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_sep_oct_nov: {
     shortDescription: "The total rainfall during September, October, and November, covering the minor rainy season in southern Ghana.",
     aboutDescription: "September through November is the minor rainy season in southern Ghana, important for the second crop cycle and for vegetable farming in the transitional zone. In the north, rainfall tapers off during this period as the dry season approaches. Total precipitation during these months affects late season harvests, soil moisture reserves heading into the dry season, and water levels in small reservoirs across the Upper East and Upper West regions.",
-    technicalDescription: "Sum of daily precipitation totals during September, October, and November.",
-    formula: "Sum of precipitation for September to November",
+    technicalDescription: rainfallTotalMethod(91),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_sep_oct_nov,
     unit: "mm",
     legendMin: 100,
     legendMax: 600,
@@ -137,8 +147,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   precipitation_dec_jan_feb: {
     shortDescription: "The total rainfall during December, January, and February, covering Ghana's driest months across the Harmattan season.",
     aboutDescription: "December through February is the driest period across nearly all of Ghana, dominated by the Harmattan winds from the Sahara. Rainfall is minimal in the north and sparse in the south. Any changes in dry season precipitation are significant because even small amounts can influence bush fire intensity in the savanna, dust conditions, and early land preparation for the upcoming planting season.",
-    technicalDescription: "Sum of daily precipitation totals during December, January, and February.",
-    formula: "Sum of precipitation for December to February",
+    technicalDescription: rainfallTotalMethod(90),
+    formula: SCIENTIFIC_FORMULA_SPECS.precipitation_dec_jan_feb,
     unit: "mm",
     legendMin: 0,
     legendMax: 200,
@@ -148,7 +158,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The number of days per year when rainfall exceeds 10 mm. This indicator helps track the frequency of moderate to heavy rainfall events across Ghana.",
     aboutDescription: "In Ghana, where rain-fed agriculture dominates, tracking days with over 10 mm of rainfall is essential. This metric helps farmers across the cocoa belt, the Guinea savanna, and coastal plains plan planting schedules and anticipate waterlogging risks that can damage crops and rural roads.",
     technicalDescription: "Annual count of days where daily precipitation total is greater than or equal to 10 mm.",
-    formula: "Count(P >= 10 mm)",
+    formula: SCIENTIFIC_FORMULA_SPECS.heavy_precip_10mm,
     unit: "days",
     legendMin: 0,
     legendMax: 100,
@@ -158,7 +168,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The number of days per year when rainfall exceeds 20 mm. This tracks very heavy rainfall events that can cause flooding in Ghana.",
     aboutDescription: "Days exceeding 20 mm of rainfall represent significant downpour events in Ghana. These heavy rains frequently trigger urban flooding in cities like Accra, Kumasi, and Tamale, overwhelm drainage systems, and can cause erosion on deforested hillsides in the Volta and Eastern regions.",
     technicalDescription: "Annual count of days where daily precipitation total is greater than or equal to 20 mm.",
-    formula: "Count(P >= 20 mm)",
+    formula: SCIENTIFIC_FORMULA_SPECS.heavy_precip_20mm,
     unit: "days",
     legendMin: 0,
     legendMax: 60,
@@ -168,7 +178,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The total number of days per year with measurable precipitation (at least 1 mm of rainfall) across Ghana.",
     aboutDescription: "Ghana experiences distinct wet and dry seasons that vary by region. The south-west receives rain for most of the year with two rainy seasons, while the northern savanna has a single rainy season. Tracking wet days helps understand shifts in these seasonal patterns that are critical for food security and water supply.",
     technicalDescription: "Annual count of days where daily precipitation total is greater than or equal to 1 mm.",
-    formula: "Count(P >= 1 mm)",
+    formula: SCIENTIFIC_FORMULA_SPECS.wet_days,
     unit: "days",
     legendMin: 0,
     legendMax: 200,
@@ -178,7 +188,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The total number of days per year with no significant precipitation (less than 1 mm of rainfall) in Ghana.",
     aboutDescription: "Dry days are a critical concern in Ghana, particularly in the northern regions where the Harmattan season brings extended periods without rain. Prolonged dry spells threaten smallholder farming, reduce water levels in the Volta Lake reservoir, and increase bushfire risk in the savanna zones.",
     technicalDescription: "Annual count of days where daily precipitation total is less than 1 mm.",
-    formula: "Count(P < 1 mm)",
+    formula: SCIENTIFIC_FORMULA_SPECS.dry_days,
     unit: "days",
     legendMin: 0,
     legendMax: 365,
@@ -188,7 +198,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The highest amount of rainfall recorded in a single day during the year. Indicates extreme rainfall intensity in Ghana.",
     aboutDescription: "Ghana is increasingly vulnerable to extreme single-day rainfall events. In Accra and other low-lying coastal cities, a single intense downpour can overwhelm drainage infrastructure and cause severe flash flooding. This indicator is vital for disaster preparedness and urban planning across Ghana's rapidly growing cities.",
     technicalDescription: "Maximum daily precipitation total recorded in a single day during the annual period.",
-    formula: "max(P1)",
+    formula: SCIENTIFIC_FORMULA_SPECS.max_1day_precip,
     unit: "mm",
     legendMin: 0,
     legendMax: 200,
@@ -198,7 +208,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The highest cumulative rainfall over any 3-day period during the year. Indicates sustained heavy rainfall events in Ghana.",
     aboutDescription: "In regions where intense rain persists for multiple days in a row, the Max 3-Day Precipitation captures multi-day storm events common during Ghana's peak rainy seasons. Sustained heavy rainfall in the Volta Basin and along the south-western coast can cause river flooding, damage to cocoa farms, and landslides in hilly terrain.",
     technicalDescription: "Maximum cumulative precipitation total over any consecutive 3-day period during the annual period.",
-    formula: "max(P1 + P2 + P3)",
+    formula: SCIENTIFIC_FORMULA_SPECS.max_3day_precip,
     unit: "mm",
     legendMin: 0,
     legendMax: 300,
@@ -208,7 +218,7 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
     shortDescription: "The highest cumulative rainfall over any 5-day period during the year. Tracks extended storm systems affecting Ghana.",
     aboutDescription: "Extended wet spells lasting five or more days can saturate soils across Ghana, leading to widespread flooding in the White Volta and Oti river basins. These prolonged events are particularly damaging in the Upper East and Upper West regions, where they can wash away crops, displace communities, and cut off rural roads.",
     technicalDescription: "Maximum cumulative precipitation total over any consecutive 5-day period during the annual period.",
-    formula: "max(sum(Pi, i=1..5))",
+    formula: SCIENTIFIC_FORMULA_SPECS.max_5day_precip,
     unit: "mm",
     legendMin: 0,
     legendMax: 400,
@@ -360,8 +370,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   mean_temp: {
     shortDescription: "The average of daily mean temperatures across the year. A fundamental climate indicator for Ghana.",
     aboutDescription: "Ghana's mean temperature varies from about 26°C along the coast to over 28°C in the northern savanna. Rising mean temperatures are a clear signal of climate change, affecting cocoa suitability zones, increasing evaporation from the Volta Lake, and intensifying heat stress for communities across all regions.",
-    technicalDescription: "Annual average of daily mean temperatures, where daily mean is the average of daily maximum and minimum temperatures.",
-    formula: "Tmean = (Tmax + Tmin) / 2",
+    technicalDescription: meanTemperatureMethod("the annual period"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp,
     unit: "°C",
     legendMin: 20,
     legendMax: 35,
@@ -370,8 +380,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   mean_temp_annual: {
     shortDescription: "The average of daily mean temperatures across the year. A fundamental climate indicator for Ghana.",
     aboutDescription: "Ghana's mean temperature varies from about 26°C along the coast to over 28°C in the northern savanna. Rising mean temperatures are a clear signal of climate change, affecting cocoa suitability zones, increasing evaporation from the Volta Lake, and intensifying heat stress for communities across all regions.",
-    technicalDescription: "Annual average of daily mean temperatures, where daily mean is the average of daily maximum and minimum temperatures.",
-    formula: "Tmean = (Tmax + Tmin) / 2",
+    technicalDescription: meanTemperatureMethod("the annual period"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_annual,
     unit: "°C",
     legendMin: 20,
     legendMax: 35,
@@ -380,28 +390,48 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   mean_temp_mam: {
     shortDescription: "The average of daily mean temperatures during March, April, and May across Ghana.",
     aboutDescription: "March through May includes some of the warmest conditions of the year across Ghana before cloud cover and rainfall become more widespread. Tracking mean temperature during this season helps assess heat exposure, cooling demand, and thermal stress on crops during early growth stages.",
-    technicalDescription: "Average of daily mean temperatures for March, April, and May, where daily mean is the average of daily maximum and minimum temperatures.",
-    formula: "Tmean = mean((Tmax + Tmin) / 2) for March to May",
+    technicalDescription: meanTemperatureMethod("MAM"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_mam,
     unit: "°C",
     legendMin: 25,
     legendMax: 39,
     colorScaleType: "temperature",
   },
+  mean_temp_apr_may_jun: {
+    shortDescription: "The average near-surface air temperature during April, May, and June across Ghana.",
+    aboutDescription: "April through June covers the onset and intensification of Ghana's major rainy season. Mean temperature during this window affects planting conditions, crop establishment, heat exposure, and demand for cooling as cloud and rainfall patterns develop.",
+    technicalDescription: meanTemperatureMethod("AMJ"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_apr_may_jun,
+    unit: "°C",
+    legendMin: 22,
+    legendMax: 35,
+    colorScaleType: "temperature",
+  },
   mean_temp_jja: {
     shortDescription: "The average of daily mean temperatures during June, July, and August across Ghana.",
     aboutDescription: "June through August typically brings cooler daytime conditions to much of Ghana as rainfall and cloud cover reduce solar heating. Understanding temperature patterns during this season supports assessments of crop growth, livestock health, and temperature-sensitive disease risks.",
-    technicalDescription: "Average of daily mean temperatures for June, July, and August, where daily mean is the average of daily maximum and minimum temperatures.",
-    formula: "Tmean = mean((Tmax + Tmin) / 2) for June to August",
+    technicalDescription: meanTemperatureMethod("JJA"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_jja,
     unit: "°C",
     legendMin: 22,
     legendMax: 34,
     colorScaleType: "temperature",
   },
+  mean_temp_jul_aug_sep: {
+    shortDescription: "The average near-surface air temperature during July, August, and September across Ghana.",
+    aboutDescription: "July through September spans peak northern rains and the southern mid-year dry spell. Tracking temperatures during this window supports assessments of crop development, livestock heat stress, human exposure, and regional differences in seasonal climate.",
+    technicalDescription: meanTemperatureMethod("JAS"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_jul_aug_sep,
+    unit: "°C",
+    legendMin: 22,
+    legendMax: 35,
+    colorScaleType: "temperature",
+  },
   mean_temp_sep_oct_nov: {
     shortDescription: "The average of daily mean temperatures during September, October, and November across Ghana.",
     aboutDescription: "September through November sees temperatures gradually rising across Ghana as cloud cover decreases and solar heating intensifies, especially in the northern savanna. In the south, temperatures remain relatively stable but nighttime lows begin to climb. This quarter is important for understanding heat exposure during late season agricultural activities and for planning energy and water resources as the country transitions toward the hotter dry season.",
-    technicalDescription: "Average of daily mean temperatures for September, October, and November, where daily mean is the average of daily maximum and minimum temperatures.",
-    formula: "Tmean = mean((Tmax + Tmin) / 2) for September to November",
+    technicalDescription: meanTemperatureMethod("SON"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_sep_oct_nov,
     unit: "°C",
     legendMin: 20,
     legendMax: 35,
@@ -410,8 +440,8 @@ export const PARAMETER_DESCRIPTIONS: Record<string, ParameterDescription> = {
   mean_temp_dec_jan_feb: {
     shortDescription: "The average of daily mean temperatures during December, January, and February across Ghana.",
     aboutDescription: "December through February is dominated by the Harmattan, when dry, dusty winds from the Sahara bring the coolest nighttime temperatures of the year, especially in the northern regions. Daytime temperatures can still be high, creating large diurnal ranges. This quarter is important for understanding heat and cold stress on communities, respiratory health risks from dust and dry air, and the timing of land preparation for the upcoming planting season.",
-    technicalDescription: "Average of daily mean temperatures for December, January, and February, where daily mean is the average of daily maximum and minimum temperatures.",
-    formula: "Tmean = mean((Tmax + Tmin) / 2) for December to February",
+    technicalDescription: meanTemperatureMethod("DJF"),
+    formula: SCIENTIFIC_FORMULA_SPECS.mean_temp_dec_jan_feb,
     unit: "°C",
     legendMin: 20,
     legendMax: 35,
