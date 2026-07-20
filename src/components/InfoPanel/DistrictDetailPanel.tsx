@@ -2,7 +2,6 @@ import { useState } from "react";
 import ClimateChart from "../Charts/ClimateChart";
 import StatisticsTable from "./StatisticsTable";
 import DownloadsSection from "./DownloadsSection";
-import PanelPartners from "./PanelPartners";
 import WeatherLoader from "../WeatherLoader";
 import { useDistrictTimeSeries } from "../../hooks/useDistrictTimeSeries";
 import { useDistrictChartSeries } from "../../hooks/useDistrictChartSeries";
@@ -217,8 +216,6 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
           scenario={scenario}
           data={timeSeriesData}
         />
-
-        <PanelPartners />
 
         <div className="panel-footer">
           <div className="data-source">
