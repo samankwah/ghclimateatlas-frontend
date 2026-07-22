@@ -11,6 +11,7 @@ interface ClimateStoryMarkersProps {
 
 const CATEGORY_COLORS: Record<string, string> = {
   "Urban Heat": "#ef4444",
+  "Youth Climate Action": "#ec4899",
   "Coastal Erosion": "#3b82f6",
   Drought: "#f59e0b",
   Flooding: "#6366f1",
@@ -88,6 +89,7 @@ const ClimateStoryMarkers: React.FC<ClimateStoryMarkersProps> = ({
   visible,
 }) => {
   const [activeStory, setActiveStory] = useState<ClimateStory | null>(null);
+  const fullStoryUrl = activeStory?.externalUrl || activeStory?.videoUrl;
 
   if (!visible) return null;
 
@@ -150,9 +152,9 @@ const ClimateStoryMarkers: React.FC<ClimateStoryMarkersProps> = ({
                   />
                 </div>
               )}
-              {activeStory.externalUrl && (
+              {fullStoryUrl && (
                 <a
-                  href={activeStory.externalUrl}
+                  href={fullStoryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="story-popup-link"

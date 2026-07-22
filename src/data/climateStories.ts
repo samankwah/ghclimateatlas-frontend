@@ -28,7 +28,7 @@ export const CLIMATE_STORIES: ClimateStory[] = [
     category: "Mangrove Depletion",
     videoSrc: mangroveDepletionVideo,
     description:
-      "Mangroves in Anyanui — at the intersection of climate, livelihoods, and conservation — are both a frontline defense and a fragile ecosystem under pressure.",
+      "Mangroves in Anyanui at the intersection of climate, livelihoods, and conservation are both a frontline defense and a fragile ecosystem under pressure.",
     body: "The mangrove forests around Anyanui in the Volta Region serve as a critical buffer between land and sea, protecting coastal communities from storm surges and erosion while nurturing the fish stocks that sustain local livelihoods. Yet these vital ecosystems are under mounting pressure from harvesting for firewood and construction, salt mining, and the changing climate. As sea levels rise and rainfall patterns shift, the delicate balance that mangroves depend on is being disrupted. Community-led conservation efforts are working to restore degraded areas through replanting initiatives, recognizing that healthy mangroves are not just an environmental asset but an economic lifeline for the people who depend on them.",
     externalUrl: "https://storymaps.arcgis.com/stories/d781587489d24a6b9a9aa566c943513c",
   },
@@ -41,7 +41,7 @@ export const CLIMATE_STORIES: ClimateStory[] = [
     category: "Irrigation",
     videoSrc: irrigationVideo,
     description:
-      "Irrigation in Woe, Volta Region — adapting to rising temperatures and unpredictable rainfall patterns that threaten smallholder agriculture.",
+      "Irrigation in Woe, Volta Region adapting to rising temperatures and unpredictable rainfall patterns that threaten smallholder agriculture.",
     body: "In Woe and surrounding communities of the Volta Region, smallholder farmers are confronting a new reality shaped by rising temperatures and increasingly erratic rainfall. Traditional rain-fed farming methods that sustained families for generations are becoming unreliable as dry spells lengthen and wet seasons grow more unpredictable. Farmers are turning to irrigation as an adaptation strategy, channeling water from local sources to maintain crop production through the dry months. But access to irrigation infrastructure remains uneven, and the costs of pumping and maintaining systems challenge the smallest producers. These communities are pioneering local solutions — from gravity-fed channels to small motor pumps — demonstrating resilience in the face of a rapidly changing climate.",
     externalUrl: "https://storymaps.arcgis.com/stories/77a6ab200fc84e15b645737c959740b8",
   },
@@ -55,7 +55,7 @@ export const CLIMATE_STORIES: ClimateStory[] = [
     videoSrc: riceProductionVideo,
     description:
       "Climate challenges and local solutions in the rice value chain of Tamale, Northern Ghana.",
-    body: "Tamale and the Northern Region form the heartland of Ghana's rice production, but the entire value chain — from planting to processing to market — faces growing climate pressures. Rising temperatures stress rice crops during critical growth stages, while shifting rainfall patterns make planting calendars unreliable. Farmers who once depended on predictable seasonal rains now navigate floods and droughts in the same growing year. Along the value chain, post-harvest losses mount as higher temperatures and humidity challenge traditional drying and storage methods. Yet Northern Ghana's rice communities are adapting: improved seed varieties, better water management practices, and investments in local processing are building resilience from farm to fork, ensuring that rice remains both a staple food and an economic engine for the region.",
+    body: "Tamale and the Northern Region form the heartland of Ghana's rice production, but the entire value chain from planting to processing to market faces growing climate pressures. Rising temperatures stress rice crops during critical growth stages, while shifting rainfall patterns make planting calendars unreliable. Farmers who once depended on predictable seasonal rains now navigate floods and droughts in the same growing year. Along the value chain, post-harvest losses mount as higher temperatures and humidity challenge traditional drying and storage methods. Yet Northern Ghana's rice communities are adapting: improved seed varieties, better water management practices, and investments in local processing are building resilience from farm to fork, ensuring that rice remains both a staple food and an economic engine for the region.",
     externalUrl: "http://ghana.safe4allafrica.eu/fromfarmtofork",
   },
   {
@@ -63,12 +63,12 @@ export const CLIMATE_STORIES: ClimateStory[] = [
     city: "Accra",
     lat: 5.6037,
     lng: -0.187,
-    title: "Accra's Rising Heat",
-    category: "Urban Heat",
+    title: "Climate Change Advocacy with Kids",
+    category: "Youth Climate Action",
     videoUrl: "https://www.dailymotion.com/video/x8zk95s",
     description:
-      "Accra is experiencing intensifying urban heat islands as concrete expansion and population growth drive temperatures higher. Nighttime relief is disappearing in dense neighborhoods.",
-    body: "Greater Accra's rapid urbanization has replaced green cover with concrete and asphalt, trapping heat well into the night. Informal settlements like Old Fadama face the worst impacts, with indoor temperatures regularly exceeding 38°C. Health facilities report rising heat-related illness, particularly among outdoor workers and the elderly. City planners are exploring cool-roof programs and urban tree planting, but the pace of development continues to outstrip adaptation efforts.",
+      "Chelsea Boakye speaks with Ghanaian climate activist Nakeeyat about her experience and why young people must have a voice in climate action.",
+    body: "Chelsea Boakye's interview with young Ghanaian climate activist Nakeeyat explores what it means for children to take part in the climate conversation. Reflecting on Nakeeyat's advocacy and participation at COP27, they discuss how young voices can press leaders to act, inspire their peers, and turn climate awareness into practical change. The story highlights the confidence and persistence of Ghana's young advocates, and the importance of giving children meaningful space in decisions that will shape their future.",
   },
   {
     id: "cape-coast-heritage",
@@ -137,7 +137,7 @@ export const CLIMATE_STORIES: ClimateStory[] = [
     lng: -0.0166,
     title: "Industrial Zone Heat Stress",
     category: "Industrial Heat",
-    videoUrl: "https://www.dailymotion.com/video/x8zk95s",
+    videoUrl: "https://www.dailymotion.com/video/x8x3gj4",
     description:
       "Tema's industrial workers face dangerous heat exposure as temperatures climb. Factory floors and outdoor work sites are becoming health hazards during peak heat months.",
     body: "Tema's heavy industrial zone — home to aluminum smelting, steel works, and food processing — concentrates heat from machinery alongside rising ambient temperatures. Workers in poorly ventilated factories report heat exhaustion and reduced productivity. The concrete-heavy landscape of Tema New Town and Community One creates its own heat island effect. With Ghana's industrial output expected to grow, adapting workplaces and urban planning to extreme heat is becoming an economic imperative, not just a health concern.",
