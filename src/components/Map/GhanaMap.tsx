@@ -1,6 +1,6 @@
 // Main Ghana Map component using Leaflet
 
-import { MapContainer, TileLayer, GeoJSON, useMap } from "react-leaflet";
+import { MapContainer, GeoJSON, useMap } from "react-leaflet";
 import { memo, useEffect, useMemo, useRef, useCallback } from "react";
 import L from "leaflet";
 import type { Layer, PathOptions } from "leaflet";
@@ -25,6 +25,7 @@ import WaterBodiesLayer from "./WaterBodiesLayer";
 import MapZoomControls from "./MapZoomControls";
 import CoastlineLayer from "./CoastlineLayer";
 import GraticuleLayer from "./GraticuleLayer";
+import VectorBaseMap from "./VectorBaseMap";
 import type { DataPoint } from "../../utils/idwInterpolation";
 import "leaflet/dist/leaflet.css";
 
@@ -328,11 +329,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     >
       <FitBounds />
 
-      {/* Light tile layer */}
-      <TileLayer
-        attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-      />
+      {/* Light basemap: OpenFreeMap Positron vector tiles, raster fallback */}
+      <VectorBaseMap />
 
       {/* Fallback display mode: centroid-based interpolation */}
       {displayMode === "interpolated" && dataPoints.length > 0 && (

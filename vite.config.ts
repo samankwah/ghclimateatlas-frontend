@@ -39,6 +39,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           leaflet: ['leaflet', 'react-leaflet'],
+          maplibre: ['maplibre-gl', '@maplibre/maplibre-gl-leaflet'],
           vendor: ['react', 'react-dom', '@tanstack/react-query', 'axios'],
         },
       },
