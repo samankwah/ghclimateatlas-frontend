@@ -2,10 +2,9 @@
 // Each segment corresponds to a coastal district and is colored/weighted by its sea level value.
 
 import { GeoJSON } from "react-leaflet";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { PathOptions, Layer } from "leaflet";
 import type { Feature, FeatureCollection } from "geojson";
-import coastlineData from "../../assets/ghana_coastline_segments.geojson";
 import { formatValue, formatChange } from "../../utils/colorScales";
 
 interface CoastlineLayerProps {
@@ -41,13 +40,22 @@ const CoastlineLayer: React.FC<CoastlineLayerProps> = ({
   unit,
   dataVersion,
 }) => {
-  const data: FeatureCollection = useMemo(
-    () => ({
-      type: "FeatureCollection" as const,
-      features: (coastlineData as unknown as { features: Feature[] }).features,
-    }),
-    []
-  );
+  // Lazy-load the GeoJSON so its ~322 kB stays out of the main bundle, which
+  // otherwise has to parse before the map can render at all.
+  const [data, setData] = useState<FeatureCollection | null>(null);
+
+  useEffect(() => {
+    if (!visible || data) return;
+    let cancelled = false;
+    import("../../assets/ghana_coastline_segments.geojson").then((mod) => {
+      if (cancelled) return;
+      const raw = (mod.default ?? mod) as unknown as { features: Feature[] };
+      setData({ type: "FeatureCollection", features: raw.features });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, data]);
 
   const getWeight = useCallback(
     (value: number): number => {
@@ -121,7 +129,7 @@ const CoastlineLayer: React.FC<CoastlineLayerProps> = ({
     [valueMap, showChange, unit, onDistrictClick, onDistrictHover]
   );
 
-  if (!visible) return null;
+  if (!visible || !data) return null;
 
   return (
     <GeoJSON

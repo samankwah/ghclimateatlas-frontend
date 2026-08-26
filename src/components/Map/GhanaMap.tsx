@@ -47,6 +47,8 @@ interface GhanaMapProps {
   showWater?: boolean;
   showStories?: boolean;
   unit?: string;
+  /** Fired once the basemap has painted, so the loading skeleton can clear. */
+  onBasemapReady?: () => void;
 }
 
 // Ghana center coordinates
@@ -130,6 +132,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   showWater = true,
   showStories = false,
   unit = "",
+  onBasemapReady,
 }) => {
   const displayMode = getDisplayMode();
 
@@ -329,8 +332,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     >
       <FitBounds />
 
-      {/* Light basemap: OpenFreeMap Positron vector tiles, raster fallback */}
-      <VectorBaseMap />
+      {/* Light basemap: fast raster tiles, upgraded to OpenFreeMap Positron */}
+      <VectorBaseMap onReady={onBasemapReady} />
 
       {/* Fallback display mode: centroid-based interpolation */}
       {displayMode === "interpolated" && dataPoints.length > 0 && (

@@ -1,0 +1,113 @@
+/* Loading skeleton for the map area.
+   Kept in its own file (rather than App.css) so the map skeleton is
+   self-contained, and uses the same tones as the Atlas skeleton palette. */
+
+.map-skeleton {
+  --map-skeleton-base: #dfe8ec;
+  --map-skeleton-highlight: #f5f8f9;
+
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  overflow: hidden;
+  background: var(--map-skeleton-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* Shimmer sweep shared by every block below. */
+.map-skeleton__block {
+  position: absolute;
+  border-radius: 3px;
+  background: var(--map-skeleton-base);
+  overflow: hidden;
+}
+
+.map-skeleton__block::after,
+.map-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--map-skeleton-highlight) 50%,
+    transparent 100%
+  );
+  animation: map-skeleton-sweep 1.35s ease-in-out infinite;
+}
+
+.map-skeleton::after {
+  opacity: 0.55;
+}
+
+/* Echo the real furniture so the layout does not jump when it resolves:
+   legend strip top-left, and the variable control bar along the bottom. */
+.map-skeleton__legend {
+  top: 18px;
+  left: 18px;
+  width: min(38%, 320px);
+  height: 46px;
+}
+
+.map-skeleton__controls {
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(72%, 620px);
+  height: 58px;
+  border-radius: 10px;
+}
+
+.map-skeleton__status {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5b7080;
+  letter-spacing: 0.01em;
+}
+
+.map-skeleton__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes map-skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Consistent with the reduced-motion rule already applied to Atlas skeletons. */
+@media (prefers-reduced-motion: reduce) {
+  .map-skeleton__block::after,
+  .map-skeleton::after {
+    display: none !important;
+    animation: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .map-skeleton__legend {
+    width: 62%;
+    height: 38px;
+  }
+
+  .map-skeleton__controls {
+    width: 88%;
+    height: 50px;
+  }
+}

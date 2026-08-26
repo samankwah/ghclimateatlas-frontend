@@ -46,6 +46,16 @@ export const FALLBACK_RASTER_ATTRIBUTION =
 
 /**
  * How long to wait for the vector style to report `load` before giving up and
- * switching to the raster fallback.
+ * keeping the raster basemap instead.
  */
 export const VECTOR_STYLE_LOAD_TIMEOUT_MS = 10_000;
+
+/**
+ * Hard cap on how long the map may report "not ready".
+ *
+ * The basemap normally signals readiness when the raster tiles paint or the
+ * vector style loads, whichever lands first. If the device is offline both
+ * signals never arrive, so this guarantees the loading skeleton always clears
+ * rather than covering the map forever.
+ */
+export const BASEMAP_READY_TIMEOUT_MS = 6_000;

@@ -9,6 +9,7 @@ fetch(`${API_BASE}/health`).catch(() => {});
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GhanaMap from "./components/Map/GhanaMap";
+import MapSkeleton from "./components/Map/MapSkeleton";
 import Legend from "./components/Map/Legend";
 import Header from "./components/Header/Header";
 import MapLayerToggles from "./components/Sidebar/MapLayerToggles";
@@ -91,6 +92,11 @@ function ClimateAtlas() {
 
   // Data fetching
   const { data: districts, isLoading: loadingDistricts, isError: districtsError, refetch: refetchDistricts } = useDistricts();
+
+  // Set once the basemap has painted, so the map skeleton reflects what the
+  // user can actually see rather than only data-fetch state.
+  const [basemapReady, setBasemapReady] = useState(false);
+  const handleBasemapReady = useCallback(() => setBasemapReady(true), []);
   const { data: variables } = useClimateVariables();
   const { data: climateData, isLoading: loadingClimate, isFetching: fetchingClimate } = useClimateData(
     variable,
@@ -346,13 +352,16 @@ function ClimateAtlas() {
             </div>
           )}
 
-          {/* Loading overlay scoped to map area only — header + controls remain visible */}
-          {(loadingDistricts || (loadingClimate && !climateData)) && !districtsError && (
-            <div className="map-loading-overlay">
-              <WeatherLoader />
-              <p>Loading climate data...</p>
-            </div>
-          )}
+          {/* Skeleton scoped to map area only — header + controls remain visible.
+              Gated on the basemap having actually painted as well as the data
+              having arrived; tracking data alone used to clear this while the
+              basemap was still blank. */}
+          {(!basemapReady || loadingDistricts || (loadingClimate && !climateData)) &&
+            !districtsError && (
+              <MapSkeleton
+                label={basemapReady ? "Loading climate data…" : "Loading the map…"}
+              />
+            )}
 
           {/* Subtle top-bar indicator while fetching new data in background */}
           {fetchingClimate && climateData && (
@@ -377,6 +386,7 @@ function ClimateAtlas() {
             showGrid={showGrid}
             showWater={showWater}
             showStories={showStories}
+            onBasemapReady={handleBasemapReady}
           />
         </div>
 

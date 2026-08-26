@@ -6,6 +6,21 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+    <!--
+      MapLibre resolves the basemap through a strict dependency chain:
+      style -> TileJSON -> sprite -> tiles. Each hop costs a full round trip
+      (~500ms from Ghana, where Cloudflare serves from Amsterdam), and none of
+      them can start until the JS bundle has parsed. Preloading warms the first
+      three during HTML parse instead, in parallel with the bundle download.
+      Glyphs are deliberately not preloaded: which ranges are needed depends on
+      the labels in view.
+    -->
+    <link rel="preload" as="fetch" crossorigin href="https://tiles.openfreemap.org/styles/positron" />
+    <link rel="preload" as="fetch" crossorigin href="https://tiles.openfreemap.org/planet" />
+    <link rel="preload" as="fetch" crossorigin href="https://tiles.openfreemap.org/sprites/ofm_f384/ofm.json" />
+    <!-- as="fetch", not "image": MapLibre pulls sprite bitmaps through fetch()
+         + createImageBitmap, so an as="image" hint would miss and double-fetch. -->
+    <link rel="preload" as="fetch" crossorigin href="https://tiles.openfreemap.org/sprites/ofm_f384/ofm.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />

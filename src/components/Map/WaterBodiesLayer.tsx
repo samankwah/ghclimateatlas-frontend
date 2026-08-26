@@ -1,10 +1,9 @@
 // Water bodies overlay for Ghana (lakes, rivers, lagoons)
 
 import { GeoJSON, useMap } from "react-leaflet";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PathOptions } from "leaflet";
 import type { FeatureCollection, Feature } from "geojson";
-import waterAreas from "../../assets/ghana_water_areas.geojson";
 
 const PANE_NAME = "water-bodies";
 
@@ -30,13 +29,22 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
     paneCreated.current = true;
   }
 
-  const waterData = useMemo<FeatureCollection>(
-    () => ({
-      type: "FeatureCollection",
-      features: (waterAreas as unknown as { features: Feature[] }).features,
-    }),
-    []
-  );
+  // Lazy-load the GeoJSON so its ~147 kB stays out of the main bundle, and is
+  // only fetched at all once the water overlay is actually switched on.
+  const [waterData, setWaterData] = useState<FeatureCollection | null>(null);
+
+  useEffect(() => {
+    if (!visible || waterData) return;
+    let cancelled = false;
+    import("../../assets/ghana_water_areas.geojson").then((mod) => {
+      if (cancelled) return;
+      const raw = (mod.default ?? mod) as unknown as { features: Feature[] };
+      setWaterData({ type: "FeatureCollection", features: raw.features });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, waterData]);
 
   const isPrecipitation = activeVariableId?.includes("precipitation") ?? false;
 
@@ -58,7 +66,7 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
     [opacity, isPrecipitation]
   );
 
-  if (!visible) return null;
+  if (!visible || !waterData) return null;
 
   return (
     <GeoJSON
