@@ -5,7 +5,7 @@
 # Proxy API requests to the production FastAPI backend.
 [[redirects]]
   from = "/api/*"
-  to = "http://atlas.meteo.gov.gh/api/:splat"
+  to = "https://atlas.meteo.gov.gh/api/:splat"
   status = 200
   force = true
 
