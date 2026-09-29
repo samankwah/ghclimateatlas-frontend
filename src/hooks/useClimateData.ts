@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query";
 import {
   fetchMapDistricts,
+  fetchDistrictList,
   fetchClimateVariables,
   fetchClimateData,
   fetchClimateComparison,
@@ -58,6 +59,7 @@ export const useClimateData = (
   variable: string,
   period: Period,
   scenario: Scenario,
+  enabled = true,
 ) => {
   const definition = getDerivedClimateVariable(variable);
   const sourceVariableIds = getSourceVariableIds(variable);
@@ -65,7 +67,7 @@ export const useClimateData = (
     queries: sourceVariableIds.map((sourceVariableId) => ({
       queryKey: getClimateQueryKey("climate-data", variable, period, scenario, sourceVariableId),
       queryFn: () => fetchClimateData(sourceVariableId, period, scenario),
-      enabled: !!variable,
+      enabled: enabled && !!variable,
       staleTime: 5 * 60 * 1000,
       placeholderData: keepPreviousData,
     })),
@@ -93,7 +95,17 @@ export const useClimateData = (
     isLoading: queryResults.some((result) => result.isLoading),
     isFetching: queryResults.some((result) => result.isFetching),
     error: queryResults.find((result) => result.error)?.error ?? null,
+    refetch: () => Promise.all(queryResults.map((result) => result.refetch())),
   };
+};
+
+export const useDistrictList = (enabled = true) => {
+  return useQuery({
+    queryKey: ["district-list"],
+    queryFn: fetchDistrictList,
+    enabled,
+    staleTime: Infinity,
+  });
 };
 
 // Fetch climate comparison (baseline vs future)

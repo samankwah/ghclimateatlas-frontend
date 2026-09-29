@@ -5,9 +5,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: dark;
-  color: #eaeaea;
-  background-color: #1a1a2e;
+  color-scheme: light;
+  color: #15333a;
+  background-color: #f7f8f5;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -15,13 +15,20 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Scales the whole Atlas up a step. Nearly every size in the app is expressed
+   in rem, so this one root value moves body copy, headings, labels and the
+   spacing keyed to them together. A percentage (not a px value) keeps the
+   visitor's own browser font-size preference in play. */
+html {
+  font-size: 106.25%; /* 17px against a default 16px root */
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 #root {
@@ -33,12 +40,12 @@ body {
 
 a {
   font-weight: 500;
-  color: #e94560;
+  color: inherit;
   text-decoration: none;
 }
 
 a:hover {
-  color: #ff6b6b;
+  color: inherit;
 }
 
 button {
@@ -49,4 +56,25 @@ button {
 .leaflet-container {
   width: 100%;
   height: 100%;
+}
+
+body.map-route {
+  height: 100%;
+  overflow: hidden;
+}
+
+body.public-route {
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.route-loader {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  background: #172426;
+  color: #f8fafc;
+  font-weight: 700;
 }

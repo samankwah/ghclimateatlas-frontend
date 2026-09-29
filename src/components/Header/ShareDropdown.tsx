@@ -129,11 +129,6 @@ const ShareDropdown: React.FC<ShareDropdownProps> = ({ isOpen, onClose, anchorRe
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen, onClose]);
 
-  // Reset copied state when dropdown closes
-  useEffect(() => {
-    if (!isOpen) setCopied(false);
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   return (

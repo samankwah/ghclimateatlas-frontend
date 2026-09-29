@@ -6,6 +6,18 @@ export interface District {
   region: string;
 }
 
+export type GeoJSONPosition = [number, number];
+
+export type DistrictGeometry =
+  | {
+      type: "Polygon";
+      coordinates: GeoJSONPosition[][];
+    }
+  | {
+      type: "MultiPolygon";
+      coordinates: GeoJSONPosition[][][];
+    };
+
 export interface DistrictGeoJSON {
   type: "Feature";
   properties: {
@@ -14,10 +26,7 @@ export interface DistrictGeoJSON {
     region: string;
     centroid?: [number, number]; // [longitude, latitude]
   };
-  geometry: {
-    type: "Polygon";
-    coordinates: number[][][];
-  };
+  geometry: DistrictGeometry | null;
 }
 
 export interface DistrictFeatureCollection {

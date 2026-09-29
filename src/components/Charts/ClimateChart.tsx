@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- Highcharts is loaded dynamically to keep it out of the initial map bundle. */
 import React, { useEffect, useMemo, useState } from "react";
 import type { ClimateTimeSeriesResponse, Period, Scenario } from "../../types/climate";
 import { normalizeUnit } from "../../utils/colorScales";
@@ -212,7 +213,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       floating: false,
       itemStyle: {
         color: "rgba(226, 232, 240, 0.9)",
-        fontSize: "10px",
+        fontSize: "12px",
         fontWeight: "400",
       },
       itemDistance: 10,
@@ -233,14 +234,14 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         text: "Year",
         style: {
           color: "rgba(226, 232, 240, 0.85)",
-          fontSize: "10px",
+          fontSize: "12px",
         },
       },
       labels: {
         rotation: 0,
         style: {
           color: "rgba(226, 232, 240, 0.78)",
-          fontSize: "9px",
+          fontSize: "11px",
         },
       },
       lineColor: "rgba(148, 163, 184, 0.55)",
@@ -259,7 +260,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
             y: 8,
             style: {
               color: "rgba(226, 232, 240, 0.82)",
-              fontSize: "10px",
+              fontSize: "12px",
               fontWeight: "600",
             },
           },
@@ -277,13 +278,13 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
         text: axisMetricLabel,
         style: {
           color: "rgba(226, 232, 240, 0.85)",
-          fontSize: "10px",
+          fontSize: "12px",
         },
       },
       labels: {
         style: {
           color: "rgba(226, 232, 240, 0.78)",
-          fontSize: "10px",
+          fontSize: "12px",
         },
         formatter: function () {
           return Highcharts.numberFormat(Number(this.value), valueDecimals);
@@ -308,7 +309,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
                 y: -4,
                 style: {
                   color: "rgba(226, 232, 240, 0.8)",
-                  fontSize: "9px",
+                  fontSize: "11px",
                 },
               },
             },
@@ -324,7 +325,7 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
       shadow: false,
       style: {
         color: "#f8fafc",
-        fontSize: "12px",
+        fontSize: "13px",
       },
       formatter: function () {
         const point = series.data.find((entry) => entry.year === Number(this.x));
@@ -388,20 +389,20 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
             verticalAlign: "bottom",
             layout: "horizontal",
             itemStyle: {
-              fontSize: "10px",
+              fontSize: "12px",
             },
           },
           xAxis: {
             labels: {
               style: {
-                fontSize: "10px",
+                fontSize: "12px",
               },
             },
           },
           yAxis: {
             labels: {
               style: {
-                fontSize: "10px",
+                fontSize: "12px",
               },
             },
           },
@@ -419,20 +420,20 @@ const ClimateChart: React.FC<ClimateChartProps> = ({
             verticalAlign: "bottom",
             layout: "horizontal",
             itemStyle: {
-              fontSize: "9px",
+              fontSize: "11px",
             },
           },
           xAxis: {
             labels: {
               style: {
-                fontSize: "9px",
+                fontSize: "11px",
               },
             },
           },
           yAxis: {
             labels: {
               style: {
-                fontSize: "9px",
+                fontSize: "11px",
               },
             },
           },

@@ -67,7 +67,7 @@ export const CLIMATE_STORIES: ClimateStory[] = [
     category: "Youth Climate Action",
     videoUrl: "https://www.dailymotion.com/video/x8zk95s",
     description:
-      "Chelsea Boakye speaks with Ghanaian climate activist Nakeeyat about her experience and why young people must have a voice in climate action.",
+      "Chelsea Boakye speaks with Ghanaian climate activist Nakeeyat about her experiences and why young people must have a voice in climate action.",
     body: "Chelsea Boakye's interview with young Ghanaian climate activist Nakeeyat explores what it means for children to take part in the climate conversation. Reflecting on Nakeeyat's advocacy and participation at COP27, they discuss how young voices can press leaders to act, inspire their peers, and turn climate awareness into practical change. The story highlights the confidence and persistence of Ghana's young advocates, and the importance of giving children meaningful space in decisions that will shape their future.",
   },
   {

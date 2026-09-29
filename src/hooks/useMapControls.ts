@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Period, Scenario, MapState } from "../types/climate";
 import { normalizeScenarioForVariable } from "../utils/climateLabels";
+import { replaceCurrentHistoryUrl } from "../utils/publicRouting";
 
 const DEFAULT_STATE: MapState = {
   variable: "annual_mean_temp",
@@ -104,8 +105,12 @@ export const useMapControls = () => {
       params.set("display", display);
     }
 
+    if (currentParams.get("tour") === "1") {
+      params.set("tour", "1");
+    }
+
     const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
-    window.history.replaceState({}, "", nextUrl);
+    replaceCurrentHistoryUrl(nextUrl);
   }, [state]);
 
   return {

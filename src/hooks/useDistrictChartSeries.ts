@@ -1,28 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchDistrictClimateTimeseries } from "../api/climate";
-import type { ClimateTimeSeriesResponse, Scenario } from "../types/climate";
+import type { Scenario } from "../types/climate";
 
-interface UseDistrictChartSeriesResult {
-  series: ClimateTimeSeriesResponse | null;
-  isLoading: boolean;
-  error: Error | null;
-}
+export const districtChartSeriesQueryKey = (
+  districtId: string | null,
+  variable: string,
+  scenario: Scenario,
+) => ["district-chart-series", districtId, variable, scenario] as const;
 
 export const useDistrictChartSeries = (
   districtId: string | null,
   variable: string,
   scenario: Scenario,
-): UseDistrictChartSeriesResult => {
+  enabled = true,
+) => {
   const query = useQuery({
-    queryKey: ["district-chart-series", districtId, variable, scenario],
+    queryKey: districtChartSeriesQueryKey(districtId, variable, scenario),
     queryFn: () => fetchDistrictClimateTimeseries(districtId!, variable, scenario),
-    enabled: !!districtId && !!variable,
+    enabled: enabled && !!districtId && !!variable,
     staleTime: 5 * 60 * 1000,
   });
 
   return {
     series: query.data ?? null,
     isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isRefetching: query.isRefetching,
+    isSuccess: query.isSuccess,
+    isError: query.isError,
+    failureCount: query.failureCount,
     error: (query.error as Error | null) ?? null,
+    refetch: query.refetch,
   };
 };

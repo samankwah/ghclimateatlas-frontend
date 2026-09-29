@@ -23,6 +23,7 @@ interface HeaderProps {
   onOpenHelp: () => void;
   onOpenTour: () => void;
   onCloseMobileActions: () => void;
+  onNavigateBack: () => void;
 }
 
 const SEA_LEVEL_HEADER_TITLES: Record<string, string> = {
@@ -57,6 +58,7 @@ const Header: React.FC<HeaderProps> = ({
   onToggleMobileActions,
   onOpenHelp,
   onOpenTour,
+  onNavigateBack,
 }) => {
   const [shareOpen, setShareOpen] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
@@ -106,7 +108,20 @@ const Header: React.FC<HeaderProps> = ({
     <header className="new-header">
       <div className={`mobile-header-shell ${mobileActionsOpen ? "is-open" : ""}`}>
         <div className="mobile-header-row">
-          <img className="mobile-header-logo" src={mobileLogo} alt="GMet" />
+          <div className="mobile-header-leading">
+            <button
+              type="button"
+              className="map-back-button"
+              aria-label="Go back"
+              title="Go back"
+              onClick={onNavigateBack}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <img className="mobile-header-logo" src={mobileLogo} alt="GMet" />
+          </div>
 
           <div className="mobile-header-center">
             <div className={`mobile-header-title-group ${mobileActionsOpen ? "is-hidden" : ""}`}>
@@ -183,6 +198,17 @@ const Header: React.FC<HeaderProps> = ({
 
       <div className="header-content">
         <div className="header-left">
+          <button
+            type="button"
+            className="map-back-button"
+            aria-label="Go back"
+            title="Go back"
+            onClick={onNavigateBack}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
           <div className="map-label">
             <img className="desktop-header-logo" src={mobileLogo} alt="GMet" />
           </div>

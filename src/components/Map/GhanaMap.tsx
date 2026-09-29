@@ -311,10 +311,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     });
   }, [activeVariableId, valueMap, showChange, unit, onDistrictClick, onDistrictHover]);
 
-  if (!districts) {
-    return null;
-  }
-
   return (
     <MapContainer
       center={GHANA_CENTER}
@@ -345,12 +341,14 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       )}
 
       {/* District polygons colored by district-level climate values */}
-      <GeoJSON
-        key={dataVersion}
-        data={districts as GeoJsonObject}
-        style={style}
-        onEachFeature={onEachFeature}
-      />
+      {districts && (
+        <GeoJSON
+          key={dataVersion}
+          data={districts as GeoJsonObject}
+          style={style}
+          onEachFeature={onEachFeature}
+        />
+      )}
 
       {/* Coastline overlay for sea level rise visualization */}
       {isSeaLevel && (
@@ -387,7 +385,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       <ClimateStoryMarkers visible={showStories} />
 
       {/* Zoom controls - bottom left */}
-      <MapZoomControls />
+      <MapZoomControls districts={districts} onDistrictSelect={onDistrictClick} />
     </MapContainer>
   );
 };

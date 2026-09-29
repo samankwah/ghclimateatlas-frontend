@@ -1,158 +1,193 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import axios from "axios";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   submitDataRequest,
   type ClimateDataRequestPayload,
   type ClimateDataRequestResponse,
 } from "../../api/requests";
-
-interface RequestDefaults {}
-
-interface DistrictOption {
-  id: string;
-  name: string;
-  region: string;
-}
+import {
+  CLIMATE_VARIABLE_OPTIONS,
+  FORMAT_OPTIONS,
+  HISTORICAL_SCENARIO_OPTION,
+  TIME_PERIOD_OPTIONS,
+  createInitialDataRequestForm,
+  filterCompatibleScenarios,
+  getCompatibleScenarioOptions,
+  getDataRequestEmailWarning,
+  getDataRequestSubmissionError,
+  getGeographyForType,
+  normalizeDataRequestPayload,
+  validateDataRequest,
+  type DataRequestValidationErrors,
+  type DataRequestValidationField,
+  type DataRequestDistrictOption,
+  type GeographyType,
+  type ScenarioMode,
+} from "./dataRequestForm";
+import "./ClimateDataRequestModal.css";
 
 interface ClimateDataRequestModalProps {
   open: boolean;
-  defaultValues: RequestDefaults;
   regionOptions: string[];
-  districtOptions: DistrictOption[];
+  districtOptions: DataRequestDistrictOption[];
+  geographyOptionsLoading?: boolean;
+  geographyOptionsError?: boolean;
   onClose: () => void;
 }
 
-const DEFAULT_VARIABLE_OPTIONS = [
-  "Average Annual Temperature",
-  "Total Annual Rainfall",
-  "Sea Level",
-];
-
-type ScenarioMode = "" | "historical" | "projection";
-type GeographyType = "" | "ghana" | "region" | "district";
 type ToastState = {
   type: "success" | "error";
   title: string;
   message: string;
 };
 
-const HISTORICAL_SCENARIO_OPTION = "Historical";
-
-const RCP_SCENARIO_OPTIONS = ["RCP 2.6", "RCP 4.5", "RCP 8.5"];
-const SSP_SCENARIO_OPTIONS = ["SSP1-2.6", "SSP2-4.5", "SSP5-8.5"];
-const TIME_PERIOD_OPTIONS = ["REFERENCE", "2021-2040", "2041-2060", "2081-2100"];
-
-const FORMAT_OPTIONS = ["CSV", "NetCDF", "GeoJSON", "Excel", "PDF report"];
-
-const isSeaLevelRequestVariable = (value: string): boolean =>
-  value.toLowerCase().includes("sea level");
-
-const createInitialForm = (_defaults: RequestDefaults): ClimateDataRequestPayload => ({
-  full_name: "",
-  email: "",
-  organization: "",
-  purpose: "",
-  geography: "",
-  time_period: "",
-  climate_variables: [],
-  scenarios: [],
-  preferred_format: "",
-});
-
-const getErrorMessage = (error: unknown): string => {
-  if (axios.isAxiosError(error)) {
-    const detail = error.response?.data?.detail;
-    if (typeof detail === "string") {
-      return detail;
-    }
-    if (Array.isArray(detail) && detail.length > 0) {
-      return detail
-        .map((item) => item?.msg)
-        .filter(Boolean)
-        .join("; ");
-    }
-    return error.message;
-  }
-
-  return error instanceof Error ? error.message : "Unable to submit request";
-};
-
-const getEmailWarningMessage = (result: ClimateDataRequestResponse): string | null => {
-  if (result.email_status === "sent") {
-    return null;
-  }
-
-  const warning = result.warning?.trim();
-  if (!warning) {
-    return "Email confirmation is currently unavailable. Your request is saved.";
-  }
-
-  const lowerWarning = warning.toLowerCase();
-  if (
-    lowerWarning.includes("smtp") ||
-    lowerWarning.includes("not configured") ||
-    lowerWarning.includes("could not be sent")
-  ) {
-    return "Email confirmation is currently unavailable. Your request is saved.";
-  }
-
-  return warning;
-};
+const FOCUSABLE_SELECTOR = [
+  "button:not([disabled])",
+  "[href]",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
 
 const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
   open,
-  defaultValues,
   regionOptions,
   districtOptions,
+  geographyOptionsLoading = false,
+  geographyOptionsError = false,
   onClose,
 }) => {
-  const [formData, setFormData] = useState<ClimateDataRequestPayload>(() =>
-    createInitialForm(defaultValues),
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const submissionInFlightRef = useRef(false);
+  const isSubmittingRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  const [formData, setFormData] = useState<ClimateDataRequestPayload>(
+    createInitialDataRequestForm,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<ClimateDataRequestResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [serverFieldErrors, setServerFieldErrors] = useState<DataRequestValidationErrors>({});
+  const [touchedFields, setTouchedFields] = useState<Partial<Record<DataRequestValidationField, boolean>>>({});
+  const [submittedOnce, setSubmittedOnce] = useState(false);
   const [scenarioMode, setScenarioMode] = useState<ScenarioMode>("");
   const [geographyType, setGeographyType] = useState<GeographyType>("");
   const [selectedGeographyValue, setSelectedGeographyValue] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  const variableOptions = DEFAULT_VARIABLE_OPTIONS;
   const selectedVariables = formData.climate_variables;
   const hasSelectedVariables = selectedVariables.length > 0;
-  const hasSeaLevelVariables = selectedVariables.some(isSeaLevelRequestVariable);
-  const hasNonSeaLevelVariables = selectedVariables.some((item) => !isSeaLevelRequestVariable(item));
-  const rcpScenarioOptions = hasNonSeaLevelVariables ? RCP_SCENARIO_OPTIONS : [];
-  const sspScenarioOptions = hasSeaLevelVariables ? SSP_SCENARIO_OPTIONS : [];
+  const geographyOptionsUnavailable =
+    geographyOptionsLoading || geographyOptionsError || districtOptions.length === 0;
+  const { rcp: rcpScenarioOptions, ssp: sspScenarioOptions } = useMemo(
+    () => getCompatibleScenarioOptions(selectedVariables),
+    [selectedVariables],
+  );
+  const validationErrors = useMemo(
+    () => validateDataRequest(formData, geographyType, scenarioMode),
+    [formData, geographyType, scenarioMode],
+  );
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  onCloseRef.current = onClose;
+  isSubmittingRef.current = isSubmitting;
 
-    setFormData(createInitialForm(defaultValues));
+  const resetForm = useCallback(() => {
+    submissionInFlightRef.current = false;
+    isSubmittingRef.current = false;
+    setFormData(createInitialDataRequestForm());
+    setIsSubmitting(false);
     setScenarioMode("");
     setGeographyType("");
     setSelectedGeographyValue("");
     setResult(null);
     setErrorMessage(null);
+    setServerFieldErrors({});
+    setTouchedFields({});
+    setSubmittedOnce(false);
     setToast(null);
-  }, [defaultValues, open]);
+  }, []);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    resetForm();
+  }, [open, resetForm]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    previouslyFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousBodyOverflow = document.body.style.overflow;
+    const bodyAlreadyMarkedOpen = document.body.classList.contains("data-request-modal-open");
+    document.body.classList.add("data-request-modal-open");
+    document.body.style.overflow = "hidden";
+    const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !isSubmitting) {
-        onClose();
+      if (event.key === "Escape") {
+        if (!isSubmittingRef.current) {
+          event.preventDefault();
+          onCloseRef.current();
+        }
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const dialog = dialogRef.current;
+      if (!dialog) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      ).filter((element) => element.getAttribute("aria-hidden") !== "true");
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+      if (event.shiftKey && (activeElement === firstElement || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && (activeElement === lastElement || !dialog.contains(activeElement))) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isSubmitting, onClose, open]);
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousBodyOverflow;
+      if (!bodyAlreadyMarkedOpen) {
+        document.body.classList.remove("data-request-modal-open");
+      }
+      previouslyFocusedRef.current?.focus();
+      previouslyFocusedRef.current = null;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!toast) {
@@ -163,35 +198,65 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const isFormValid = useMemo(
-    () =>
-      formData.full_name.trim().length > 1 &&
-      formData.email.trim().length > 4 &&
-      formData.purpose.trim().length > 2 &&
-      formData.geography.trim().length > 1 &&
-      formData.time_period.trim().length > 1 &&
-      formData.climate_variables.length > 0 &&
-      formData.scenarios.length > 0 &&
-      formData.preferred_format.trim().length > 1,
-    [formData],
-  );
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      dialogRef.current?.querySelector<HTMLElement>("#data-request-title")?.focus();
+    });
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [result]);
 
   const updateField = (field: keyof ClimateDataRequestPayload, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrorMessage(null);
+    if (field !== "organization" && field !== "additional_notes") {
+      setServerFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
+
+  const markTouched = (field: DataRequestValidationField) => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const handleFieldBlur = (field: DataRequestValidationField) => () => {
+    markTouched(field);
+  };
+
+  const getFieldError = (field: DataRequestValidationField): string | undefined =>
+    serverFieldErrors[field] ||
+    (submittedOnce || touchedFields[field] ? validationErrors[field] : undefined);
+
+  const requestClose = useCallback(() => {
+    if (!isSubmittingRef.current) {
+      onCloseRef.current();
+    }
+  }, []);
 
   const handleGeographyTypeChange = (value: GeographyType) => {
     setGeographyType(value);
     setSelectedGeographyValue("");
+    setErrorMessage(null);
+    setServerFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.geography;
+      return next;
+    });
     setFormData((prev) => ({
       ...prev,
-      geography: value === "ghana" ? "Ghana" : "",
+      geography: getGeographyForType(value),
     }));
   };
 
   const handleGeographySelectionChange = (value: string) => {
     setSelectedGeographyValue(value);
-    setFormData((prev) => ({ ...prev, geography: value }));
+    updateField("geography", value);
   };
 
   const toggleVariable = (value: string) => {
@@ -207,18 +272,17 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
       return {
         ...prev,
         climate_variables: climateVariables,
-        scenarios: prev.scenarios.filter((scenario) => {
-          if (scenario === HISTORICAL_SCENARIO_OPTION) return true;
-          if (RCP_SCENARIO_OPTIONS.includes(scenario)) {
-            return climateVariables.some((item) => !isSeaLevelRequestVariable(item));
-          }
-          if (SSP_SCENARIO_OPTIONS.includes(scenario)) {
-            return climateVariables.some(isSeaLevelRequestVariable);
-          }
-          return false;
-        }),
+        scenarios: filterCompatibleScenarios(prev.scenarios, climateVariables),
       };
     });
+    setErrorMessage(null);
+    setServerFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.climate_variables;
+      delete next.scenarios;
+      return next;
+    });
+    markTouched("climate_variables");
   };
 
   const toggleScenario = (value: string) => {
@@ -228,6 +292,13 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
         ? prev.scenarios.filter((item) => item !== value)
         : [...prev.scenarios, value],
     }));
+    setErrorMessage(null);
+    setServerFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.scenarios;
+      return next;
+    });
+    markTouched("scenarios");
   };
 
   useEffect(() => {
@@ -242,6 +313,7 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
     }
 
     setScenarioMode(mode);
+    markTouched("scenarios");
     setFormData((prev) => ({
       ...prev,
       scenarios: mode === "historical" ? [HISTORICAL_SCENARIO_OPTION] : [],
@@ -250,24 +322,33 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!isFormValid || isSubmitting) {
+    if (submissionInFlightRef.current) {
       return;
     }
 
-    setIsSubmitting(true);
+    const normalizedPayload = normalizeDataRequestPayload(formData);
+    const clientErrors = validateDataRequest(normalizedPayload, geographyType, scenarioMode);
+    setFormData(normalizedPayload);
+    setSubmittedOnce(true);
+    setServerFieldErrors({});
     setErrorMessage(null);
 
-    try {
-      const response = await submitDataRequest({
-        ...formData,
-        full_name: formData.full_name.trim(),
-        email: formData.email.trim(),
-        organization: formData.organization?.trim() || null,
-        purpose: formData.purpose.trim(),
-        geography: formData.geography.trim(),
-        time_period: formData.time_period.trim(),
-        preferred_format: formData.preferred_format.trim(),
+    const firstInvalidField = Object.keys(clientErrors)[0] as DataRequestValidationField | undefined;
+    if (firstInvalidField) {
+      window.requestAnimationFrame(() => {
+        dialogRef.current
+          ?.querySelector<HTMLElement>(`[data-validation-field="${firstInvalidField}"]`)
+          ?.focus();
       });
+      return;
+    }
+
+    submissionInFlightRef.current = true;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      const response = await submitDataRequest(normalizedPayload);
       setResult(response);
       setToast({
         type: "success",
@@ -278,26 +359,38 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
             : "Your request is saved for follow-up.",
       });
     } catch (error) {
-      const message = getErrorMessage(error);
-      setErrorMessage(message);
+      const submissionError = getDataRequestSubmissionError(error);
+      setErrorMessage(submissionError.message);
+      setServerFieldErrors(submissionError.fieldErrors);
       setToast({
         type: "error",
         title: "Submission failed",
-        message,
+        message: submissionError.message,
+      });
+      const firstServerField = Object.keys(
+        submissionError.fieldErrors,
+      )[0] as DataRequestValidationField | undefined;
+      window.requestAnimationFrame(() => {
+        if (firstServerField) {
+          dialogRef.current
+            ?.querySelector<HTMLElement>(`[data-validation-field="${firstServerField}"]`)
+            ?.focus();
+        } else {
+          dialogRef.current?.querySelector<HTMLElement>("#data-request-submit-error")?.focus();
+        }
       });
     } finally {
+      submissionInFlightRef.current = false;
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleSubmitAnother = () => {
-    setFormData(createInitialForm(defaultValues));
-    setScenarioMode("");
-    setGeographyType("");
-    setSelectedGeographyValue("");
-    setResult(null);
-    setErrorMessage(null);
-    setToast(null);
+    resetForm();
+    window.requestAnimationFrame(() => {
+      dialogRef.current?.querySelector<HTMLElement>("#data-request-full-name")?.focus();
+    });
   };
 
   if (!open) {
@@ -305,7 +398,7 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
   }
 
   const emailWasSent = result?.email_status === "sent";
-  const emailWarning = result ? getEmailWarningMessage(result) : null;
+  const emailWarning = result ? getDataRequestEmailWarning(result) : null;
 
   return (
     <div
@@ -313,20 +406,24 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !isSubmitting) {
-          onClose();
+          requestClose();
         }
       }}
     >
       <section
+        ref={dialogRef}
         className="data-request-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="data-request-title"
+        aria-describedby="data-request-description"
+        tabIndex={-1}
       >
         <button
+          ref={closeButtonRef}
           type="button"
           className="data-request-close"
-          onClick={onClose}
+          onClick={requestClose}
           disabled={isSubmitting}
           aria-label="Close data request form"
         >
@@ -377,13 +474,15 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                 </svg>
               </div>
               <p className="data-request-eyebrow">Request received</p>
-              <h2 id="data-request-title">Climate data request submitted</h2>
+              <h2 id="data-request-title" tabIndex={-1}>Climate data request submitted</h2>
               {emailWasSent ? (
-                <p>
+                <p id="data-request-description">
                   A confirmation email was sent to <strong>{formData.email}</strong>.
                 </p>
               ) : (
-                <p>Your request was saved. Keep this Request ID for follow-up.</p>
+                <p id="data-request-description">
+                  Your request was saved. Keep this Request ID for follow-up.
+                </p>
               )}
             </div>
 
@@ -401,7 +500,7 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                 <button type="button" className="data-request-secondary-btn" onClick={handleSubmitAnother}>
                   Submit another request
                 </button>
-                <button type="button" className="data-request-primary-btn" onClick={onClose}>
+                <button type="button" className="data-request-primary-btn" onClick={requestClose}>
                   Done
                 </button>
               </div>
@@ -430,13 +529,13 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
 
               <div className="modal-section-parameter">
                 <h3 className="modal-param-name">Climate Data Request</h3>
-                <p className="modal-short-desc">
+                <p className="modal-short-desc" id="data-request-description">
                   Request a prepared climate data package.
                 </p>
               </div>
             </div>
 
-            <form className="data-request-form" onSubmit={handleSubmit}>
+            <form className="data-request-form" onSubmit={handleSubmit} noValidate>
               <div className="modal-header">
                 <h2 id="data-request-title">Request download access</h2>
               </div>
@@ -444,66 +543,138 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
               <div className="data-request-form-columns">
                 <div className="data-request-column">
                   <div className="data-request-grid two-columns">
-                    <label>
+                    <label htmlFor="data-request-full-name">
                       <span>Full name *</span>
                       <input
+                        id="data-request-full-name"
                         type="text"
+                        autoComplete="name"
                         value={formData.full_name}
                         onChange={(event) => updateField("full_name", event.target.value)}
+                        onBlur={handleFieldBlur("full_name")}
+                        data-validation-field="full_name"
+                        aria-invalid={Boolean(getFieldError("full_name"))}
+                        aria-describedby={getFieldError("full_name") ? "data-request-full-name-error" : undefined}
                         required
                       />
+                      {getFieldError("full_name") && (
+                        <span className="data-request-field-error" id="data-request-full-name-error">
+                          {getFieldError("full_name")}
+                        </span>
+                      )}
                     </label>
 
-                    <label>
+                    <label htmlFor="data-request-email">
                       <span>Email *</span>
                       <input
+                        id="data-request-email"
                         type="email"
+                        autoComplete="email"
+                        inputMode="email"
                         value={formData.email}
                         onChange={(event) => updateField("email", event.target.value)}
+                        onBlur={handleFieldBlur("email")}
+                        data-validation-field="email"
+                        aria-invalid={Boolean(getFieldError("email"))}
+                        aria-describedby={getFieldError("email") ? "data-request-email-error" : undefined}
                         required
                       />
+                      {getFieldError("email") && (
+                        <span className="data-request-field-error" id="data-request-email-error">
+                          {getFieldError("email")}
+                        </span>
+                      )}
                     </label>
                   </div>
 
-                  <label>
+                  <label htmlFor="data-request-organization">
                     <span>Organization / institution</span>
                     <input
+                      id="data-request-organization"
                       type="text"
+                      autoComplete="organization"
                       value={formData.organization || ""}
                       onChange={(event) => updateField("organization", event.target.value)}
                     />
                   </label>
 
-                  <label>
+                  <label htmlFor="data-request-purpose">
                     <span>Request purpose *</span>
                     <textarea
+                      id="data-request-purpose"
                       value={formData.purpose}
                       onChange={(event) => updateField("purpose", event.target.value)}
+                      onBlur={handleFieldBlur("purpose")}
+                      data-validation-field="purpose"
+                      aria-invalid={Boolean(getFieldError("purpose"))}
+                      aria-describedby={getFieldError("purpose") ? "data-request-purpose-error" : undefined}
                       rows={2}
                       required
                     />
+                    {getFieldError("purpose") && (
+                      <span className="data-request-field-error" id="data-request-purpose-error">
+                        {getFieldError("purpose")}
+                      </span>
+                    )}
                   </label>
 
                   <div className="data-request-grid two-columns">
-                    <label>
+                    <label htmlFor="data-request-geography-type">
                       <span>Geography type *</span>
                       <select
+                        id="data-request-geography-type"
                         value={geographyType}
                         onChange={(event) => handleGeographyTypeChange(event.target.value as GeographyType)}
+                        onBlur={handleFieldBlur("geography_type")}
+                        data-validation-field="geography_type"
+                        aria-invalid={Boolean(getFieldError("geography_type"))}
+                        aria-describedby={
+                          [
+                            getFieldError("geography_type") ? "data-request-geography-type-error" : "",
+                            geographyOptionsUnavailable ? "data-request-geography-options-status" : "",
+                          ].filter(Boolean).join(" ") || undefined
+                        }
                         required
                       >
                         <option value="">Select type</option>
                         <option value="ghana">Ghana</option>
-                        <option value="region">Region</option>
-                        <option value="district">District</option>
+                        <option value="region" disabled={geographyOptionsUnavailable}>
+                          Region{geographyOptionsLoading ? " (loading…)" : geographyOptionsUnavailable ? " (unavailable)" : ""}
+                        </option>
+                        <option value="district" disabled={geographyOptionsUnavailable}>
+                          District{geographyOptionsLoading ? " (loading…)" : geographyOptionsUnavailable ? " (unavailable)" : ""}
+                        </option>
                       </select>
+                      {getFieldError("geography_type") && (
+                        <span className="data-request-field-error" id="data-request-geography-type-error">
+                          {getFieldError("geography_type")}
+                        </span>
+                      )}
+                      {geographyOptionsUnavailable && (
+                        <span
+                          className="data-request-field-help"
+                          id="data-request-geography-options-status"
+                          role={geographyOptionsError ? "alert" : "status"}
+                        >
+                          {geographyOptionsLoading
+                            ? "Loading region and district options…"
+                            : "Region and district options are currently unavailable; Ghana remains available."}
+                        </span>
+                      )}
                     </label>
 
-                    <label>
+                    <label htmlFor="data-request-time-period">
                       <span>Time period needed *</span>
                       <select
+                        id="data-request-time-period"
                         value={formData.time_period}
                         onChange={(event) => updateField("time_period", event.target.value)}
+                        onBlur={handleFieldBlur("time_period")}
+                        data-validation-field="time_period"
+                        aria-invalid={Boolean(getFieldError("time_period"))}
+                        aria-describedby={
+                          getFieldError("time_period") ? "data-request-time-period-error" : undefined
+                        }
                         required
                       >
                         <option value="">Select time period</option>
@@ -513,15 +684,25 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                           </option>
                         ))}
                       </select>
+                      {getFieldError("time_period") && (
+                        <span className="data-request-field-error" id="data-request-time-period-error">
+                          {getFieldError("time_period")}
+                        </span>
+                      )}
                     </label>
                   </div>
 
                   {geographyType === "region" && (
-                    <label>
+                    <label htmlFor="data-request-geography">
                       <span>Region *</span>
                       <select
+                        id="data-request-geography"
                         value={selectedGeographyValue}
                         onChange={(event) => handleGeographySelectionChange(event.target.value)}
+                        onBlur={handleFieldBlur("geography")}
+                        data-validation-field="geography"
+                        aria-invalid={Boolean(getFieldError("geography"))}
+                        aria-describedby={getFieldError("geography") ? "data-request-geography-error" : undefined}
                         required
                       >
                         <option value="">Select region</option>
@@ -531,15 +712,25 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                           </option>
                         ))}
                       </select>
+                      {getFieldError("geography") && (
+                        <span className="data-request-field-error" id="data-request-geography-error">
+                          {getFieldError("geography")}
+                        </span>
+                      )}
                     </label>
                   )}
 
                   {geographyType === "district" && (
-                    <label>
+                    <label htmlFor="data-request-geography">
                       <span>District *</span>
                       <select
+                        id="data-request-geography"
                         value={selectedGeographyValue}
                         onChange={(event) => handleGeographySelectionChange(event.target.value)}
+                        onBlur={handleFieldBlur("geography")}
+                        data-validation-field="geography"
+                        aria-invalid={Boolean(getFieldError("geography"))}
+                        aria-describedby={getFieldError("geography") ? "data-request-geography-error" : undefined}
                         required
                       >
                         <option value="">Select district</option>
@@ -552,110 +743,160 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                           );
                         })}
                       </select>
+                      {getFieldError("geography") && (
+                        <span className="data-request-field-error" id="data-request-geography-error">
+                          {getFieldError("geography")}
+                        </span>
+                      )}
                     </label>
                   )}
                 </div>
 
                 <div className="data-request-column">
-                  <fieldset className="data-request-section">
+                  <fieldset
+                    className="data-request-section"
+                    aria-invalid={Boolean(getFieldError("climate_variables"))}
+                    aria-describedby={
+                      getFieldError("climate_variables") ? "data-request-climate-variables-error" : undefined
+                    }
+                  >
                     <legend>Climate variables *</legend>
                     <div className="data-request-chip-grid">
-                      {variableOptions.map((option) => (
+                      {CLIMATE_VARIABLE_OPTIONS.map((option) => (
                         <label key={option} className="data-request-chip">
                           <input
                             type="checkbox"
                             checked={formData.climate_variables.includes(option)}
                             onChange={() => toggleVariable(option)}
+                            data-validation-field="climate_variables"
                           />
                           <span>{option}</span>
                         </label>
                       ))}
                     </div>
+                    {getFieldError("climate_variables") && (
+                      <span className="data-request-field-error" id="data-request-climate-variables-error">
+                        {getFieldError("climate_variables")}
+                      </span>
+                    )}
                   </fieldset>
 
-                  {hasSelectedVariables && (
-                    <fieldset className="data-request-section">
-                      <legend>Scenarios *</legend>
-                      <div className="data-request-scenario-toggle" role="group" aria-label="Scenario type">
-                        <button
-                          type="button"
-                          className={`data-request-toggle-option ${scenarioMode === "historical" ? "active" : ""}`}
-                          onClick={() => handleScenarioModeChange("historical")}
-                          aria-pressed={scenarioMode === "historical"}
-                        >
-                          Historical
-                        </button>
-                        <button
-                          type="button"
-                          className={`data-request-toggle-option ${scenarioMode === "projection" ? "active" : ""}`}
-                          onClick={() => handleScenarioModeChange("projection")}
-                          aria-pressed={scenarioMode === "projection"}
-                        >
-                          Projections
-                        </button>
+                  <fieldset
+                    className="data-request-section"
+                    disabled={!hasSelectedVariables}
+                    aria-invalid={Boolean(getFieldError("scenarios"))}
+                    aria-describedby={
+                      getFieldError("scenarios")
+                        ? "data-request-scenarios-error"
+                        : !hasSelectedVariables
+                          ? "data-request-scenarios-help"
+                          : undefined
+                    }
+                  >
+                    <legend>Scenarios *</legend>
+                    <div className="data-request-scenario-toggle" role="group" aria-label="Scenario type">
+                      <button
+                        type="button"
+                        className={`data-request-toggle-option ${scenarioMode === "historical" ? "active" : ""}`}
+                        onClick={() => handleScenarioModeChange("historical")}
+                        aria-pressed={scenarioMode === "historical"}
+                        data-validation-field="scenarios"
+                        disabled={!hasSelectedVariables}
+                      >
+                        Historical
+                      </button>
+                      <button
+                        type="button"
+                        className={`data-request-toggle-option ${scenarioMode === "projection" ? "active" : ""}`}
+                        onClick={() => handleScenarioModeChange("projection")}
+                        aria-pressed={scenarioMode === "projection"}
+                        disabled={!hasSelectedVariables}
+                      >
+                        Projections
+                      </button>
+                    </div>
+
+                    {!hasSelectedVariables && (
+                      <p className="data-request-field-help" id="data-request-scenarios-help">
+                        Select a climate variable to make scenarios available.
+                      </p>
+                    )}
+
+                    {scenarioMode === "historical" && (
+                      <div className="data-request-scenario-panel">
+                        <div className="data-request-selected-scenario" role="status">
+                          <span className="data-request-selected-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                          </span>
+                          <span>Historical baseline</span>
+                        </div>
                       </div>
+                    )}
 
-                      {scenarioMode === "historical" && (
-                        <div className="data-request-scenario-panel">
-                          <div className="data-request-selected-scenario" role="status">
-                            <span className="data-request-selected-icon" aria-hidden="true">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M20 6 9 17l-5-5" />
-                              </svg>
-                            </span>
-                            <span>Historical baseline</span>
+                    {scenarioMode === "projection" && (
+                      <div className="data-request-scenario-panel">
+                        {rcpScenarioOptions.length > 0 && (
+                          <div className="data-request-scenario-group">
+                            <span>RCP scenarios</span>
+                            <div className="data-request-chip-grid">
+                              {rcpScenarioOptions.map((option) => (
+                                <label key={option} className="data-request-chip">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.scenarios.includes(option)}
+                                    onChange={() => toggleScenario(option)}
+                                    data-validation-field="scenarios"
+                                  />
+                                  <span>{option}</span>
+                                </label>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {scenarioMode === "projection" && (
-                        <div className="data-request-scenario-panel">
-                          {rcpScenarioOptions.length > 0 && (
-                            <div className="data-request-scenario-group">
-                              <span>RCP scenarios</span>
-                              <div className="data-request-chip-grid">
-                                {rcpScenarioOptions.map((option) => (
-                                  <label key={option} className="data-request-chip">
-                                    <input
-                                      type="checkbox"
-                                      checked={formData.scenarios.includes(option)}
-                                      onChange={() => toggleScenario(option)}
-                                    />
-                                    <span>{option}</span>
-                                  </label>
-                                ))}
-                              </div>
+                        {sspScenarioOptions.length > 0 && (
+                          <div className="data-request-scenario-group">
+                            <span>SSP scenarios</span>
+                            <div className="data-request-chip-grid">
+                              {sspScenarioOptions.map((option) => (
+                                <label key={option} className="data-request-chip">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.scenarios.includes(option)}
+                                    onChange={() => toggleScenario(option)}
+                                    data-validation-field="scenarios"
+                                  />
+                                  <span>{option}</span>
+                                </label>
+                              ))}
                             </div>
-                          )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                          {sspScenarioOptions.length > 0 && (
-                            <div className="data-request-scenario-group">
-                              <span>SSP scenarios</span>
-                              <div className="data-request-chip-grid">
-                                {sspScenarioOptions.map((option) => (
-                                  <label key={option} className="data-request-chip">
-                                    <input
-                                      type="checkbox"
-                                      checked={formData.scenarios.includes(option)}
-                                      onChange={() => toggleScenario(option)}
-                                    />
-                                    <span>{option}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </fieldset>
-                  )}
+                    {getFieldError("scenarios") && (
+                      <span className="data-request-field-error" id="data-request-scenarios-error">
+                        {getFieldError("scenarios")}
+                      </span>
+                    )}
+                  </fieldset>
 
                   <div className="data-request-grid">
-                    <label>
+                    <label htmlFor="data-request-preferred-format">
                       <span>Preferred format *</span>
                       <select
+                        id="data-request-preferred-format"
                         value={formData.preferred_format}
                         onChange={(event) => updateField("preferred_format", event.target.value)}
+                        onBlur={handleFieldBlur("preferred_format")}
+                        data-validation-field="preferred_format"
+                        aria-invalid={Boolean(getFieldError("preferred_format"))}
+                        aria-describedby={
+                          getFieldError("preferred_format") ? "data-request-preferred-format-error" : undefined
+                        }
                         required
                       >
                         <option value="">Select format</option>
@@ -665,13 +906,23 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                           </option>
                         ))}
                       </select>
+                      {getFieldError("preferred_format") && (
+                        <span className="data-request-field-error" id="data-request-preferred-format-error">
+                          {getFieldError("preferred_format")}
+                        </span>
+                      )}
                     </label>
                   </div>
                 </div>
               </div>
 
               {errorMessage && (
-                <div className="data-request-error" role="alert">
+                <div
+                  className="data-request-error"
+                  id="data-request-submit-error"
+                  role="alert"
+                  tabIndex={-1}
+                >
                   {errorMessage}
                 </div>
               )}
@@ -680,7 +931,7 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                 <button
                   type="button"
                   className="data-request-secondary-btn"
-                  onClick={onClose}
+                  onClick={requestClose}
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -688,14 +939,19 @@ const ClimateDataRequestModal: React.FC<ClimateDataRequestModalProps> = ({
                 <button
                   type="submit"
                   className="data-request-primary-btn"
-                  disabled={!isFormValid || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? "Submitting..." : "Submit request"}
                 </button>
               </div>
             </form>
 
-            <button type="button" className="modal-return data-request-return" onClick={onClose}>
+            <button
+              type="button"
+              className="modal-return data-request-return"
+              onClick={requestClose}
+              disabled={isSubmitting}
+            >
               <svg
                 width="18"
                 height="18"

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import ClimateChart from "../Charts/ClimateChart";
+import { DistrictChartSkeleton } from "../Loading/SkeletonLoaders";
 import StatisticsTable from "./StatisticsTable";
 import DownloadsSection from "./DownloadsSection";
-import WeatherLoader from "../WeatherLoader";
 import { useDistrictTimeSeries } from "../../hooks/useDistrictTimeSeries";
 import { useDistrictChartSeries } from "../../hooks/useDistrictChartSeries";
 import type { ClimateVariable, ClimateComparison, Scenario, Period } from "../../types/climate";
@@ -142,10 +142,7 @@ const DistrictDetailPanel: React.FC<DistrictDetailPanelProps> = ({
       </div>
 
       {isLoading || isChartLoading ? (
-        <div className="chart-loading">
-          <WeatherLoader size="sm" />
-          <span>Loading chart data...</span>
-        </div>
+        <DistrictChartSkeleton />
       ) : (
         <ClimateChart
           series={chartSeries}

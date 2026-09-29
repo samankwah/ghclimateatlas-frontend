@@ -7,6 +7,7 @@ import type {
   ClimateResponse,
   ClimateComparisonResponse,
   ClimateTimeSeriesResponse,
+  District,
   RegionInfo,
   DistrictClimate,
   Period,
@@ -82,6 +83,11 @@ export const fetchDistricts = async (): Promise<DistrictFeatureCollection> => {
 
 export const fetchMapDistricts = async (): Promise<DistrictFeatureCollection> => {
   const response = await api.get<DistrictFeatureCollection>("/districts/map");
+  return response.data;
+};
+
+export const fetchDistrictList = async (): Promise<District[]> => {
+  const response = await api.get<District[]>("/districts/list");
   return response.data;
 };
 

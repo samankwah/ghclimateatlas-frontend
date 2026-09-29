@@ -4,35 +4,25 @@ import type { CookieConsentValue } from "../../utils/cookieConsent";
 
 export default function CookieConsent() {
   const { hasResponded, setConsent } = useCookieConsent();
-  const [visible, setVisible] = useState(!hasResponded);
   const [mounted, setMounted] = useState(false);
   const [hiding, setHiding] = useState(false);
 
   useEffect(() => {
-    if (!hasResponded) {
-      setHiding(false);
-      setMounted(false);
-      setVisible(true);
-      requestAnimationFrame(() => setMounted(true));
-      return;
-    }
-
-    if (!hiding) {
-      setMounted(false);
-      setVisible(false);
-    }
-  }, [hasResponded, hiding]);
+    if (hasResponded) return;
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, [hasResponded]);
 
   const dismiss = useCallback((value: CookieConsentValue) => {
     setHiding(true);
     setConsent(value);
     setTimeout(() => {
       setMounted(false);
-      setVisible(false);
+      setHiding(false);
     }, 300);
   }, [setConsent]);
 
-  if (!visible) return null;
+  if (hasResponded && !hiding) return null;
 
   return (
     <div

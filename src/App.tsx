@@ -7,13 +7,13 @@ import { API_BASE } from "./api/climate";
 fetch(`${API_BASE}/health`).catch(() => {});
 
 import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import GhanaMap from "./components/Map/GhanaMap";
 import MapSkeleton from "./components/Map/MapSkeleton";
 import Legend from "./components/Map/Legend";
 import Header from "./components/Header/Header";
 import MapLayerToggles from "./components/Sidebar/MapLayerToggles";
 import ClimateDataRequestModal from "./components/Downloads/ClimateDataRequestModal";
+import { buildDataRequestGeographyOptions } from "./components/Downloads/dataRequestForm";
 import TimelineBar from "./components/Timeline/TimelineBar";
 import CategoryTabs, { type Category } from "./components/Categories/CategoryTabs";
 import DistrictSearch from "./components/Search/DistrictSearch";
@@ -40,16 +40,8 @@ import {
   isSeaLevelVariableId,
 } from "./utils/climateLabels";
 import { getFixedDisplayRange } from "./utils/displayRanges";
+import { navigateBackFromMap, replaceCurrentHistoryUrl } from "./utils/publicRouting";
 import "./App.css";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 function ClimateAtlas() {
   const [, setHoveredDistrict] = useState<string | null>(null);
@@ -62,7 +54,9 @@ function ClimateAtlas() {
   const [mobileControlsOpen, setMobileControlsOpen] = useState(false);
   const [mobileHeaderActionsOpen, setMobileHeaderActionsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [tourOpen, setTourOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tour") === "1",
+  );
   const [dataRequestOpen, setDataRequestOpen] = useState(false);
 
   // Category tab state
@@ -83,6 +77,20 @@ function ClimateAtlas() {
     selectDistrict,
     toggleShowChange,
   } = useMapControls();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tour") !== "1") return;
+
+    params.delete("tour");
+    const query = params.toString();
+    const nextUrl = `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`;
+    replaceCurrentHistoryUrl(nextUrl);
+  }, []);
+
+  const handleNavigateBack = useCallback(() => {
+    navigateBackFromMap();
+  }, []);
 
   const handleParameterSelect = useCallback((variableId: string, parameterId: string) => {
     setSelectedParameterId(parameterId);
@@ -126,23 +134,13 @@ function ClimateAtlas() {
   );
 
   const geographyOptions = useMemo(() => {
-    const features = districts?.features ?? [];
-    const regionNames = Array.from(
-      new Set(features.map((feature) => feature.properties.region).filter(Boolean)),
-    ).sort((a, b) => a.localeCompare(b));
-
-    const districtItems = features
-      .map((feature) => ({
+    const districtItems = (districts?.features ?? []).map((feature) => ({
         id: feature.properties.id,
         name: feature.properties.name,
         region: feature.properties.region,
-      }))
-      .sort((a, b) => a.region.localeCompare(b.region) || a.name.localeCompare(b.name));
+      }));
 
-    return {
-      regionOptions: regionNames,
-      districtOptions: districtItems,
-    };
+    return buildDataRequestGeographyOptions(districtItems);
   }, [districts]);
 
   const effectiveVariable = useMemo(() => {
@@ -273,8 +271,6 @@ function ClimateAtlas() {
     setTourOpen(true);
   }, []);
 
-  const requestDefaults = useMemo(() => ({}), []);
-
   useEffect(() => {
     const variableLabel =
       selectedParameterLabel?.trim() ||
@@ -319,6 +315,7 @@ function ClimateAtlas() {
         onOpenHelp={handleOpenHelp}
         onOpenTour={handleOpenTour}
         onCloseMobileActions={() => setMobileHeaderActionsOpen(false)}
+        onNavigateBack={handleNavigateBack}
       />
 
       {/* Map container - full bleed with all floating overlays inside */}
@@ -493,9 +490,10 @@ function ClimateAtlas() {
       )}
       <ClimateDataRequestModal
         open={dataRequestOpen}
-        defaultValues={requestDefaults}
         regionOptions={geographyOptions.regionOptions}
         districtOptions={geographyOptions.districtOptions}
+        geographyOptionsLoading={loadingDistricts}
+        geographyOptionsError={districtsError}
         onClose={() => setDataRequestOpen(false)}
       />
       {tourOpen && (
@@ -509,12 +507,10 @@ function ClimateAtlas() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <CookieConsentProvider>
-        <ClimateAtlas />
-        <CookieConsent />
-      </CookieConsentProvider>
-    </QueryClientProvider>
+    <CookieConsentProvider>
+      <ClimateAtlas />
+      <CookieConsent />
+    </CookieConsentProvider>
   );
 }
 

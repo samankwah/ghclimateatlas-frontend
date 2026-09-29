@@ -85,12 +85,54 @@ body {
   justify-content: space-between;
   width: 100%;
   gap: 2rem;
+  position: relative;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.map-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 2px solid #ffc533;
+  border-radius: 50%;
+  background: #ffc533;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+  color: #272727;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.map-back-button svg {
+  width: 24px;
+  height: 24px;
+}
+
+.map-back-button:hover {
+  border-color: #ffe07a;
+  background: #ffe07a;
+  color: #171717;
+  transform: translateX(-1px);
+}
+
+.map-back-button:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.mobile-header-leading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 /* MAP label with info icon */
@@ -217,7 +259,11 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.125rem;
-  transform: translateX(-3.5rem);
+  position: absolute;
+  left: 50%;
+  width: min(20rem, 24vw);
+  text-align: center;
+  transform: translateX(-50%);
 }
 
 .variable-title {
@@ -849,6 +895,7 @@ body {
   justify-content: center;
   padding: 1rem 2rem 9rem;
   background: rgba(0, 0, 0, 0.55);
+  overscroll-behavior: contain;
 }
 
 .data-request-modal {
@@ -864,6 +911,7 @@ body {
   -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
   color: var(--text-primary);
+  outline: none;
 }
 
 .data-request-close {
@@ -961,6 +1009,8 @@ body {
   min-height: 0;
   padding: 1.75rem;
   background: transparent;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .data-request-form-columns {
@@ -1037,6 +1087,31 @@ body {
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.16);
 }
 
+.data-request-form input[aria-invalid="true"],
+.data-request-form textarea[aria-invalid="true"],
+.data-request-form select[aria-invalid="true"] {
+  border-color: #f87171;
+}
+
+.data-request-form .data-request-field-error,
+.data-request-form .data-request-field-help {
+  display: block;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.data-request-form .data-request-field-error {
+  color: #fecaca;
+}
+
+.data-request-form .data-request-field-help {
+  color: #94a3b8;
+}
+
 .data-request-form fieldset {
   margin: 0;
   padding: 0;
@@ -1109,6 +1184,20 @@ body {
   border-color: #f59e0b;
   background: rgba(245, 158, 11, 0.16);
   color: #ffffff;
+}
+
+.data-request-toggle-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.data-request-close:focus-visible,
+.data-request-toggle-option:focus-visible,
+.data-request-primary-btn:focus-visible,
+.data-request-secondary-btn:focus-visible,
+.data-request-return:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
 }
 
 .data-request-scenario-panel {
@@ -1444,6 +1533,7 @@ body {
 
   .data-request-form {
     padding: 1.25rem;
+    overflow: visible;
   }
 }
 
@@ -1512,7 +1602,7 @@ body {
   .data-request-form textarea,
   .data-request-form select {
     min-height: 2.55rem;
-    font-size: 16px;
+    font-size: max(16px, 1rem); /* the 16px floor keeps iOS from zooming on focus */
   }
 
   .data-request-form textarea {
@@ -1912,7 +2002,7 @@ body {
   gap: 0.625rem;
 }
 
-.section-label {
+.timeline-section-label {
   font-size: 0.9375rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -2859,6 +2949,40 @@ body {
   animation: pulse-locate 1.5s ease-in-out infinite;
 }
 
+.zoom-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.map-location-status {
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  bottom: 0;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 6.5rem));
+  padding: 0.65rem 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 0.65rem;
+  background: rgba(15, 23, 42, 0.94);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+  color: #f8fafc;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.map-location-status.success {
+  border-color: rgba(59, 130, 246, 0.75);
+}
+
+.map-location-status.permission-denied,
+.map-location-status.unavailable,
+.map-location-status.timeout,
+.map-location-status.unsupported {
+  border-color: rgba(248, 113, 113, 0.75);
+}
+
 @keyframes pulse-locate {
   0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
   50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
@@ -2930,7 +3054,7 @@ body {
 
   .mobile-header-row {
     display: grid;
-    grid-template-columns: 4rem minmax(0, 1fr) 4rem;
+    grid-template-columns: 7.25rem minmax(0, 1fr) 7.25rem;
     align-items: center;
     gap: 0.55rem;
     min-height: 4rem;
@@ -3108,7 +3232,7 @@ body {
     width: 72%;
   }
 
-  .section-label {
+  .timeline-section-label {
     font-size: 0.9rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -3251,6 +3375,13 @@ body {
     bottom: 12rem;
   }
 
+  .map-location-status {
+    right: calc(100% + 0.6rem);
+    left: auto;
+    max-width: min(17rem, calc(100vw - 5.75rem));
+    font-size: 0.75rem;
+  }
+
   /* --- Bottom bar: keep position:fixed (same as desktop), just enable touch --- */
   .bottom-control-bar {
     pointer-events: auto;
@@ -3326,7 +3457,7 @@ body {
   }
 
   .mobile-header-row {
-    grid-template-columns: 2.7rem minmax(0, 1fr) 2rem;
+    grid-template-columns: 5.75rem minmax(0, 1fr) 5.75rem;
     gap: 0.4rem;
     min-height: 3.5rem;
   }
@@ -3334,6 +3465,10 @@ body {
   .mobile-header-logo {
     width: 2.2rem;
     height: 2.2rem;
+  }
+
+  .mobile-header-leading {
+    gap: 0.35rem;
   }
 
   .mobile-header-center {
@@ -3434,7 +3569,7 @@ body {
     width: 72%;
   }
 
-  .section-label {
+  .timeline-section-label {
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -4339,6 +4474,21 @@ body {
   font-size: 0.875rem;
 }
 
+.chart-loading--skeleton {
+  display: block;
+  min-height: 290px;
+  padding: 1.25rem 1rem 1rem;
+}
+
+.district-chart-skeleton { width: 100%; }
+.district-chart-skeleton__heading { display: flex; margin-bottom: 1rem; align-items: center; justify-content: space-between; gap: 1rem; line-height: 1; }
+.district-chart-skeleton__plot { display: block; margin-bottom: .9rem; line-height: 1; }
+.district-chart-skeleton__plot .react-loading-skeleton { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .react-loading-skeleton::after { display: none !important; animation: none !important; }
+}
+
 .chart-empty {
   text-align: center;
   padding: 2rem;
@@ -4920,7 +5070,7 @@ body {
 
   .mobile-header-row {
     display: grid;
-    grid-template-columns: 4.25rem minmax(0, 1fr) 3rem;
+    grid-template-columns: 7.5rem minmax(0, 1fr) 7.5rem;
     align-items: center;
     gap: 0.75rem;
     min-height: 4rem;
@@ -5085,7 +5235,7 @@ body {
     padding: 0.75rem 0.9rem;
   }
 
-  .section-label {
+  .timeline-section-label {
     font-size: 0.82rem;
   }
 
@@ -5221,7 +5371,7 @@ body {
     gap: 0.25rem;
   }
 
-  .bottom-control-bar.panel-open .section-label {
+  .bottom-control-bar.panel-open .timeline-section-label {
     font-size: 0.7rem;
   }
 
@@ -5232,6 +5382,59 @@ body {
   .bottom-control-bar.panel-open .category-tabs {
     padding: 0.5rem 0.6rem;
     gap: 0.4rem;
+  }
+}
+
+@media (min-width: 1101px) and (max-width: 1350px) {
+  .new-header {
+    padding-inline: 1rem;
+  }
+
+  .header-left {
+    gap: 0.75rem;
+  }
+
+  .desktop-header-logo {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .header-legend {
+    --legend-width: 220px;
+  }
+
+  .header-right {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-header-row {
+    grid-template-columns: 7.25rem minmax(0, 1fr) 7.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-header-shell {
+    padding: 0.35rem 0.55rem;
+  }
+
+  .mobile-header-row {
+    grid-template-columns: 5.75rem minmax(0, 1fr) 5.75rem;
+    gap: 0.4rem;
+  }
+
+  .mobile-header-logo {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .mobile-header-leading {
+    gap: 0.35rem;
+  }
+
+  .mobile-header-center {
+    margin-left: 0;
   }
 }
 
@@ -5913,7 +6116,7 @@ body {
   }
 
   .district-search-input {
-    font-size: 16px;
+    font-size: max(16px, 1rem); /* the 16px floor keeps iOS from zooming on focus */
   }
 
   .district-search-results,
@@ -6226,7 +6429,7 @@ body {
     width: 100%;
   }
 
-  .section-label {
+  .timeline-section-label {
     text-align: center;
   }
 
@@ -6702,5 +6905,252 @@ body {
   .cookie-btn-accept {
     background: var(--accent);
     box-shadow: 0 20px 40px -24px rgba(233, 69, 96, 0.75);
+  }
+}
+
+/* ================================
+   Readability typography scale
+
+   These role-based sizes deliberately affect text only. Keeping spacing and
+   control geometry unchanged avoids the layout side effects of scaling the
+   root font size, while still giving dense labels and body copy a useful lift.
+   ================================ */
+:root {
+  --font-ui-compact: 0.75rem;
+  --font-ui-label: 0.8125rem;
+  --font-ui-small: 0.875rem;
+  --font-ui-control: 0.9375rem;
+  --font-ui-body: 1rem;
+  --font-ui-reading: 1.0625rem;
+}
+
+/* 12px: non-essential metadata that must stay compact. */
+.toggle-label,
+.data-request-eyebrow,
+.data-request-form legend,
+.data-request-scenario-group > span,
+.timeline-label,
+.marker-years,
+.version-badge-button,
+.selection-badge,
+.info-footer small {
+  font-size: var(--font-ui-compact);
+}
+
+/* 13px: chart annotations, status text, and short supporting labels. */
+.legend-value,
+.share-status,
+.district-search-result-item .result-region,
+.data-request-chip span,
+.data-request-selected-scenario,
+.scenario-slider span,
+.marker-label,
+.city-tooltip,
+.district-detail-panel .region-label,
+.value-comparison .period-label,
+.chart-title,
+.chart-tooltip .tooltip-label,
+.chart-tooltip .tooltip-value,
+.chart-legend-box .legend-text,
+.chart-tooltip-target .tooltip-range,
+.chart-bottom-legend .legend-label,
+.statistics-table th,
+.statistics-table .period-header,
+.grid-point-info,
+.data-source,
+.chart-period-label,
+.chart-tooltip-label,
+.chart-tooltip-value,
+.climate-chart-note,
+.climate-chart-legend .legend-label,
+.story-popup-caption-hint,
+.period-labels span {
+  font-size: var(--font-ui-label);
+}
+
+.legend-value,
+.floating-map-legend .legend-value {
+  line-height: 1.1;
+}
+
+/* 14px: standard compact interface copy and interactive labels. */
+.variable-description,
+.header-btn-labeled span,
+.tour-card p,
+.district-search-input,
+.district-search-empty,
+.district-search-result-item,
+.data-request-toggle-option,
+.data-request-warning,
+.data-request-toast-copy strong,
+.data-request-toast-copy span,
+.change-toggle,
+.version-badge-popover,
+.category-tab,
+.category-panel-description,
+.value-display .label,
+.change-value .percent,
+.leaflet-tooltip,
+.chart-tooltip-target .tooltip-year,
+.statistics-table td,
+.story-popup-description,
+.story-popup-link,
+.cookie-consent-title,
+.cookie-btn {
+  font-size: var(--font-ui-small) !important;
+}
+
+/* 15px: primary controls and compact content summaries. */
+.map-text,
+.national-avg,
+.share-dropdown-item,
+.data-request-secondary-btn,
+.category-subpanel-label,
+.modal-tech-toggle,
+.modal-formula-parameter,
+.chart-subtitle,
+.chart-loading,
+.chart-tooltip .tooltip-header,
+.change-badge,
+.chart-tooltip-target .tooltip-value,
+.more-details-header,
+.download-item,
+.cookie-consent-text {
+  font-size: var(--font-ui-control);
+}
+
+/* 16px: key choices and category names. */
+.legend-label,
+.scenario-info,
+.scenario-btn,
+.data-request-form select,
+.timeline-section-label,
+.period-option .period-label,
+.tab-label,
+.category-panel-title,
+.category-panel-label,
+.modal-section-desc,
+.modal-legend h4,
+.downloads-header {
+  font-size: var(--font-ui-body);
+}
+
+/* 17px: paragraphs and longer technical explanations. */
+.help-section p,
+.modal-about-text,
+.modal-formula,
+.modal-tech-text,
+.modal-return {
+  font-size: var(--font-ui-reading);
+}
+
+.data-request-chip span {
+  font-size: var(--font-ui-label) !important;
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .bottom-control-bar.panel-open .timeline-section-label {
+    font-size: var(--font-ui-compact);
+  }
+
+  .bottom-control-bar.panel-open .scenario-slider span {
+    font-size: 0.6875rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-header-scenario,
+  .statistics-table td,
+  .change-badge,
+  .district-header-orange .header-region,
+  .district-header-orange .header-subtitle,
+  .header-period-comparison .period-future {
+    font-size: var(--font-ui-label) !important;
+  }
+
+  .mobile-header-action span,
+  .scenario-slider span,
+  .period-option .period-label,
+  .tab-label,
+  .category-panel-description,
+  .tour-card p,
+  .district-search-result-item .result-region,
+  .district-header-orange .header-scenario {
+    font-size: var(--font-ui-small) !important;
+  }
+
+  .timeline-section-label,
+  .category-subpanel-back {
+    font-size: var(--font-ui-control);
+  }
+
+  .category-panel-label,
+  .district-search-input,
+  .district-search-result-item .result-name,
+  .cookie-consent-title {
+    font-size: var(--font-ui-body) !important;
+  }
+
+  .tab-label {
+    display: flex;
+    min-height: 2.2em;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-header-title {
+    font-size: var(--font-ui-control);
+  }
+
+  .floating-map-legend .legend-value {
+    font-size: 0.6875rem !important;
+  }
+
+  .mobile-header-scenario,
+  .mobile-header-action span,
+  .mobile-share-status,
+  .period-option .period-label,
+  .tab-label,
+  .chart-period-label {
+    font-size: var(--font-ui-compact) !important;
+  }
+
+  .floating-map-legend .legend-label,
+  .scenario-slider span,
+  .category-panel-info-btn,
+  .tour-card p,
+  .climate-chart-legend .legend-label {
+    font-size: var(--font-ui-label) !important;
+  }
+
+  .timeline-section-label,
+  .category-panel-description,
+  .data-request-landscape .modal-short-desc,
+  .modal-section-desc,
+  .modal-tech-toggle,
+  .modal-map-legend .legend-label {
+    font-size: var(--font-ui-small) !important;
+  }
+
+  .help-section p,
+  .modal-about-text,
+  .modal-formula,
+  .modal-tech-text,
+  .modal-return,
+  .modal-legend h4 {
+    font-size: var(--font-ui-control);
+  }
+}
+
+@media (max-width: 360px) {
+  .variable-title {
+    font-size: var(--font-ui-control);
   }
 }

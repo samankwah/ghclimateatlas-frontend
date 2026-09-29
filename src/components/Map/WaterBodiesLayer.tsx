@@ -1,7 +1,7 @@
 // Water bodies overlay for Ghana (lakes, rivers, lagoons)
 
-import { GeoJSON, useMap } from "react-leaflet";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { GeoJSON, Pane } from "react-leaflet";
+import { useCallback, useEffect, useState } from "react";
 import type { PathOptions } from "leaflet";
 import type { FeatureCollection, Feature } from "geojson";
 
@@ -18,17 +18,6 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
   opacity = 0.55,
   activeVariableId,
 }) => {
-  const map = useMap();
-  const paneCreated = useRef(false);
-
-  // Create the pane synchronously so it exists before GeoJSON renders.
-  if (!paneCreated.current && !map.getPane(PANE_NAME)) {
-    const pane = map.createPane(PANE_NAME);
-    pane.style.zIndex = "450";
-    pane.style.pointerEvents = "none";
-    paneCreated.current = true;
-  }
-
   // Lazy-load the GeoJSON so its ~147 kB stays out of the main bundle, and is
   // only fetched at all once the water overlay is actually switched on.
   const [waterData, setWaterData] = useState<FeatureCollection | null>(null);
@@ -69,12 +58,14 @@ const WaterBodiesLayer: React.FC<WaterBodiesLayerProps> = ({
   if (!visible || !waterData) return null;
 
   return (
-    <GeoJSON
-      key={`water-bodies-${isPrecipitation ? "gray" : "blue"}`}
-      data={waterData}
-      style={stylePerFeature}
-      interactive={false}
-    />
+    <Pane name={PANE_NAME} style={{ zIndex: 450, pointerEvents: "none" }}>
+      <GeoJSON
+        key={`water-bodies-${isPrecipitation ? "gray" : "blue"}`}
+        data={waterData}
+        style={stylePerFeature}
+        interactive={false}
+      />
+    </Pane>
   );
 };
 

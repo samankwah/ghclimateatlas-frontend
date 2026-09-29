@@ -30,6 +30,16 @@ function geojsonPlugin(): Plugin {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), geojsonPlugin()],
+  // maplibre-gl locates its web worker at runtime with
+  // `new URL('./maplibre-gl-worker.mjs', import.meta.url)`. Pre-bundling moves
+  // the entry into node_modules/.vite/deps, where that sibling file does not
+  // exist, so the worker fetch 404s and the vector basemap fails to start in
+  // dev. Serving both packages unbundled keeps import.meta.url pointing at the
+  // real package directory. Dev only - the production build resolves it through
+  // the maplibre manualChunk below.
+  optimizeDeps: {
+    exclude: ['maplibre-gl', '@maplibre/maplibre-gl-leaflet'],
+  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_RELEASE_DATE__: JSON.stringify("2026-03-25"),
@@ -37,10 +47,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          leaflet: ['leaflet', 'react-leaflet'],
-          maplibre: ['maplibre-gl', '@maplibre/maplibre-gl-leaflet'],
-          vendor: ['react', 'react-dom', '@tanstack/react-query', 'axios'],
+        // Matched by path rather than by package name: the name form let
+        // react-leaflet's import of react-dom pull React's entry into the leaflet
+        // chunk, which forced every public page to download the map library.
+        manualChunks(id) {
+          const packagePath = id.replace(/\\/g, '/').split('/node_modules/').pop()
+          if (!packagePath || packagePath === id) return undefined
+          const inPackage = (...names: string[]) => names.some((name) => packagePath.startsWith(`${name}/`))
+          if (inPackage('maplibre-gl', '@maplibre/maplibre-gl-leaflet')) return 'maplibre'
+          if (inPackage('leaflet', 'react-leaflet', '@react-leaflet')) return 'leaflet'
+          if (inPackage('react', 'react-dom', 'scheduler', '@tanstack/react-query', '@tanstack/query-core', 'axios')) return 'vendor'
+          return undefined
         },
       },
     },
