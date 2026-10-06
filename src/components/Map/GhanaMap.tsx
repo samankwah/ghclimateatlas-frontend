@@ -180,7 +180,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
   const getStyle = useCallback((
     districtId: string,
-    districtName: string,
     regionName: string,
     isSelected: boolean,
   ): PathOptions => {
@@ -197,7 +196,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
     const isIndirectSeaRisk =
       isSeaLevelRiskVariable(activeVariableId) &&
-      getCoastalExposure(districtName, regionName).kind === "indirect";
+      getCoastalExposure(districtId, regionName).kind === "indirect";
     const value = valueMap.get(districtId);
     const hasValue = value !== undefined;
     const fillColor = hasValue
@@ -221,9 +220,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       return { fillColor: "#e5e7eb", fillOpacity: 0.5, weight: 0.8, color: "#475569", opacity: 0.6 };
     }
     const districtId = feature.properties.id as string;
-    const districtName = feature.properties.name as string;
     const regionName = feature.properties.region as string;
-    return getStyle(districtId, districtName, regionName, districtId === selectedDistrictId);
+    return getStyle(districtId, regionName, districtId === selectedDistrictId);
   }, [selectedDistrictId, getStyle]);
 
   // Imperatively update styles when selectedDistrictId changes (no GeoJSON re-mount)
@@ -240,7 +238,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       if (feature?.properties) {
         layer.setStyle(getStyle(
           feature.properties.id as string,
-          feature.properties.name as string,
           feature.properties.region as string,
           false
         ));
@@ -253,7 +250,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       if (feature?.properties) {
         layer.setStyle(getStyle(
           feature.properties.id as string,
-          feature.properties.name as string,
           feature.properties.region as string,
           true
         ));
@@ -269,7 +265,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
       if (!props) return;
 
       const value = valueMap.get(districtId);
-      const coastalContext = getCoastalContextLabel(activeVariableId, props.name as string, props.region as string);
+      const coastalContext = getCoastalContextLabel(activeVariableId, props.id as string, props.region as string);
       const formattedValue = value !== undefined
         ? (showChange ? formatChange(value, unit) : formatValue(value, unit))
         : "No data";
@@ -295,7 +291,7 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
     // Tooltip - will be updated when valueMap changes via useEffect
     const value = valueMap.get(districtId);
-    const coastalContext = getCoastalContextLabel(activeVariableId, districtName, region);
+    const coastalContext = getCoastalContextLabel(activeVariableId, districtId, region);
     const formattedValue = value !== undefined
       ? (showChange ? formatChange(value, unit) : formatValue(value, unit))
       : "No data";

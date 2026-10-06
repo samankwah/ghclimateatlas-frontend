@@ -1,35 +1,6 @@
-const COASTAL_DISTRICTS = new Set([
-  "Accra Metropolitan",
-  "Tema Metropolitan",
-  "Kpone Katamanso",
-  "Ada East",
-  "Ada West",
-  "Ningo Prampram",
-  "Shai Osudoku",
-  "Krowor",
-  "Ledzokuku",
-  "La Dade-Kotopon",
-  "Ga South",
-  "Sekondi-Takoradi Metropolitan",
-  "Effia Kwesimintsim",
-  "Shama",
-  "Ahanta West",
-  "Ellembelle",
-  "Jomoro",
-  "Nzema East",
-  "Cape Coast Metropolitan",
-  "Komenda-Edina-Eguafo-Abrem",
-  "Mfantseman",
-  "Ekumfi",
-  "Gomoa West",
-  "Gomoa East",
-  "Effutu",
-  "Awutu Senya East",
-  "Awutu Senya West",
-  "Keta",
-  "Ketu South",
-  "South Tongu",
-]);
+import { COASTAL_DISTRICT_IDS } from "../data/coastalDistricts";
+
+const COASTAL_DISTRICTS = new Set(COASTAL_DISTRICT_IDS);
 
 const REGION_PROXY_SCORES: Record<string, number> = {
   "Greater Accra": 0.18,
@@ -73,8 +44,8 @@ export const isSeaLevelVariable = (variableId: string): boolean =>
 export const isSeaLevelRiskVariable = (variableId: string): boolean =>
   SEA_LEVEL_RISK_VARIABLE_IDS.has(variableId);
 
-export const getCoastalExposure = (districtName: string, regionName: string): CoastalExposure => {
-  if (COASTAL_DISTRICTS.has(districtName)) {
+export const getCoastalExposure = (districtId: string, regionName: string): CoastalExposure => {
+  if (COASTAL_DISTRICTS.has(districtId)) {
     return { kind: "direct", score: 1 };
   }
 
@@ -84,12 +55,12 @@ export const getCoastalExposure = (districtName: string, regionName: string): Co
   };
 };
 
-export const getCoastalContextLabel = (variableId: string, districtName: string, regionName: string): string | null => {
+export const getCoastalContextLabel = (variableId: string, districtId: string, regionName: string): string | null => {
   if (!isSeaLevelRiskVariable(variableId)) {
     return null;
   }
 
-  const exposure = getCoastalExposure(districtName, regionName);
+  const exposure = getCoastalExposure(districtId, regionName);
   if (exposure.kind === "direct") {
     return "Direct coastal exposure";
   }
