@@ -15,7 +15,6 @@ import {
   dashboardDistrictOptions,
   dashboardScenarioOptions,
   dashboardSelectionFromVariable,
-  dashboardSeriesCsv,
   dashboardTimeScaleOptions,
   dashboardVariableForSelection,
   filterDashboardSeries,
@@ -67,16 +66,6 @@ const formatMetric = (value: number, unit: string) => {
   return `${rendered}${unit ? ` ${unit}` : ""}`;
 };
 
-const downloadCsv = (csv: string, filename: string) => {
-  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-};
 
 const DashboardPage = ({ search }: DashboardPageProps) => {
   // Names only: the dropdown needs no boundary geometry.
@@ -211,19 +200,6 @@ const DashboardPage = ({ search }: DashboardPageProps) => {
     updateState({ variable: dashboardVariableForSelection(selection.parameter, timeScale) });
   };
 
-  const exportSeries = () => {
-    if (!series || !filtered.length) return;
-    const csv = dashboardSeriesCsv(filtered, {
-      district: selectedDistrict?.name || series.district_name,
-      variable: selectedVariable?.name || series.variable_name,
-      scenario: SCENARIO_LABELS[state.scenario],
-      unit,
-    });
-    const districtSlug = (selectedDistrict?.name || series.district_name)
-      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    downloadCsv(csv, `${districtSlug || "district"}-${state.variable}-${state.from}-${state.to}.csv`);
-  };
-
   return (
     <main id="main-content" className="public-main dashboard-page">
       <section className="dashboard-controls-panel" aria-labelledby="dashboard-controls-title">
@@ -347,7 +323,6 @@ const DashboardPage = ({ search }: DashboardPageProps) => {
                 <span>{timeScaleLabel} · {SCENARIO_LABELS[state.scenario]} · {state.from}–{state.to}</span>
               </p>
               <div className="dashboard-result-actions">
-                <button type="button" className="text-button" onClick={exportSeries}><AtlasIcon name="download" size={15} /> Download CSV</button>
                 <RouteLink className="text-link" to={`/map?variable=${encodeURIComponent(state.variable)}&scenario=${state.scenario}&district=${encodeURIComponent(state.district)}&period=2080`}>
                   View on map <AtlasIcon name="arrow" size={15} />
                 </RouteLink>

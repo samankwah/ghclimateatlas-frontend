@@ -232,7 +232,7 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
 .header-indicators strong { color: var(--atlas-blue); font-size: 1.65rem; font-weight: 400; letter-spacing: -.03em; }
 .header-indicators em { color: #7d939e; font-size: var(--atlas-text-small); font-style: normal; }
 
-.atlas-tabs { margin-top: 24px; border-top: 1px solid var(--atlas-line); border-bottom: 1px solid var(--atlas-line); background: #fff; }
+.atlas-tabs { position: sticky; top: 0; z-index: 30; margin-top: 24px; border-top: 1px solid var(--atlas-line); border-bottom: 1px solid var(--atlas-line); background: #fff; }
 .atlas-tabs__inner { display: flex; min-height: 58px; align-items: stretch; justify-content: center; }
 .atlas-tabs a { position: relative; display: flex; padding: 0 clamp(14px, 2.3vw, 31px); align-items: center; justify-content: center; color: #506d7b; font-size: var(--atlas-text-label); font-weight: 800; letter-spacing: .075em; text-align: center; text-transform: uppercase; white-space: nowrap; }
 .atlas-tabs a::after { position: absolute; right: 20px; bottom: -1px; left: 20px; height: 3px; background: var(--atlas-cyan); content: ""; opacity: 0; }
@@ -428,17 +428,12 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
   letter-spacing: -.03em;
   line-height: 1.1;
 }
-.public-site--overview .overview-feature-heading p {
-  margin-top: 8px;
-  color: var(--atlas-muted);
-  font-size: var(--atlas-text-body);
-}
 
-/* One lead update spanning both rows, with two stacked tiles beside it. */
+/* The carousel spans both rows, with the next two updates stacked beside it. */
 .public-site--overview .overview-feature-grid {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  grid-template-rows: repeat(2, minmax(214px, 1fr)) auto;
+  grid-template-rows: repeat(2, minmax(214px, 1fr));
   gap: 16px;
 }
 
@@ -447,6 +442,8 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
   min-width: 0;
   overflow: hidden;
 }
+/* With only two updates there is one tile; it fills the column on its own. */
+.public-site--overview article.overview-update-tile:only-of-type { grid-row: 1 / span 2; }
 
 /* ---------------------------------------------------------------------------
    Latest Updates carousel - live GMet Climate Atlas news in the feature grid.
@@ -689,7 +686,7 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
   text-underline-offset: 3px;
 }
 
-/* Secondary update tiles - photo, scrim and headline, like the lead slide. */
+/* Up-next tiles - photo, scrim and headline, like the carousel slides. */
 .public-site--overview .overview-update-tile {
   position: relative;
   display: flex;
@@ -718,15 +715,6 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
   background: linear-gradient(112deg, #e6edf0, #f3f6f8);
 }
 
-.public-site--overview .overview-feature-footer {
-  display: flex;
-  padding-top: 8px;
-  grid-column: 1 / -1;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .observed-section { padding: 88px 0 92px; background: white; }
 .observed-heading { display: grid; margin-bottom: 46px; grid-template-columns: 1.05fr .75fr; align-items: end; gap: 80px; }
 .observed-heading h2 { margin-top: 8px; }
@@ -738,14 +726,6 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
 .climatology-chart .highcharts-container,
 .dashboard-chart .highcharts-container { width: 100% !important; }
 
-.chart-data-table { margin: 5px 5px 0; border-top: 1px solid var(--atlas-line); }
-.chart-data-table summary { padding: 11px 0 2px; color: var(--atlas-blue); font-size: var(--atlas-text-label); font-weight: 800; cursor: pointer; text-transform: uppercase; }
-.chart-data-table__scroll { max-height: 280px; margin-top: 10px; overflow: auto; }
-.chart-data-table table { width: 100%; border-collapse: collapse; font-size: var(--atlas-text-small); text-align: right; }
-.chart-data-table caption { padding: 7px; color: var(--atlas-muted); text-align: left; }
-.chart-data-table th,
-.chart-data-table td { padding: 6px 8px; border-bottom: 1px solid #e5edf0; }
-.chart-data-table th:first-child { text-align: left; }
 
 /* Table of indicators */
 .indicator-table-section { padding: 88px 0 92px; background: #e3f1f8; border-top: 1px solid #cfe4ee; }
@@ -779,6 +759,112 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
 .faq-question > summary span { color: var(--atlas-cyan); font-size: 1.2rem; font-weight: 300; transition: transform 160ms ease; }
 .faq-question[open] > summary span { transform: rotate(45deg); }
 .faq-question > div { padding: 0 28px 18px 0; color: var(--atlas-muted); font-size: var(--atlas-text-body); }
+
+/* ---------------------------------------------------------------------------
+   Overview page design system. The storm-field photo anchors the middle of the
+   page (observed climate); the FAQ and Latest updates, which closes the page,
+   sit on the masthead cloud photo washed near white, so the page never reads as
+   flat white yet stays distinct from the footer. The indicator table keeps its
+   original styling.
+   --------------------------------------------------------------------------- */
+
+.overview-page {
+  --ov-ink: #0a2230;
+  --ov-night: #06202d;
+  --ov-mist: #f1f6f8;
+  --ov-card-shadow: 0 1px 2px rgba(10, 34, 48, .06), 0 18px 40px -12px rgba(10, 34, 48, .18);
+}
+
+.overview-page .observed-heading h2,
+.public-site--overview .overview-page .overview-feature-heading h2 {
+  font-family: Lato, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+
+/* Masthead sky: the cloud photo, washed almost to white. It is laid on the
+   page itself, so one continuous sky runs from under the masthead behind the
+   tabs with no seam; the header is made transparent over it. Scoped with
+   :has() so the shared header on the other Atlas pages stays white. */
+.public-site--overview:has(> .overview-page) {
+  --ov-sky-height: 1500px;
+  background:
+    linear-gradient(180deg, rgba(236, 244, 248, .86) 0, rgba(255, 255, 255, .93) 75%, #fff 100%) center top / 100% var(--ov-sky-height) no-repeat,
+    url("../../assets/overview-hero-clouds.webp") center top / auto var(--ov-sky-height) no-repeat,
+    #fff;
+}
+.public-site--overview:has(> .overview-page) .public-header { background: transparent; }
+/* Latest updates closes the page below the FAQ, on the same washed cloud photo
+   (mirrored vertically) with a rule between them. */
+.public-site--overview .overview-page .overview-feature-section {
+  padding-top: 72px;
+  border-top: 1px solid #e0e9ed;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(236, 244, 248, .9)),
+    url("../../assets/overview-hero-clouds.webp") center bottom / cover no-repeat;
+}
+/* The sticky tabs repeat the same sky, shifted up by their resting position
+   (set from PublicSite.tsx), so they match the page at rest and keep the
+   cloud photo behind them once stuck over scrolled content. */
+.public-site--overview:has(> .overview-page) .atlas-tabs {
+  --ov-sky-y: calc(-1 * var(--atlas-tabs-sky-offset, 0px));
+  border-bottom-color: rgba(20, 62, 82, .1);
+  background:
+    linear-gradient(180deg, rgba(236, 244, 248, .86) 0, rgba(255, 255, 255, .93) 75%, #fff 100%) center var(--ov-sky-y) / 100% var(--ov-sky-height) no-repeat,
+    url("../../assets/overview-hero-clouds.webp") center var(--ov-sky-y) / auto var(--ov-sky-height) no-repeat,
+    #fff;
+}
+.public-site--overview .overview-page .overview-feature-heading h2 { color: var(--ov-ink); }
+.public-site--overview .overview-page .overview-feature-heading h2::after {
+  display: block;
+  width: 56px;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--atlas-cyan), var(--atlas-blue));
+  content: "";
+}
+.public-site--overview .overview-page .overview-updates-card,
+.public-site--overview .overview-page .overview-update-tile {
+  border-radius: 14px;
+  box-shadow: var(--ov-card-shadow);
+}
+
+/* Observed trends: a bright sky photo under a blue veil that matches it, dark
+   enough behind the heading for white text; kept compact so the charts sit
+   close to their heading. */
+.overview-page .observed-section {
+  position: relative;
+  padding: 64px 0 60px;
+  background:
+    radial-gradient(ellipse 60% 55% at 22% 18%, rgba(5, 38, 58, .5), transparent 72%),
+    linear-gradient(180deg, rgba(7, 52, 78, .3) 0%, rgba(7, 52, 78, .4) 50%, rgba(6, 40, 60, .6) 100%),
+    url("../../assets/observed-sky.webp") center top / cover no-repeat,
+    #2f6f9e;
+  color: white;
+}
+.overview-page .observed-heading { margin-bottom: 28px; }
+.overview-page .observed-heading .eyebrow { color: #8fe0f5; }
+.overview-page .observed-heading h2 { color: white; text-shadow: 0 2px 24px rgba(0, 0, 0, .35); }
+.overview-page .observed-heading > p { color: rgba(255, 255, 255, .86); text-shadow: 0 1px 12px rgba(0, 0, 0, .4); }
+.overview-page .climatology-chart {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06);
+}
+
+/* FAQ: the masthead cloud photo washed near white; layout unchanged. */
+.overview-page .faq-section {
+  background:
+    linear-gradient(180deg, rgba(241, 246, 248, .9), rgba(255, 255, 255, .95)),
+    url("../../assets/overview-hero-clouds.webp") center / cover no-repeat;
+}
+
+@media (max-width: 860px) {
+  .public-site--overview:has(> .overview-page) { --ov-sky-height: 2400px; }
+  .overview-page .observed-section { padding: 48px 0 44px; }
+  .public-site--overview .overview-page .overview-feature-section { padding-top: 44px; }
+}
 
 /* Dashboard */
 .dashboard-page { background: #f6f8f9; }
@@ -902,7 +988,7 @@ body.public-route #root { width: 100%; min-height: 100%; height: auto; }
 .case-study-detail__story > p:last-of-type { color: #3f5d6b; font-size: 1.05rem; line-height: 1.8; }
 .case-study-detail__source { display: inline-flex; min-height: 44px; margin-top: 28px; align-items: center; gap: 8px; color: var(--atlas-blue); font-size: var(--atlas-text-small); font-weight: 800; }
 .case-study-detail__source:hover { color: var(--atlas-blue-deep); }
-.case-study-detail__media { position: sticky; top: 24px; }
+.case-study-detail__media { position: sticky; top: 72px; }
 .case-study-detail__media button { position: relative; display: grid; width: 100%; aspect-ratio: 16 / 9; padding: 0; overflow: hidden; place-items: center; border: 0; border-radius: 12px; background: linear-gradient(135deg, #087aaa, #00a8d1); color: white; cursor: pointer; box-shadow: 0 12px 30px rgba(14,65,88,.16); }
 .case-study-detail__media video,
 .case-study-detail__media img { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: cover; transition: transform 350ms ease; }
@@ -1021,7 +1107,7 @@ body.story-video-is-open { overflow: hidden !important; }
 .guide-jump-links strong { color: var(--atlas-ink); font-size: var(--atlas-text-small); }
 .guide-jump-links a { color: var(--atlas-blue); font-size: var(--atlas-text-small); font-weight: 700; }
 .guide-jump-links a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.guide-section { padding-bottom: 72px; scroll-margin-top: 24px; }
+.guide-section { padding-bottom: 72px; scroll-margin-top: 72px; }
 .guide-section + .guide-section { padding-top: 68px; border-top: 1px solid var(--atlas-line); }
 .guide-section > h2 { margin: 6px 0 13px; max-width: 720px; font-size: clamp(1.75rem, 3vw, 2.3rem); font-weight: 600; letter-spacing: -.025em; line-height: 1.15; }
 .guide-section > p:not(.eyebrow):not(.guide-section-label) { max-width: 720px; color: var(--atlas-muted); font-size: var(--atlas-text-body); }
@@ -1134,6 +1220,10 @@ body.story-video-is-open { overflow: hidden !important; }
     min-height: 220px;
     grid-column: auto;
   }
+  .public-site--overview article.overview-update-tile:only-of-type {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
   .overview-intro__grid,
   .observed-heading,
   .page-heading__grid { grid-template-columns: 1fr; gap: 24px; }
@@ -1212,7 +1302,6 @@ body.story-video-is-open { overflow: hidden !important; }
   .public-site--overview .overview-updates-card { min-height: 330px; }
   .public-site--overview .overview-update-story { padding: 18px 16px 14px; }
   .public-site--overview .overview-update-tile { min-height: 200px; }
-  .public-site--overview .overview-feature-footer .button { width: 100%; justify-content: center; }
   .overview-intro { padding-top: 58px; padding-bottom: 61px; }
   .section-label { margin-bottom: 32px; }
   .map-viewer-section,

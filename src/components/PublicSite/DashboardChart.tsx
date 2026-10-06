@@ -290,32 +290,6 @@ const DashboardChart = ({
         options={options}
         containerProps={{ style: { width: "100%", minWidth: 0 } }}
       />
-      <details className="chart-data-table">
-        <summary>View chart data</summary>
-        <div className="chart-data-table__scroll">
-          <table>
-            <caption>{anomaly ? `${label} values` : label} under {scenarioLabel}</caption>
-            <thead>
-              <tr>
-                <th scope="col">Year</th>
-                <th scope="col">p10{displayUnit ? ` (${displayUnit})` : ""}</th>
-                <th scope="col">p50{displayUnit ? ` (${displayUnit})` : ""}</th>
-                <th scope="col">p90{displayUnit ? ` (${displayUnit})` : ""}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((point) => (
-                <tr key={point.year}>
-                  <th scope="row">{point.year}</th>
-                  <td>{point.p10.toFixed(decimals)}</td>
-                  <td>{point.p50.toFixed(decimals)}</td>
-                  <td>{point.p90.toFixed(decimals)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </details>
     </figure>
   );
 };

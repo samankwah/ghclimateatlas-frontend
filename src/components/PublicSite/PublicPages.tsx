@@ -19,7 +19,7 @@ const STORIES_PER_PAGE = 6;
 const ObservedClimatologyChart = lazy(() => import("./ObservedClimatologyChart"));
 
 const climatologyChartFallback = (
-  <figure className="climatology-chart"><ChartSkeleton height={380} /></figure>
+  <figure className="climatology-chart"><ChartSkeleton height={340} /></figure>
 );
 
 export const HomePage = () => (
@@ -90,18 +90,6 @@ const faqCategories = [
 
 export const OverviewPage = () => (
   <main id="main-content" className="public-main overview-page">
-    <section className="overview-feature-section" aria-labelledby="overview-feature-heading">
-      <div className="public-container">
-        <div className="overview-feature-heading">
-          <h2 id="overview-feature-heading">Latest updates</h2>
-          <p>Climate news and insights from the Ghana Meteorological Agency.</p>
-        </div>
-        <div className="overview-feature-grid">
-          <LatestUpdatesCard />
-        </div>
-      </div>
-    </section>
-
     <section className="observed-section" aria-labelledby="observed-title">
       <div className="public-container">
         <div className="observed-heading">
@@ -178,6 +166,17 @@ export const OverviewPage = () => (
             </div>
           </details>
         ))}
+      </div>
+    </section>
+
+    <section className="overview-feature-section" aria-labelledby="overview-feature-heading">
+      <div className="public-container">
+        <div className="overview-feature-heading">
+          <h2 id="overview-feature-heading">Latest updates</h2>
+        </div>
+        <div className="overview-feature-grid">
+          <LatestUpdatesCard />
+        </div>
       </div>
     </section>
   </main>

@@ -5,7 +5,6 @@ import { useLatestUpdates } from "../../hooks/useLatestUpdates";
 import type { AtlasNewsItem } from "../../types/news";
 import { OverviewUpdatesSkeleton } from "../Loading/SkeletonLoaders";
 import AtlasIcon from "./AtlasIcon";
-import RouteLink from "./RouteLink";
 
 const AUTOPLAY_MS = 7000;
 const TILE_COUNT = 2;
@@ -15,21 +14,6 @@ const GMET_SOURCE_LABEL = "meteo.gov.gh";
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-const formatRelativeTime = (isoTimestamp: string): string | null => {
-  const fetched = Date.parse(isoTimestamp);
-  if (Number.isNaN(fetched)) return null;
-
-  const minutes = Math.round((Date.now() - fetched) / 60000);
-  if (minutes < 1) return "Updated just now";
-  if (minutes < 60) return `Updated ${minutes} min ago`;
-
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `Updated ${hours} ${hours === 1 ? "hour" : "hours"} ago`;
-
-  const days = Math.round(hours / 24);
-  return `Updated ${days} ${days === 1 ? "day" : "days"} ago`;
-};
 
 // A failed rendition falls back to the original file, then to the gradient
 // alone - which is a deliberate design state, not a broken one.
@@ -48,8 +32,7 @@ interface UpdateStoryProps {
   source: string;
 }
 
-// Date and headline at the top, the publisher at the bottom - shared by the
-// lead slide and the stacked tiles so all three read as one set.
+// Date and headline at the top, the publisher at the bottom.
 const UpdateStory = ({ item, source }: UpdateStoryProps) => (
   <>
     <span className="overview-update-scrim" aria-hidden="true" />
@@ -108,7 +91,7 @@ const UpdateSlide = ({ index, item, source, total }: UpdateSlideProps) => {
   );
 };
 
-// A secondary update beside the carousel, laid out as a photo tile.
+// An up-next update beside the carousel, laid out as a photo tile.
 const UpdateTile = ({ item, source }: UpdateStoryProps) => {
   const { handleImageError, imageSrc } = useUpdateImage(item);
 
@@ -137,16 +120,10 @@ const LatestUpdatesCard = () => {
   const [isPaused, setIsPaused] = useState(false);
 
   const isFallback = isError || (!isLoading && !data);
-  const allItems = useMemo<AtlasNewsItem[]>(
+  // Every update rotates through the carousel, newest first.
+  const items = useMemo<AtlasNewsItem[]>(
     () => (isFallback ? LATEST_UPDATES_FALLBACK : data?.items ?? []),
     [data, isFallback],
-  );
-  // The newest update leads the carousel; the next ones sit beside it as tiles
-  // and anything older rotates through the carousel after the lead.
-  const tileItems = allItems.slice(1, 1 + TILE_COUNT);
-  const items = useMemo(
-    () => [...allItems.slice(0, 1), ...allItems.slice(1 + TILE_COUNT)],
-    [allItems],
   );
   const total = items.length;
 
@@ -211,10 +188,15 @@ const LatestUpdatesCard = () => {
   // A refetch can return fewer items than the reader is currently looking at.
   const currentIndex = Math.min(activeIndex, Math.max(0, total - 1));
   const activeItem = items[currentIndex];
-  const freshness = !isFallback && data ? formatRelativeTime(data.fetched_at) : null;
+  // The tiles preview the next updates after the one on show, wrapping round,
+  // so the same story is never on screen twice.
+  const tileItems = Array.from(
+    { length: Math.min(TILE_COUNT, total - 1) },
+    (_, offset) => items[(currentIndex + offset + 1) % total],
+  );
   const allNewsUrl = (!isFallback && data?.all_news_url) || GMET_NEWS_URL;
-  const sourceStatus = isFallback ? "Saved copy" : freshness;
-  const leadSource = sourceStatus ? `${GMET_SOURCE_LABEL} · ${sourceStatus}` : GMET_SOURCE_LABEL;
+  // No "updated" time on live news; only the offline copy is labelled as such.
+  const leadSource = isFallback ? `${GMET_SOURCE_LABEL} · Saved copy` : GMET_SOURCE_LABEL;
 
   if (total === 0) {
     return (
@@ -279,20 +261,6 @@ const LatestUpdatesCard = () => {
       </section>
 
       {tileItems.map((item) => <UpdateTile item={item} key={item.id} source={GMET_SOURCE_LABEL} />)}
-
-      <div className="overview-feature-footer">
-        <RouteLink className="button button--outline" to="/case-studies">
-          Explore case studies
-        </RouteLink>
-        <a
-          className="button button--navy"
-          href={allNewsUrl}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          More updates <AtlasIcon name="external" size={16} />
-        </a>
-      </div>
     </>
   );
 };

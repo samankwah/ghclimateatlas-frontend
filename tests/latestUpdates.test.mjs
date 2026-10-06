@@ -82,13 +82,19 @@ test("external GMet links are opened safely and images degrade gracefully", asyn
   assert.match(card, /loading=\{index === 0 \? "eager" : "lazy"\}/);
 });
 
-test("the newest update leads the carousel and the next two become tiles", async () => {
+test("all four updates rotate in the carousel, with the next two as tiles beside it", async () => {
   const card = await readSource(CARD);
+  const api = await readSource(API);
 
+  assert.match(api, /export const LATEST_UPDATES_LIMIT = 4;/);
+  assert.match(card, /items\.map\(\(item, index\) => \(\s*<UpdateSlide/);
   assert.match(card, /const TILE_COUNT = 2;/);
-  assert.match(card, /allItems\.slice\(1, 1 \+ TILE_COUNT\)/);
+  // The tiles preview the updates after the one on show, wrapping round.
+  assert.match(card, /items\[\(currentIndex \+ offset \+ 1\) % total\]/);
   assert.match(card, /<UpdateTile item=\{item\} key=\{item\.id\} source=\{GMET_SOURCE_LABEL\} \/>/);
-  // Every tile shares one layout: date and headline on top, publisher below.
+  assert.doesNotMatch(card, /CAROUSEL_ONLY_IDS/);
+  assert.doesNotMatch(card, /Explore case studies|More updates|overview-feature-footer/);
+  // Every slide shares one layout: date and headline on top, publisher below.
   assert.match(card, /const UpdateStory = /);
   assert.match(card, /className="overview-update-story__source"/);
   // The reference layout has no header bar or arrow buttons on the lead tile.
@@ -102,10 +108,11 @@ test("degraded states are visible rather than disguised as live data", async () 
 
   assert.match(card, /LATEST_UPDATES_FALLBACK/);
   assert.match(card, /const isFallback = isError \|\| \(!isLoading && !data\);/);
-  assert.match(card, /const sourceStatus = isFallback \? "Saved copy" : freshness;/);
+  assert.match(card, /const leadSource = isFallback \? `\$\{GMET_SOURCE_LABEL\} · Saved copy` : GMET_SOURCE_LABEL;/);
   assert.match(card, /source=\{leadSource\}/);
   assert.match(card, /OverviewUpdatesSkeleton/);
-  assert.match(card, /formatRelativeTime/);
+  // Live news carries no "Updated ... ago" stamp.
+  assert.doesNotMatch(card, /formatRelativeTime|Updated \$\{/);
   // The empty state points at the source instead of rendering a blank tile.
   assert.match(card, /Climate Atlas updates are published by the Ghana Meteorological Agency/);
 
@@ -134,12 +141,13 @@ test("the Overview page swaps the prototype card for the updates carousel", asyn
   assert.match(site, /<RouteLink to="\/map">Map Viewer<\/RouteLink>/);
 });
 
-test("the updates card keeps the launch card's grid footprint and responsive rules", async () => {
+test("the carousel spans both rows with the tiles beside it, and responsive rules", async () => {
   const css = await readSource(CSS);
 
   assert.match(css, /\.overview-updates-card \{[\s\S]*grid-column: 1;[\s\S]*grid-row: 1 \/ span 2/);
-  // The next updates sit beside the carousel as stacked photo tiles.
   assert.match(css, /\.overview-update-tile \{[\s\S]*grid-column: 2;/);
+  // The retired footer buttons left no rules behind.
+  assert.doesNotMatch(css, /overview-feature-footer/);
   assert.match(css, /@media \(max-width: 860px\)[\s\S]*overview-updates-card \{[\s\S]*grid-column: 1 \/ -1/);
   assert.match(css, /@media \(max-width: 620px\)[\s\S]*overview-updates-card \{ min-height/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*overview-updates-card__viewport \{ scroll-behavior: auto; \}/);

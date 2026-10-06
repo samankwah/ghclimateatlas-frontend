@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import logo from "../../assets/smart-logo-gmet.webp";
 import { useDistrictList } from "../../hooks/useClimateData";
 import { CLIMATE_STORIES } from "../../data/climateStories";
@@ -56,7 +56,7 @@ const routeMastheads: Partial<Record<PublicRoutePath, typeof defaultMasthead>> =
   "/dashboard": {
     kicker: "Climate data explorer",
     title: "Climate Dashboard",
-    description: "Compare district projections by indicator, emissions pathway and time period.",
+    description: "See how the climate of any district in Ghana is projected to change, under different emissions scenarios and time periods.",
   },
   "/case-studies": {
     kicker: "Case Studies",
@@ -113,22 +113,22 @@ const routeHeroIndicators: Partial<Record<PublicRoutePath, HeroIndicator[]>> = {
   ],
   "/dashboard": [
     {
-      title: "Build your view",
+      title: "Choose what to explore",
       icon: "map",
       tone: "coral",
-      description: "Set a district, climate indicator and time period in one place.",
+      description: "Select a district, climate parameter, time scale and date range.",
     },
     {
-      title: "Compare pathways",
+      title: "Compare scenarios",
       icon: "compass",
       tone: "blue",
-      description: "Test how different emissions pathways change the outlook.",
+      description: "See how low, medium and high emissions shape the district’s future climate.",
     },
     {
-      title: "Export the series",
-      icon: "download",
+      title: "Read the projections",
+      icon: "chart",
       tone: "teal",
-      description: "Download the selected time series as a reusable CSV file.",
+      description: "Follow the median projection and the range of likely outcomes across climate models.",
     },
   ],
   "/case-studies": [
@@ -249,6 +249,7 @@ const renderPage = (
 
 const PublicSite = ({ pathname, search }: PublicSiteProps) => {
   const atlasTabsRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const isHome = pathname === "/";
   const [dataRequestOpen, setDataRequestOpen] = useState(false);
   const districtListQuery = useDistrictList(dataRequestOpen);
@@ -287,6 +288,26 @@ const PublicSite = ({ pathname, search }: PublicSiteProps) => {
     );
   }, [pathname]);
 
+  // The sticky tabs carry their own copy of the page sky; offset it by the tabs'
+  // resting position so it lines up seamlessly with the sky behind the header.
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    const tabs = atlasTabsRef.current;
+    if (!header || !tabs) return;
+
+    const syncSkyOffset = () => {
+      const siteTop = header.parentElement?.offsetTop ?? 0;
+      const restingTop = header.offsetTop - siteTop + header.offsetHeight + parseFloat(getComputedStyle(tabs).marginTop);
+      tabs.style.setProperty("--atlas-tabs-sky-offset", `${restingTop}px`);
+    };
+    syncSkyOffset();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const resizeObserver = new ResizeObserver(syncSkyOffset);
+    resizeObserver.observe(header);
+    return () => resizeObserver.disconnect();
+  }, [isHome, pathname]);
+
   if (isHome) {
     return (
       <div className="public-site public-site--home">
@@ -299,7 +320,7 @@ const PublicSite = ({ pathname, search }: PublicSiteProps) => {
   return (
     <div className={`public-site${hasClimateHero ? " public-site--overview" : ""}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
-      <header className="public-header">
+      <header ref={headerRef} className="public-header">
         <div className="climate-masthead">
           <div className="public-container climate-masthead__content">
             <p>{masthead.kicker}</p>
@@ -335,19 +356,19 @@ const PublicSite = ({ pathname, search }: PublicSiteProps) => {
             ))}
           </div>
         )}
-
-        <nav ref={atlasTabsRef} className="atlas-tabs" aria-label="Climate Atlas sections">
-          <div className="public-container atlas-tabs__inner">
-            {PUBLIC_NAV_ITEMS.slice(0, 2).map((item) => (
-              <RouteLink key={item.href} className={isRouteActive(pathname, item.href) ? "active" : ""} to={item.href} aria-current={isRouteActive(pathname, item.href) ? "page" : undefined}>{item.label}</RouteLink>
-            ))}
-            <RouteLink className="atlas-tabs__map" to="/map">Map Viewer</RouteLink>
-            {PUBLIC_NAV_ITEMS.slice(2).map((item) => (
-              <RouteLink key={item.href} className={isRouteActive(pathname, item.href) ? "active" : ""} to={item.href} aria-current={isRouteActive(pathname, item.href) ? "page" : undefined}>{item.label}</RouteLink>
-            ))}
-          </div>
-        </nav>
       </header>
+
+      <nav ref={atlasTabsRef} className="atlas-tabs" aria-label="Climate Atlas sections">
+        <div className="public-container atlas-tabs__inner">
+          {PUBLIC_NAV_ITEMS.slice(0, 2).map((item) => (
+            <RouteLink key={item.href} className={isRouteActive(pathname, item.href) ? "active" : ""} to={item.href} aria-current={isRouteActive(pathname, item.href) ? "page" : undefined}>{item.label}</RouteLink>
+          ))}
+          <RouteLink className="atlas-tabs__map" to="/map">Map Viewer</RouteLink>
+          {PUBLIC_NAV_ITEMS.slice(2).map((item) => (
+            <RouteLink key={item.href} className={isRouteActive(pathname, item.href) ? "active" : ""} to={item.href} aria-current={isRouteActive(pathname, item.href) ? "page" : undefined}>{item.label}</RouteLink>
+          ))}
+        </div>
+      </nav>
 
       {renderPage(pathname, search, () => setDataRequestOpen(true))}
 

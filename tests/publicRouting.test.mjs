@@ -283,8 +283,8 @@ test("keeps dashboard controls, data states, compact actions, and shared series 
   assert.match(dashboardSource, /scenario: event\.target\.value as Scenario/);
   assert.match(dashboardSource, /useDistrictChartSeries\(/);
   assert.match(dashboardSource, /seriesQuery\.refetch\(\)/);
-  assert.match(dashboardSource, /new Blob\(\[csv\]/);
-  assert.match(dashboardSource, /Download CSV/);
+  // CSV download was removed from the dashboard.
+  assert.doesNotMatch(dashboardSource, /new Blob\(\[csv\]|Download CSV/);
   assert.match(dashboardSource, /View on map/);
   assert.doesNotMatch(dashboardSource, /dashboard-stat-grid/);
   assert.doesNotMatch(dashboardSource, /advanced-controls/);
@@ -323,7 +323,7 @@ test("ships typed observed climatology and Highcharts instead of a raster chart"
   assert.match(dashboardChartSource, /crosshair/);
   assert.match(dashboardChartSource, /align: "right"/);
   assert.match(dashboardChartSource, /verticalAlign: "top"/);
-  assert.match(dashboardChartSource, /View chart data/);
+  assert.doesNotMatch(dashboardChartSource, /View chart data/);
   assert.doesNotMatch(dashboardChartSource, /<img/);
 });
 

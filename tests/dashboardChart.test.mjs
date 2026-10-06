@@ -78,7 +78,8 @@ test("configures line anomaly mode with split zones, a subtle band, and signed t
   assert.match(chartSource, /> p90: <b>/);
   assert.match(chartSource, /value >= 0 \? "\+" : ""/);
   assert.match(chartSource, /with a subtle p10 to p90 ensemble range/);
-  assert.match(chartSource, /View chart data/);
+  // The chart has no "View chart data" table under it.
+  assert.doesNotMatch(chartSource, /View chart data|chart-data-table/);
   assert.match(pageSource, /Split-color median with a subtle p10–p90 ensemble range/);
   assert.equal(pageSource.match(/parameter=\{selection\.parameter\}/g)?.length, 2);
 });

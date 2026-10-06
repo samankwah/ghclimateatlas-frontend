@@ -14,7 +14,7 @@ const ObservedClimatologyChart = ({ data }: ObservedClimatologyChartProps) => {
   const options: Highcharts.Options = {
     chart: {
       backgroundColor: "transparent",
-      height: 330,
+      height: 290,
       spacing: [14, 8, 8, 8],
       style: { fontFamily: 'Arial, "Helvetica Neue", sans-serif' },
     },

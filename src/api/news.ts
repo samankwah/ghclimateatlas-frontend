@@ -7,7 +7,8 @@ const newsApi = axios.create({
   timeout: 30000,
 });
 
-export const LATEST_UPDATES_LIMIT = 6;
+// The Overview carousel shows the four newest on-topic updates.
+export const LATEST_UPDATES_LIMIT = 4;
 
 export const fetchLatestUpdates = async (
   limit: number = LATEST_UPDATES_LIMIT,

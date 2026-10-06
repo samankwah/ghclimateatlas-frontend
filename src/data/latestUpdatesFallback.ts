@@ -3,49 +3,15 @@
 // Rendered only when the API cannot be reached (a preview deploy with no
 // backend, or an outage), and always labelled as a saved copy in the UI so it
 // is never mistaken for live data. Regenerate from:
-//   curl "<api>/news/latest?limit=6"
+//   curl "<api>/news/latest"
 //
-// Captured 2026-09-01 from https://www.meteo.gov.gh/climate-atlas/climate-change/#section-latest-updates
+// Like the live feed, it holds only on-topic updates and leaves out the
+// articles in the backend's EXCLUDED_SLUGS. Captured 2026-10-06 from
+// https://www.meteo.gov.gh/news/
 
 import type { AtlasNewsItem } from "../types/news";
 
 export const LATEST_UPDATES_FALLBACK: AtlasNewsItem[] = [
-  {
-    id: "gmet-begins-stakeholder-engagement-on-establishment-of-wmo-regional-training-centre",
-    kind: "news",
-    title: "GMet Begins Stakeholder Engagement on Establishment of WMO Regional Training Centre",
-    summary: "The Ghana Meteorological Agency (GMet) has begun a two-day stakeholder sensitisation workshop to build consensus and institutional support for the establishmen",
-    category: "Articles",
-    published_at: "2026-08-27",
-    published_label: "27 Aug 2026",
-    url: "https://www.meteo.gov.gh/news/gmet-begins-stakeholder-engagement-on-establishment-of-wmo-regional-training-centre/",
-    image_url: "https://www.meteo.gov.gh/media/images/IMG_3574.width-800.jpg",
-    image_fallback_url: "https://www.meteo.gov.gh/media/images/IMG_3574.original.jpg",
-  },
-  {
-    id: "gmet-strengthens-aeronautical-meteorological-capacity-through-refresher-training",
-    kind: "news",
-    title: "GMet Strengthens Aeronautical Meteorological Capacity Through Refresher Training",
-    summary: "The Ghana Meteorological Agency (GMet) has commenced a five-day Aeronautical Meteorological Refresher Training Programme for staff of the Accra International A",
-    category: "Articles",
-    published_at: "2026-08-27",
-    published_label: "27 Aug 2026",
-    url: "https://www.meteo.gov.gh/news/gmet-strengthens-aeronautical-meteorological-capacity-through-refresher-training/",
-    image_url: "https://www.meteo.gov.gh/media/images/GMET3439.width-800.jpg",
-    image_fallback_url: "https://www.meteo.gov.gh/media/images/GMET3439.original.jpg",
-  },
-  {
-    id: "gmet-constitutes-nine-member-committee-to-guide-establishment-of-wmo-regional-training-centre",
-    kind: "news",
-    title: "GMet Constitutes Nine-Member Committee to Guide Establishment of WMO Regional Training Centre",
-    summary: "The Ghana Meteorological Agency (GMet) has constituted a nine-member Steering Committee to oversee and guide the establishment of a proposed World Meteorologic",
-    category: "Articles",
-    published_at: "2026-08-27",
-    published_label: "27 Aug 2026",
-    url: "https://www.meteo.gov.gh/news/gmet-constitutes-nine-member-committee-to-guide-establishment-of-wmo-regional-training-centre/",
-    image_url: "https://www.meteo.gov.gh/media/images/GMET4254.width-800.jpg",
-    image_fallback_url: "https://www.meteo.gov.gh/media/images/GMET4254.original.jpg",
-  },
   {
     id: "beyond-training-and-apply-the-knowledge-dr-ignatius-kweku-williams-charges-trainees",
     kind: "news",
@@ -81,5 +47,17 @@ export const LATEST_UPDATES_FALLBACK: AtlasNewsItem[] = [
     url: "https://www.meteo.gov.gh/news/gmet-engages-ndpc-on-climate-atlas-application-for-national-development-planning/",
     image_url: "https://www.meteo.gov.gh/media/images/GMET1797.width-800.jpg",
     image_fallback_url: "https://www.meteo.gov.gh/media/images/GMET1797.original.jpg",
+  },
+  {
+    id: "gmet-launches-ghana-climate-atlas-to-support-climate-resilient-development",
+    kind: "news",
+    title: "GMet Launches Ghana Climate Atlas to Support Climate-Resilient Development",
+    summary: "In a significant step toward strengthening climate-resilient development, the Ghana Meteorological Agency, in collaboration with the Danish Meteorological Inst",
+    category: "Articles",
+    published_at: "2026-03-25",
+    published_label: "25 Mar 2026",
+    url: "https://www.meteo.gov.gh/news/gmet-launches-ghana-climate-atlas-to-support-climate-resilient-development/",
+    image_url: "https://www.meteo.gov.gh/media/images/_MG_9120.width-800.jpg",
+    image_fallback_url: "https://www.meteo.gov.gh/media/images/_MG_9120.original.jpg",
   },
 ];
