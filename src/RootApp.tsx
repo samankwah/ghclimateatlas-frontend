@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import MapSkeleton from "./components/Map/MapSkeleton";
 import PublicSite from "./components/PublicSite/PublicSite";
+import { PUBLIC_SITE_ENABLED } from "./config/features";
 import {
   migrateLegacyMapLocation,
   NAVIGATION_EVENT,
@@ -34,6 +35,9 @@ const readLocation = (): BrowserLocation => {
   );
   if (legacyDestination) {
     replaceCurrentHistoryUrl(legacyDestination);
+  } else if (!PUBLIC_SITE_ENABLED && normalizePathname(window.location.pathname) !== "/map") {
+    // Public pages are hidden: send every other path to the Map Viewer.
+    replaceCurrentHistoryUrl(`/map${window.location.search}${window.location.hash}`);
   }
 
   return {
@@ -45,7 +49,7 @@ const readLocation = (): BrowserLocation => {
 
 function RootApp() {
   const [location, setLocation] = useState<BrowserLocation>(readLocation);
-  const isMap = location.pathname === "/map";
+  const isMap = !PUBLIC_SITE_ENABLED || location.pathname === "/map";
 
   useEffect(() => {
     const updateLocation = () => setLocation(readLocation());

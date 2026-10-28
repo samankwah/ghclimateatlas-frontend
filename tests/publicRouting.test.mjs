@@ -61,6 +61,24 @@ test("defines every public route and the lazy map route", async () => {
   assert.match(rootSource, /location\.pathname === "\/map"/);
 });
 
+test("keeps deployed builds map-only until the public site is enabled", async () => {
+  const [features, rootSource, devEnv, prodEnv] = await Promise.all([
+    readSource("../src/config/features.ts"),
+    readSource("../src/RootApp.tsx"),
+    readSource("../.env.development"),
+    readSource("../.env"),
+  ]);
+
+  // Off unless the build explicitly sets the flag to "true".
+  assert.match(features, /PUBLIC_SITE_ENABLED = import\.meta\.env\.VITE_PUBLIC_SITE_ENABLED === "true"/);
+  // While off, every path renders the map and is rewritten to /map.
+  assert.match(rootSource, /const isMap = !PUBLIC_SITE_ENABLED \|\| location\.pathname === "\/map"/);
+  assert.match(rootSource, /replaceCurrentHistoryUrl\(`\/map\$\{window\.location\.search\}\$\{window\.location\.hash\}`\)/);
+  // Only the dev server turns it on; the committed .env read by production builds must not.
+  assert.match(devEnv, /^VITE_PUBLIC_SITE_ENABLED=true$/m);
+  assert.doesNotMatch(prodEnv, /^VITE_PUBLIC_SITE_ENABLED=/m);
+});
+
 test("matches active public navigation exactly", () => {
   assert.equal(isRouteActive("/dashboard", "/dashboard"), true);
   assert.equal(isRouteActive("/dashboard/", "/dashboard"), true);
@@ -367,7 +385,9 @@ test("renders a high-contrast, keyboard-visible back control at every map header
   assert.equal(headerSource.match(/aria-label="Go back"/g)?.length, 2);
   assert.equal(headerSource.match(/title="Go back"/g)?.length, 2);
   assert.match(headerSource, /onClick=\{onNavigateBack\}/);
-  assert.match(appSource, /onNavigateBack=\{handleNavigateBack\}/);
+  // The back control only renders when the public site is enabled.
+  assert.match(appSource, /onNavigateBack=\{PUBLIC_SITE_ENABLED \? handleNavigateBack : undefined\}/);
+  assert.equal(headerSource.match(/\{onNavigateBack && \(/g)?.length, 2);
   assert.match(css, /\.map-back-button \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;[\s\S]*?background: #ffc533;/);
   assert.match(css, /\.map-back-button:focus-visible \{[\s\S]*?outline: 3px solid #ffffff;/);
   assert.match(css, /grid-template-columns: 5\.75rem minmax\(0, 1fr\) 5\.75rem;/);

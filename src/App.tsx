@@ -40,6 +40,7 @@ import {
   isSeaLevelVariableId,
 } from "./utils/climateLabels";
 import { getFixedDisplayRange } from "./utils/displayRanges";
+import { PUBLIC_SITE_ENABLED } from "./config/features";
 import { navigateBackFromMap, replaceCurrentHistoryUrl } from "./utils/publicRouting";
 import "./App.css";
 
@@ -313,7 +314,7 @@ function ClimateAtlas() {
         onOpenHelp={handleOpenHelp}
         onOpenTour={handleOpenTour}
         onCloseMobileActions={() => setMobileHeaderActionsOpen(false)}
-        onNavigateBack={handleNavigateBack}
+        onNavigateBack={PUBLIC_SITE_ENABLED ? handleNavigateBack : undefined}
       />
 
       {/* Map container - full bleed with all floating overlays inside */}
