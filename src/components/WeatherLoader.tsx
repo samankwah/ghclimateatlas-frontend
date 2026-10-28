@@ -1,3 +1,5 @@
+import "./WeatherLoader.css";
+
 interface WeatherLoaderProps {
   size?: "sm" | "md";
   className?: string;

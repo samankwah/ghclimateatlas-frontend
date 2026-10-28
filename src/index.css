@@ -70,11 +70,9 @@ body.public-route {
   overflow-y: auto;
 }
 
+/* Positions the map skeleton (absolutely placed) while the map chunk loads. */
 .route-loader {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  background: #172426;
-  color: #f8fafc;
-  font-weight: 700;
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
 }

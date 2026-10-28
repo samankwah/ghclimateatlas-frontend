@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import MapSkeleton from "./components/Map/MapSkeleton";
 import PublicSite from "./components/PublicSite/PublicSite";
 import {
   migrateLegacyMapLocation,
@@ -64,8 +65,10 @@ function RootApp() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Map fallback: the same skeleton the map shows until its data arrives, so
+          loading reads as one continuous screen rather than a text page first. */}
       {isMap ? (
-      <Suspense fallback={<div className="route-loader" role="status">Opening the climate map…</div>}>
+      <Suspense fallback={<div className="route-loader"><MapSkeleton /></div>}>
         <MapApp />
       </Suspense>
       ) : (

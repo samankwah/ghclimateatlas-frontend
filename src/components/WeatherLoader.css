@@ -1,0 +1,63 @@
+/* Styles for the sun/cloud/rain WeatherLoader. Kept beside the component (not in
+   App.css) so it is styled wherever it renders, including the map route's
+   Suspense fallback, which shows before the lazy App chunk and its CSS arrive. */
+
+.weather-loader {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.75rem;
+  filter: drop-shadow(0 6px 18px rgba(56, 189, 248, 0.2));
+}
+
+.weather-loader.is-small {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 0;
+  filter: none;
+}
+
+.weather-loader svg {
+  overflow: visible;
+}
+
+.weather-loader-sun {
+  transform-origin: 38px 38px;
+  animation: weather-loader-sun-rotate 6s linear infinite;
+}
+
+.weather-loader-cloud {
+  transform-origin: 50px 66px;
+  animation: weather-loader-cloud-float 3s ease-in-out infinite;
+}
+
+.weather-loader-drops line {
+  opacity: 0;
+  animation: weather-loader-drop 1.4s ease-in infinite;
+}
+
+.weather-loader-drops line:nth-child(1) { animation-delay: 0s; }
+.weather-loader-drops line:nth-child(2) { animation-delay: 0.35s; }
+.weather-loader-drops line:nth-child(3) { animation-delay: 0.7s; }
+
+@keyframes weather-loader-sun-rotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes weather-loader-cloud-float {
+  0%, 100% { transform: translateX(-3px); }
+  50%      { transform: translateX(3px); }
+}
+
+@keyframes weather-loader-drop {
+  0%   { opacity: 0; transform: translateY(-4px); }
+  40%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weather-loader-sun,
+  .weather-loader-cloud,
+  .weather-loader-drops line {
+    animation: none;
+  }
+}
