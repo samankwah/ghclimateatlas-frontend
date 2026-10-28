@@ -15,12 +15,16 @@
 // The plugin defaults to `pane: "tilePane"` and `interactive: false`, so the
 // MapLibre canvas sits below every overlay pane and never registers its own
 // mouse/keyboard handlers -- district click and hover handling stays with Leaflet.
+//
+// MapLibre (~1 MB of JS + CSS) is imported dynamically inside the effect, so the
+// atlas can mount, fetch its data and paint the raster basemap while it downloads,
+// instead of waiting for it before rendering anything.
 
 import { useEffect, useRef } from "react";
 import { useMap } from "react-leaflet";
 import L from "leaflet";
-import "@maplibre/maplibre-gl-leaflet";
-import "maplibre-gl/dist/maplibre-gl.css";
+// Type-only: brings in the plugin's `L.MaplibreGL` typings without bundling it here.
+import type {} from "@maplibre/maplibre-gl-leaflet";
 import {
   BASEMAP_ATTRIBUTION,
   BASEMAP_READY_TIMEOUT_MS,
@@ -109,54 +113,64 @@ const VectorBaseMap: React.FC<VectorBaseMapProps> = ({ onReady }) => {
     };
 
     // --- 2. Vector basemap, loaded in parallel and faded in on top ----------
-    try {
-      vectorLayer = L.maplibreGL({
-        style: OPENFREEMAP_POSITRON_STYLE,
-        // maplibre-gl-leaflet reads customAttribution off this option and pushes
-        // it into Leaflet's attribution control; it forces the MapLibre map's own
-        // attribution control off regardless.
-        attributionControl: { customAttribution: BASEMAP_ATTRIBUTION },
-      });
-      vectorLayer.addTo(map);
-
-      // The plugin appends its container to tilePane after the raster layer's,
-      // so it stacks above. Held transparent until the style is drawn, so the
-      // raster tiles show through instead of a blank canvas.
-      const container = vectorLayer.getContainer();
-      container.style.opacity = "0";
-      container.style.transition = `opacity ${UPGRADE_FADE_MS}ms ease-in-out`;
-
-      // getMaplibreMap() only exists once the layer has been added.
-      const glMap = vectorLayer.getMaplibreMap();
-
-      glMap.on("load", () => {
-        vectorReady = true;
-        if (styleTimeoutId) clearTimeout(styleTimeoutId);
+    const startVector = async () => {
+      try {
+        const [{ maplibreGL }] = await Promise.all([
+          import("@maplibre/maplibre-gl-leaflet"),
+          import("maplibre-gl/dist/maplibre-gl.css"),
+        ]);
         if (disposed) return;
 
-        container.style.opacity = "1";
-        notifyReady();
-        // Drop the raster only once the vector layer has faded fully in, so no
-        // frame is left with an empty basemap.
-        fadeTimeoutId = setTimeout(removeRaster, UPGRADE_FADE_MS);
-      });
+        vectorLayer = maplibreGL({
+          style: OPENFREEMAP_POSITRON_STYLE,
+          // maplibre-gl-leaflet reads customAttribution off this option and pushes
+          // it into Leaflet's attribution control; it forces the MapLibre map's own
+          // attribution control off regardless.
+          attributionControl: { customAttribution: BASEMAP_ATTRIBUTION },
+        });
+        vectorLayer.addTo(map);
 
-      // Tile-level errors after the style loads are transient and ignorable.
-      // An error before `load` means the style itself never arrived.
-      glMap.on("error", (event) => {
-        if (vectorReady) return;
-        keepRasterOnly(event?.error?.message ?? "style error");
-      });
+        // The plugin appends its container to tilePane after the raster layer's,
+        // so it stacks above. Held transparent until the style is drawn, so the
+        // raster tiles show through instead of a blank canvas.
+        const container = vectorLayer.getContainer();
+        container.style.opacity = "0";
+        container.style.transition = `opacity ${UPGRADE_FADE_MS}ms ease-in-out`;
 
-      styleTimeoutId = setTimeout(() => {
-        keepRasterOnly("load timed out");
-      }, VECTOR_STYLE_LOAD_TIMEOUT_MS);
-    } catch (error) {
-      // Thrown when WebGL is unavailable (older hardware, GPU blocklist,
-      // software rendering disabled). The raster basemap is already on the map,
-      // so there is nothing to fall back to -- just clean up the vector attempt.
-      keepRasterOnly(error instanceof Error ? error.message : "WebGL unavailable");
-    }
+        // getMaplibreMap() only exists once the layer has been added.
+        const glMap = vectorLayer.getMaplibreMap();
+
+        glMap.on("load", () => {
+          vectorReady = true;
+          if (styleTimeoutId) clearTimeout(styleTimeoutId);
+          if (disposed) return;
+
+          container.style.opacity = "1";
+          notifyReady();
+          // Drop the raster only once the vector layer has faded fully in, so no
+          // frame is left with an empty basemap.
+          fadeTimeoutId = setTimeout(removeRaster, UPGRADE_FADE_MS);
+        });
+
+        // Tile-level errors after the style loads are transient and ignorable.
+        // An error before `load` means the style itself never arrived.
+        glMap.on("error", (event) => {
+          if (vectorReady) return;
+          keepRasterOnly(event?.error?.message ?? "style error");
+        });
+
+        styleTimeoutId = setTimeout(() => {
+          keepRasterOnly("load timed out");
+        }, VECTOR_STYLE_LOAD_TIMEOUT_MS);
+      } catch (error) {
+        // Thrown when WebGL is unavailable (older hardware, GPU blocklist,
+        // software rendering disabled) or the MapLibre chunk failed to download.
+        // The raster basemap is already on the map, so there is nothing to fall
+        // back to -- just clean up the vector attempt.
+        keepRasterOnly(error instanceof Error ? error.message : "WebGL unavailable");
+      }
+    };
+    void startVector();
 
     return () => {
       disposed = true;
