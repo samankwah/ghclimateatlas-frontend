@@ -44,8 +44,6 @@ import { navigateBackFromMap, replaceCurrentHistoryUrl } from "./utils/publicRou
 import "./App.css";
 
 function ClimateAtlas() {
-  const [, setHoveredDistrict] = useState<string | null>(null);
-
   // Map layer toggles state
   const [showGrid] = useState(true);
 
@@ -376,7 +374,6 @@ function ClimateAtlas() {
             maxValue={maxValue}
             selectedDistrictId={selectedDistrictId}
             onDistrictClick={selectDistrict}
-            onDistrictHover={setHoveredDistrict}
 
             unit={effectiveVariable?.unit || ""}
             dataVersion={`${variable}-${period}-${scenario}`}

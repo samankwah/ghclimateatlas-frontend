@@ -14,7 +14,6 @@ interface CoastlineLayerProps {
   minValue: number;
   maxValue: number;
   onDistrictClick: (districtId: string) => void;
-  onDistrictHover: (districtId: string | null) => void;
   selectedDistrictId: string | null;
   showChange?: boolean;
   unit: string;
@@ -34,7 +33,6 @@ const CoastlineLayer: React.FC<CoastlineLayerProps> = ({
   minValue,
   maxValue,
   onDistrictClick,
-  onDistrictHover,
   selectedDistrictId,
   showChange = false,
   unit,
@@ -122,11 +120,9 @@ const CoastlineLayer: React.FC<CoastlineLayerProps> = ({
 
       layer.on({
         click: () => onDistrictClick(districtId),
-        mouseover: () => onDistrictHover(districtId),
-        mouseout: () => onDistrictHover(null),
       });
     },
-    [valueMap, showChange, unit, onDistrictClick, onDistrictHover]
+    [valueMap, showChange, unit, onDistrictClick]
   );
 
   if (!visible || !data) return null;

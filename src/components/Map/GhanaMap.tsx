@@ -40,7 +40,6 @@ interface GhanaMapProps {
   maxValue: number;
   selectedDistrictId: string | null;
   onDistrictClick: (districtId: string) => void;
-  onDistrictHover: (districtId: string | null) => void;
 
   dataVersion?: string;
   showGrid?: boolean;
@@ -125,7 +124,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
   maxValue,
   selectedDistrictId,
   onDistrictClick,
-  onDistrictHover,
 
   dataVersion,
   showGrid = false,
@@ -306,10 +304,8 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     // Events
     layer.on({
       click: () => onDistrictClick(districtId),
-      mouseover: () => onDistrictHover(districtId),
-      mouseout: () => onDistrictHover(null),
     });
-  }, [activeVariableId, valueMap, showChange, unit, onDistrictClick, onDistrictHover]);
+  }, [activeVariableId, valueMap, showChange, unit, onDistrictClick]);
 
   return (
     <MapContainer
@@ -359,7 +355,6 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
           minValue={minValue}
           maxValue={maxValue}
           onDistrictClick={onDistrictClick}
-          onDistrictHover={onDistrictHover}
           selectedDistrictId={selectedDistrictId}
           showChange={showChange}
           unit={unit}
