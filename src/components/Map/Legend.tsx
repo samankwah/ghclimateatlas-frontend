@@ -141,7 +141,7 @@ const Legend: React.FC<LegendProps> = ({
   return (
     <div className={className} style={legendScaleStyle}>
       <span className="legend-label">
-        {showChange ? "Change from baseline" : "Average value"} ({displayUnit})
+        {showChange ? "Change from baseline" : "Average"} ({displayUnit})
       </span>
       <div className="legend-scale">
         <div className="legend-bar-container">
