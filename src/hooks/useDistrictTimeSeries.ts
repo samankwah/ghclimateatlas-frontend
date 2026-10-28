@@ -75,7 +75,7 @@ export const useDistrictTimeSeries = (
   const baselineQueries = useQueries({
     queries: PERCENTILES.flatMap((percentile) =>
       sourceVariableIds.map((sourceVariableId) => ({
-        queryKey: ["district-baseline", variable, sourceVariableId, districtId, percentile],
+        queryKey: ["district-baseline", variable, sourceVariableId, percentile],
         queryFn: () => fetchClimateData(sourceVariableId, "baseline", scenario, percentile),
         enabled: !!districtId && !!variable,
         staleTime: 5 * 60 * 1000,
@@ -95,7 +95,6 @@ export const useDistrictTimeSeries = (
               sourceVariableId,
               config.period,
               scenario,
-              districtId,
               percentile,
             ],
             queryFn: () => fetchClimateComparison(sourceVariableId, config.period, scenario, percentile),
