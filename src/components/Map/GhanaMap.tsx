@@ -278,6 +278,13 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
     });
   }, [valueMap, activeVariableId, showChange, unit]);
 
+  // onEachFeature only runs when the GeoJSON layer mounts, so read the click
+  // handler through a ref to always call the latest one.
+  const onDistrictClickRef = useRef(onDistrictClick);
+  useEffect(() => {
+    onDistrictClickRef.current = onDistrictClick;
+  }, [onDistrictClick]);
+
   // Event handlers for each feature
   const onEachFeature = useCallback((feature: Feature, layer: Layer) => {
     const districtId = feature.properties?.id as string;
@@ -303,9 +310,9 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
 
     // Events
     layer.on({
-      click: () => onDistrictClick(districtId),
+      click: () => onDistrictClickRef.current(districtId),
     });
-  }, [activeVariableId, valueMap, showChange, unit, onDistrictClick]);
+  }, [activeVariableId, valueMap, showChange, unit]);
 
   return (
     <MapContainer
@@ -336,10 +343,12 @@ const GhanaMap: React.FC<GhanaMapProps> = ({
         />
       )}
 
-      {/* District polygons colored by district-level climate values */}
+      {/* District polygons colored by district-level climate values. Not keyed
+          on the data: react-leaflet restyles every district via setStyle when
+          `style` changes, and the effect above rebinds tooltips, so a variable or
+          period change no longer rebuilds all ~260 paths. */}
       {districts && (
         <GeoJSON
-          key={dataVersion}
           data={districts as GeoJsonObject}
           style={style}
           onEachFeature={onEachFeature}
